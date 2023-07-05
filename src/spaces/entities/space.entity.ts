@@ -11,7 +11,7 @@ export class Space extends BaseEntity {
   name: string;
 
   @OneToMany(() => Channel, (channel) => channel.space)
-  channels: Channel[];
+  channels?: Channel[];
 
   @ManyToMany(() => User, (user) => user.spaces)
   users: User[];
