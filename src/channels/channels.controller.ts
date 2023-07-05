@@ -8,16 +8,18 @@ import {
   Delete,
 } from '@nestjs/common';
 import { ChannelsService } from './channels.service';
-import { CreateChannelDto } from './dto/CreateChannel.dto';
-import { UpdateChannelDto } from './dto/UpdateChannel.dto';
+import { CreateChannelDto, UpdateChannelDto } from './dto';
+import { Channel } from './entities/channel.entity';
 
 @Controller('channels')
 export class ChannelsController {
   constructor(private readonly channelsService: ChannelsService) {}
 
   @Post()
-  create(@Body() createChannelDto: CreateChannelDto) {
-    return this.channelsService.create(createChannelDto);
+  async createChannel(
+    @Body() createChannelDto: CreateChannelDto,
+  ): Promise<Channel> {
+    return this.channelsService.createChannel(createChannelDto);
   }
 
   @Get()

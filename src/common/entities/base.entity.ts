@@ -4,11 +4,14 @@ import {
   UpdateDateColumn,
   Column,
   DeleteDateColumn,
+  BeforeInsert,
 } from 'typeorm';
+
+import { v4 as uuidv4 } from 'uuid';
 
 export abstract class BaseEntity {
   @PrimaryGeneratedColumn()
-  id: string;
+  id: number;
 
   @Column()
   uuid: string;
@@ -21,4 +24,9 @@ export abstract class BaseEntity {
 
   @DeleteDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   deletedAt: Date;
+
+  @BeforeInsert()
+  generateUuid() {
+    this.uuid = uuidv4();
+  }
 }

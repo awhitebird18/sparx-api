@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { CreateChannelDto } from './dto/CreateChannel.dto';
-import { UpdateChannelDto } from './dto/UpdateChannel.dto';
+import { CreateChannelDto, UpdateChannelDto } from './dto';
+import { ChannelsRepository } from './channels.repository';
+import { Channel } from './entities/channel.entity';
 
 @Injectable()
 export class ChannelsService {
-  create(createChannelDto: CreateChannelDto) {
-    return 'This action adds a new channel';
+  constructor(private readonly channelsRepository: ChannelsRepository) {}
+
+  async createChannel(createChannelDto: CreateChannelDto): Promise<Channel> {
+    return this.channelsRepository.createChannel(createChannelDto);
   }
 
   findAll() {
@@ -17,6 +20,7 @@ export class ChannelsService {
   }
 
   update(id: number, updateChannelDto: UpdateChannelDto) {
+    console.log(updateChannelDto);
     return `This action updates a #${id} channel`;
   }
 
