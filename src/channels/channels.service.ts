@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { CreateChannelDto } from './dto/create-channel.dto';
-import { UpdateChannelDto } from './dto/update-channel.dto';
+import { CreateChannelDto } from './dto/CreateChannel.dto';
+import { UpdateChannelDto } from './dto/UpdateChannel.dto';
 
 @Injectable()
 export class ChannelsService {
