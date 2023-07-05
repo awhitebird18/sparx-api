@@ -22,7 +22,6 @@ import { AuthModule } from './auth/auth.module';
       database: 'postgres',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
-      autoLoadEntities: true,
     }),
     ConfigModule.forRoot({ isGlobal: true }),
     ChannelsModule,
