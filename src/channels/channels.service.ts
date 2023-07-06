@@ -5,7 +5,7 @@ import { Channel } from './entities/channel.entity';
 
 @Injectable()
 export class ChannelsService {
-  constructor(private readonly channelsRepository: ChannelsRepository) {}
+  constructor(private channelsRepository: ChannelsRepository) {}
 
   async createChannel(createChannelDto: CreateChannelDto): Promise<Channel> {
     return this.channelsRepository.createChannel(createChannelDto);

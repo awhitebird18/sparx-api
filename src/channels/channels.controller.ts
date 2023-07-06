@@ -10,11 +10,13 @@ import {
 import { ChannelsService } from './channels.service';
 import { CreateChannelDto, UpdateChannelDto } from './dto';
 import { Channel } from './entities/channel.entity';
+import { ApiBody } from '@nestjs/swagger';
 
 @Controller('channels')
 export class ChannelsController {
   constructor(private readonly channelsService: ChannelsService) {}
 
+  @ApiBody({ type: CreateChannelDto })
   @Post()
   async createChannel(
     @Body() createChannelDto: CreateChannelDto,

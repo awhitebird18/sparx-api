@@ -10,11 +10,11 @@ export class Channel extends BaseEntity {
   @Column()
   name: string;
 
-  @Column()
-  topic: string;
+  @Column({ nullable: true })
+  topic?: string;
 
-  @Column()
-  description: string;
+  @Column({ nullable: true })
+  description?: string;
 
   @ManyToOne(() => Company, (company) => company.channels)
   company: Company;
