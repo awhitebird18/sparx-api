@@ -6,16 +6,18 @@ import { CreateChannelDto } from './CreateChannel.dto';
 
 export class ChannelDto extends IntersectionType(CreateChannelDto, BaseDto) {
   @ApiProperty({
-    example: 'Announcements',
-    description: 'Publicly displayed name of the channel',
+    example: 'Lets disciuss frogs',
+    description:
+      'Publicly displayed topic that gives users the current topic of the channel',
   })
   @IsOptional()
   @IsString()
   topic: string;
 
   @ApiProperty({
-    example: 'Announcements',
-    description: 'Publicly displayed name of the channel',
+    example: 'This channel is for company announcements',
+    description:
+      'Publicly displayed description that provides information about the channel',
   })
   @IsOptional()
   @IsString()

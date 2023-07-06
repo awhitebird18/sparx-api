@@ -11,7 +11,7 @@ export class CreateChannelDto {
   name: string;
 
   @ApiProperty({
-    example: 'Direct Message',
+    example: 'Direct',
     description: 'Type of channel',
   })
   @IsNotEmpty()
