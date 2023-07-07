@@ -10,6 +10,7 @@ import { SpacesModule } from './spaces/spaces.module';
 import { CompaniesModule } from './companies/companies.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { SectionsModule } from './sections/sections.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AuthModule } from './auth/auth.module';
     CompaniesModule,
     UsersModule,
     AuthModule,
+    SectionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

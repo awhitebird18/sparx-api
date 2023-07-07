@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CreateChannelDto, UpdateChannelDto } from './dto';
+import { ChannelDto, CreateChannelDto, UpdateChannelDto } from './dto';
 import { ChannelsRepository } from './channels.repository';
 import { Channel } from './entities/channel.entity';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class ChannelsService {
@@ -11,20 +12,34 @@ export class ChannelsService {
     return this.channelsRepository.createChannel(createChannelDto);
   }
 
-  findAll() {
-    return `This action returns all channels`;
+  async findSubscribedChannels() {
+    const channels = await this.channelsRepository.findSubscribedChannels();
+    return plainToInstance(ChannelDto, channels);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} channel`;
+  async findOne(uuid: string) {
+    const channel = await this.channelsRepository.findChannel(uuid);
+
+    return plainToInstance(ChannelDto, channel);
   }
 
-  update(id: number, updateChannelDto: UpdateChannelDto) {
-    console.log(updateChannelDto);
-    return `This action updates a #${id} channel`;
+  async updateChannel(uuid: string, updateChannelDto: UpdateChannelDto) {
+    const channel = await this.channelsRepository.updateChannel(
+      uuid,
+      updateChannelDto,
+    );
+
+    return plainToInstance(ChannelDto, channel);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} channel`;
+  async removeChannel(uuid: string): Promise<boolean> {
+    const channel = await this.channelsRepository.findChannel(uuid);
+
+    if (!channel) {
+      return false;
+    }
+
+    await this.channelsRepository.softRemove(channel);
+    return true;
   }
 }

@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { ChannelType } from '../enums/channelType.enum';
 
 export class CreateChannelDto {
   @ApiProperty({
@@ -11,10 +12,21 @@ export class CreateChannelDto {
   name: string;
 
   @ApiProperty({
-    example: 'Direct',
+    example: 'direct',
     description: 'Type of channel',
   })
   @IsNotEmpty()
   @IsString()
-  type: string;
+  @IsEnum(ChannelType)
+  type: ChannelType;
+
+  @ApiProperty({
+    example: false,
+    description:
+      'Sets a channel to be private. Private channels are invite only',
+  })
+  @IsNotEmpty()
+  @IsString()
+  @IsBoolean()
+  isPrivate: boolean;
 }

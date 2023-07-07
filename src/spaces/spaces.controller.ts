@@ -10,7 +10,9 @@ import {
 import { SpacesService } from './spaces.service';
 import { CreateSpaceDto } from './dto/CreateSpace.dto';
 import { UpdateSpaceDto } from './dto/UpdateSpace.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Spaces')
 @Controller('spaces')
 export class SpacesController {
   constructor(private readonly spacesService: SpacesService) {}
