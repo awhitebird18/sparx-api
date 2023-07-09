@@ -12,11 +12,14 @@ export class Section extends BaseEntity {
   type?: string;
 
   @Column({ nullable: true })
+  isSystem?: boolean;
+
+  @Column({ nullable: true })
   emoji?: string;
 
   @OneToMany(() => Channel, (channel) => channel.section)
   channels: Channel[];
 
   @ManyToOne(() => User, (user) => user.sections)
-  user: User;
+  user?: User;
 }
