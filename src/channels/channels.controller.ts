@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { ChannelsService } from './channels.service';
 import { CreateChannelDto, UpdateChannelDto } from './dto';
-import { Channel } from './entities/channel.entity';
 import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { NotFoundException } from '@nestjs/common/exceptions';
@@ -22,9 +21,7 @@ export class ChannelsController {
 
   @ApiBody({ type: CreateChannelDto })
   @Post()
-  async createChannel(
-    @Body() createChannelDto: CreateChannelDto,
-  ): Promise<Channel> {
+  async createChannel(@Body() createChannelDto: CreateChannelDto) {
     return this.channelsService.createChannel(createChannelDto);
   }
 

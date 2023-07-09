@@ -5,18 +5,20 @@ import {
 } from '@nestjs/common';
 import { ChannelDto, CreateChannelDto, UpdateChannelDto } from './dto';
 import { ChannelsRepository } from './channels.repository';
-import { Channel } from './entities/channel.entity';
 import { plainToInstance } from 'class-transformer';
 import { SectionsRepository } from 'src/sections/sections.repository';
+import { ChannelGateway } from 'src/websockets/channel.gateway';
 
 @Injectable()
 export class ChannelsService {
   constructor(
     private channelsRepository: ChannelsRepository,
     private sectionRepository: SectionsRepository,
+    private channelGateway: ChannelGateway,
   ) {}
 
-  async createChannel(createChannelDto: CreateChannelDto): Promise<Channel> {
+  async createChannel(createChannelDto: CreateChannelDto) {
+    // Perform checks
     const section = await this.sectionRepository.findSection(
       '6780ff5c-44a3-43c9-9be3-a6bf1d16e8e9',
     );
@@ -33,7 +35,11 @@ export class ChannelsService {
       throw new ConflictException('A channel with this name already exists.');
     }
 
-    return this.channelsRepository.createChannel(createChannelDto, section);
+    // Create database entry
+    await this.channelsRepository.createChannel(createChannelDto, section);
+
+    // Send new channel over socket
+    this.channelGateway.sendChannelUpdate();
   }
 
   async findSubscribedChannels() {
