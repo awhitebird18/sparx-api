@@ -17,7 +17,6 @@ export class SectionsService {
   async findUserSections() {
     const sections = await this.sectionsRepository.findUserSections();
 
-    console.log(sections);
     return plainToInstance(SectionDto, sections);
   }
 

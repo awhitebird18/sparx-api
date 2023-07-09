@@ -1,16 +1,22 @@
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Repository, FindOptionsWhere } from 'typeorm';
 import { Channel } from './entities/channel.entity';
 import { CreateChannelDto, UpdateChannelDto } from './dto';
 import { Injectable } from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common/exceptions';
+import { Section } from 'src/sections/entities/section.entity';
 
 @Injectable()
 export class ChannelsRepository extends Repository<Channel> {
   constructor(private dataSource: DataSource) {
     super(Channel, dataSource.createEntityManager());
   }
-  async createChannel(createChannelDto: CreateChannelDto): Promise<Channel> {
+  async createChannel(
+    createChannelDto: CreateChannelDto,
+    section: Section,
+  ): Promise<Channel> {
     const channel = this.create(createChannelDto);
+
+    channel.section = section;
     return this.save(channel);
   }
 
@@ -18,7 +24,13 @@ export class ChannelsRepository extends Repository<Channel> {
     return this.find();
   }
 
-  findChannel(uuid: string): Promise<Channel> {
+  async findOneByProperties(
+    searchCriteria: FindOptionsWhere<Channel>,
+  ): Promise<Channel> {
+    return this.findOne({ where: searchCriteria });
+  }
+
+  findChannelByUuid(uuid: string): Promise<Channel> {
     return this.findOne({ where: { uuid } });
   }
 
@@ -26,7 +38,7 @@ export class ChannelsRepository extends Repository<Channel> {
     uuid: string,
     updateChannelDto: UpdateChannelDto,
   ): Promise<Channel> {
-    const channel = await this.findChannel(uuid);
+    const channel = await this.findChannelByUuid(uuid);
 
     if (!channel) {
       throw new NotFoundException(`Channel with UUID ${uuid} not found`);

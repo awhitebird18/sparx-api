@@ -16,7 +16,6 @@ export class CreateChannelDto {
     description: 'Type of channel',
   })
   @IsNotEmpty()
-  @IsString()
   @IsEnum(ChannelType)
   type: ChannelType;
 
@@ -26,7 +25,6 @@ export class CreateChannelDto {
       'Sets a channel to be private. Private channels are invite only',
   })
   @IsNotEmpty()
-  @IsString()
   @IsBoolean()
   isPrivate: boolean;
 }

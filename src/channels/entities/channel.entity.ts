@@ -5,6 +5,7 @@ import { Section } from 'src/sections/entities/section.entity';
 import { Space } from 'src/spaces/entities/space.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Entity, Column, OneToMany, ManyToMany, ManyToOne } from 'typeorm';
+import { ChannelType } from '../enums/channelType.enum';
 
 @Entity()
 export class Channel extends BaseEntity {
@@ -19,6 +20,13 @@ export class Channel extends BaseEntity {
 
   @Column({ default: false })
   isPrivate?: boolean;
+
+  @Column({
+    type: 'enum',
+    enum: ChannelType,
+    default: ChannelType.CHANNEL,
+  })
+  type: ChannelType;
 
   @ManyToOne(() => Company, (company) => company.channels)
   company: Company;
