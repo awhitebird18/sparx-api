@@ -1,8 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseDto } from 'src/common/dto/Base.dto';
 import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { IntersectionType } from '@nestjs/mapped-types';
+import { CreateMessageDto } from './CreateMessage.dto';
 
-export class MessageDto extends BaseDto {
+export class MessageDto extends IntersectionType(CreateMessageDto, BaseDto) {
   @ApiProperty({
     example: 'Hey John, how are you?',
     description: 'Serialized Lexical message content.',

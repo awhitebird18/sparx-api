@@ -1,5 +1,5 @@
 import { Exclude } from 'class-transformer';
-import { IsUUID } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate } from 'class-validator';
 
@@ -11,14 +11,18 @@ export class BaseDto {
   uuid?: string;
 
   @ApiProperty({ example: '2023-07-05T12:34:56Z' })
+  @IsOptional()
   @IsDate()
   createdAt: Date;
 
   @ApiProperty({ example: '2023-07-05T12:34:56Z' })
+  @IsOptional()
   @IsDate()
   updatedAt: Date;
 
   @ApiProperty({ example: '2023-07-05T12:34:56Z' })
   @IsDate()
+  @IsOptional()
   deletedAt: Date;
 }
+// Todo: add createdBy, updatedBy, deletedBy
