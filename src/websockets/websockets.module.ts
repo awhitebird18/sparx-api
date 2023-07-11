@@ -1,9 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ChannelGateway } from './channel.gateway';
 import { ChannelsModule } from '../channels/channels.module';
 
 @Module({
-  imports: [ChannelsModule],
+  imports: [forwardRef(() => ChannelsModule)],
   providers: [ChannelGateway],
   exports: [ChannelGateway],
 })

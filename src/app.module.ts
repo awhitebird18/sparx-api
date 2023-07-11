@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 
 import { ChannelsModule } from './channels/channels.module';
 import { MessagesModule } from './messages/messages.module';
@@ -11,6 +12,8 @@ import { CompaniesModule } from './companies/companies.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { SectionsModule } from './sections/sections.module';
+import { WebsocketsModule } from './websockets/websockets.module';
+import { JwtAuthGuard } from './auth/jwtAuthGuard.guard';
 
 @Module({
   imports: [
@@ -32,8 +35,9 @@ import { SectionsModule } from './sections/sections.module';
     UsersModule,
     AuthModule,
     SectionsModule,
+    WebsocketsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
 })
 export class AppModule {}
