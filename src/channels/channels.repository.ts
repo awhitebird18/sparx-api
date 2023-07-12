@@ -1,4 +1,4 @@
-import { DataSource, Repository, FindOptionsWhere } from 'typeorm';
+import { DataSource, Repository, FindOptionsWhere, In } from 'typeorm';
 import { Channel } from './entities/channel.entity';
 import { CreateChannelDto, UpdateChannelDto } from './dto';
 import { Injectable } from '@nestjs/common';
@@ -22,6 +22,14 @@ export class ChannelsRepository extends Repository<Channel> {
 
   async findSubscribedChannels(): Promise<Channel[]> {
     return this.find();
+  }
+
+  async findChannelsByIds(channelIds: string[]): Promise<Channel[]> {
+    return this.find({
+      where: {
+        id: In(channelIds),
+      },
+    });
   }
 
   async findOneByProperties(

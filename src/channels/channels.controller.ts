@@ -20,7 +20,7 @@ export class ChannelsController {
   constructor(private readonly channelsService: ChannelsService) {}
 
   @ApiBody({ type: CreateChannelDto })
-  @Post()
+  @Post('')
   async createChannel(@Body() createChannelDto: CreateChannelDto) {
     return this.channelsService.createChannel(createChannelDto);
   }

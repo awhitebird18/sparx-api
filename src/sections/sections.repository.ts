@@ -14,7 +14,7 @@ export class SectionsRepository extends Repository<Section> {
     return this.save(section);
   }
 
-  async findUserSections(): Promise<Section[]> {
+  async findUserSections(userId: string): Promise<Section[]> {
     return this.find({ relations: ['channels'] });
   }
 

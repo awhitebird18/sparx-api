@@ -11,6 +11,8 @@ import { SectionsService } from './sections.service';
 import { CreateSectionDto } from './dto/CreateSection.dto';
 import { UpdateSectionDto } from './dto/UpdateSection.dto';
 import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
+import { GetUser } from 'src/common/decorators/getUser.decorator';
+import { User } from 'src/users/entities/user.entity';
 
 @ApiTags('Sections')
 @Controller('sections')
@@ -24,8 +26,8 @@ export class SectionsController {
   }
 
   @Get()
-  findUserSections() {
-    return this.sectionsService.findUserSections();
+  findUserSections(@GetUser() user: User) {
+    return this.sectionsService.findUserSections(user.uuid);
   }
 
   @ApiParam({

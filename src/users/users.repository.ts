@@ -10,9 +10,9 @@ export class UsersRepository extends Repository<User> {
     super(User, dataSource.createEntityManager());
   }
   async createUser(createUserDto: CreateUserDto): Promise<User> {
-    const User = this.create(createUserDto);
+    const User = await this.create(createUserDto);
 
-    return this.save(User);
+    return await this.save(User);
   }
 
   async findSubscribedUsers(): Promise<User[]> {
