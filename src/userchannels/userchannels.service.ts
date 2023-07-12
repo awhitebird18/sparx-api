@@ -3,6 +3,9 @@ import { UserChannelsRepository } from './userchannel.repository';
 import { UserChannel } from './entity/userchannel.entity';
 import { UserChannelDto } from './dto/UserChannel.dto';
 import { SectionsService } from 'src/sections/sections.service';
+import { plainToClass } from 'class-transformer';
+import { ChannelDto } from 'src/channels/dto';
+import { SectionDto } from 'src/sections/dto';
 
 @Injectable()
 export class UserchannelsService {
@@ -22,7 +25,9 @@ export class UserchannelsService {
 
     if (userChannel) {
       userChannel.isSubscribed = true;
-      return this.userChannelsRepository.updateUserChannel(userChannel);
+      return this.userChannelsRepository.updateUserChannel(userChannel.uuid, {
+        isSubscribed: true,
+      });
     }
 
     const section = await this.sectionsService.findDefaultSection(
@@ -41,17 +46,28 @@ export class UserchannelsService {
   }
 
   async leaveChannel(userUuid: string, channelUuid: string) {
-    const userChannel = await this.userChannelsRepository.findOneByProperties({
-      user: { uuid: userUuid },
-      channel: { uuid: channelUuid },
-    });
+    const userChannel = await this.userChannelsRepository.findOneByProperties(
+      {
+        user: { uuid: userUuid },
+        channel: { uuid: channelUuid },
+      },
+      ['channel'],
+    );
 
     if (!userChannel) {
       throw new NotFoundException('User-Channel link not found');
     }
 
-    userChannel.isSubscribed = false;
-    return this.userChannelsRepository.updateUserChannel(userChannel);
+    const section = await this.sectionsService.findDefaultSection(
+      userChannel.channel.type,
+    );
+
+    const sectionDto = plainToClass(SectionDto, section);
+
+    return this.userChannelsRepository.updateUserChannel(userChannel.uuid, {
+      isSubscribed: false,
+      section: sectionDto,
+    });
   }
 
   async findUserChannel(
@@ -78,10 +94,12 @@ export class UserchannelsService {
       throw new NotFoundException('User not found');
     }
 
-    const channels = userChannels.map((userChannel) => ({
-      ...userChannel,
-      ...userChannel.channel,
-    }));
+    const channels = userChannels.map((userChannel) =>
+      plainToClass(UserChannelDto, {
+        ...userChannel,
+        channel: plainToClass(ChannelDto, userChannel.channel),
+      }),
+    );
 
     return channels;
   }

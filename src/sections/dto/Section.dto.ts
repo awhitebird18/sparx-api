@@ -3,16 +3,17 @@ import { IsArray, IsBoolean, IsEnum, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { IntersectionType } from '@nestjs/mapped-types';
 import { CreateSectionDto } from './CreateSection.dto';
-import { ChannelDto } from 'src/channels/dto';
+
 import { SectionType } from '../enums';
+import { UserChannelDto } from 'src/userchannels/dto/UserChannel.dto';
 
 export class SectionDto extends IntersectionType(CreateSectionDto, BaseDto) {
   @ApiProperty({
-    example: [ChannelDto],
+    example: [UserChannelDto],
     description: 'Channels that exist under this section',
   })
   @IsArray()
-  channels: ChannelDto[];
+  channels: UserChannelDto[];
 
   @ApiProperty({
     example: true,

@@ -21,7 +21,7 @@ export class CreateSectionDto {
     description: 'UserId of the user who created the section',
   })
   @IsUUID(4)
-  userId: string;
+  userId?: string;
 
   @ApiProperty({
     example: true,

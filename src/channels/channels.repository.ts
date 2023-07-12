@@ -4,6 +4,7 @@ import { CreateChannelDto, UpdateChannelDto } from './dto';
 import { Injectable } from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common/exceptions';
 import { Section } from 'src/sections/entities/section.entity';
+import { ChannelType } from './enums/channelType.enum';
 
 @Injectable()
 export class ChannelsRepository extends Repository<Channel> {
@@ -22,6 +23,13 @@ export class ChannelsRepository extends Repository<Channel> {
 
   async findSubscribedChannels(): Promise<Channel[]> {
     return this.find();
+  }
+
+  async findChannels(): Promise<Channel[]> {
+    return this.find({ where: { type: ChannelType.CHANNEL } });
+  }
+  async findDirectMessages(): Promise<Channel[]> {
+    return this.find({ where: { type: ChannelType.DIRECT } });
   }
 
   async findChannelsByIds(channelIds: string[]): Promise<Channel[]> {

@@ -1,10 +1,17 @@
-import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
+import {
+  DataSource,
+  FindOptionsWhere,
+  Repository,
+  UpdateResult,
+} from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { UserChannel } from './entity/userchannel.entity';
 import { CreateUserChannelDto } from './dto/CreateUserChannel.dto';
 import { User } from 'src/users/entities/user.entity';
 import { Channel } from 'src/channels/entities/channel.entity';
 import { Section } from 'src/sections/entities/section.entity';
+import { UpdateUserChannel } from './dto/UpdateUserChannel.dto';
+import { UserChannelDto } from './dto/UserChannel.dto';
 
 @Injectable()
 export class UserChannelsRepository extends Repository<UserChannel> {
@@ -12,7 +19,7 @@ export class UserChannelsRepository extends Repository<UserChannel> {
     super(UserChannel, dataSource.createEntityManager());
   }
 
-  findOneByProperties(
+  async findOneByProperties(
     searchFields: FindOptionsWhere<UserChannel>,
     relations?: string[],
   ) {
@@ -22,8 +29,11 @@ export class UserChannelsRepository extends Repository<UserChannel> {
     });
   }
 
-  async updateUserChannel(userChannel): Promise<UserChannel> {
-    return this.save(userChannel);
+  async updateUserChannel(
+    uuid: string,
+    userChannel: UpdateUserChannel,
+  ): Promise<UpdateResult> {
+    return this.update({ uuid }, userChannel);
   }
 
   async createUserChannel(

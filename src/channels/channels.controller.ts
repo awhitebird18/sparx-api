@@ -31,6 +31,16 @@ export class ChannelsController {
     return this.channelsService.findSubscribedChannels();
   }
 
+  @Get('channel')
+  findChannels() {
+    return this.channelsService.findChannels();
+  }
+
+  @Get('direct')
+  findDirectMessages() {
+    return this.channelsService.findDirectMessages();
+  }
+
   @Get(':uuid')
   @ApiParam({
     name: 'uuid',

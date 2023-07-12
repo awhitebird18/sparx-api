@@ -3,6 +3,7 @@ import { CreateSectionDto, SectionDto, UpdateSectionDto } from './dto';
 import { SectionsRepository } from 'src/sections/sections.repository';
 import { plainToInstance } from 'class-transformer';
 import { SectionType } from './enums';
+import { Section } from './entities/section.entity';
 
 @Injectable()
 export class SectionsService {
@@ -38,8 +39,8 @@ export class SectionsService {
     return plainToInstance(SectionDto, [...sections, ...this.defaultSections]);
   }
 
-  async findDefaultSection(sectionType: string) {
-    return await this.sectionsRepository.findDefaultSection(sectionType);
+  async findDefaultSection(sectionType: string): Promise<Section> {
+    return this.sectionsRepository.findDefaultSection(sectionType);
   }
 
   async updateSection(sectionId: string, updateSectionDto: UpdateSectionDto) {

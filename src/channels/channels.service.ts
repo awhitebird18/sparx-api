@@ -42,6 +42,14 @@ export class ChannelsService {
     this.channelGateway.sendChannelUpdate();
   }
 
+  async findChannels() {
+    return this.channelsRepository.findChannels();
+  }
+
+  async findDirectMessages() {
+    return this.channelsRepository.findDirectMessages();
+  }
+
   async findSubscribedChannels() {
     const channels = await this.channelsRepository.findSubscribedChannels();
     return plainToInstance(ChannelDto, channels);
