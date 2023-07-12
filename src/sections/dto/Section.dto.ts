@@ -19,7 +19,7 @@ export class SectionDto extends IntersectionType(CreateSectionDto, BaseDto) {
     description: 'Defines if section is system generated',
   })
   @IsBoolean()
-  isSystem?: boolean;
+  isSystem: boolean;
 
   @ApiProperty({
     example: 'channel',

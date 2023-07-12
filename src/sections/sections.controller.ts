@@ -45,22 +45,22 @@ export class SectionsController {
       },
     },
   })
-  @Patch(':uuid')
+  @Patch(':sectionId')
   updateSection(
-    @Param('uuid') uuid: string,
+    @Param('sectionId') sectionId: string,
     @Body() updateSectionDto: UpdateSectionDto,
   ) {
-    return this.sectionsService.updateSection(uuid, updateSectionDto);
+    return this.sectionsService.updateSection(sectionId, updateSectionDto);
   }
 
   @ApiParam({
-    name: 'uuid',
+    name: 'sectionId',
     required: true,
     description: 'UUID of the section',
     example: 'ddb2cd52-1f80-41c4-9bf1-43d18b814488',
   })
-  @Delete(':uuid')
-  removeSection(@Param('uuid') uuid: string) {
-    return this.sectionsService.removeSection(uuid);
+  @Delete(':sectionId')
+  removeSection(@Param('sectionId') sectionId: string) {
+    return this.sectionsService.removeSection(sectionId);
   }
 }

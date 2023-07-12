@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateSectionDto {
@@ -16,4 +22,13 @@ export class CreateSectionDto {
   })
   @IsUUID(4)
   userId: string;
+
+  @ApiProperty({
+    example: true,
+    description:
+      'Determines if section is system of user created. All users receive system sections.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isSystem?: boolean;
 }
