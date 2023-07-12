@@ -20,7 +20,10 @@ export class SectionsRepository extends Repository<Section> {
   }
 
   async findUserSections(userId: string): Promise<Section[]> {
-    return this.find({ relations: ['channels'] });
+    return this.find({
+      where: { user: { uuid: userId } },
+      relations: ['channels'],
+    });
   }
 
   async findDefaultSection(sectionType: string): Promise<Section> {

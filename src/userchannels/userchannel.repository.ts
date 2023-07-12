@@ -11,7 +11,6 @@ import { User } from 'src/users/entities/user.entity';
 import { Channel } from 'src/channels/entities/channel.entity';
 import { Section } from 'src/sections/entities/section.entity';
 import { UpdateUserChannel } from './dto/UpdateUserChannel.dto';
-import { UserChannelDto } from './dto/UserChannel.dto';
 
 @Injectable()
 export class UserChannelsRepository extends Repository<UserChannel> {
