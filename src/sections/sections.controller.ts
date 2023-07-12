@@ -31,6 +31,11 @@ export class SectionsController {
     return this.sectionsService.findUserSections(user.uuid);
   }
 
+  @Get('seed')
+  seedDefaultSections() {
+    return this.sectionsService.seedDefaultSections();
+  }
+
   @ApiParam({
     name: 'uuid',
     required: true,

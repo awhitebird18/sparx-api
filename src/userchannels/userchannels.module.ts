@@ -6,12 +6,15 @@ import { UserChannel } from './entity/userchannel.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from 'src/users/users.module';
 import { SectionsModule } from 'src/sections/sections.module';
+import { ChannelsModule } from 'src/channels/channels.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserChannel]),
     UsersModule,
     SectionsModule,
+    ChannelsModule,
+    UsersModule,
   ],
   controllers: [UserchannelsController],
   providers: [UserchannelsService, UserChannelsRepository],

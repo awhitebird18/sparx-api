@@ -3,7 +3,6 @@ import { CreateSectionDto, SectionDto, UpdateSectionDto } from './dto';
 import { SectionsRepository } from 'src/sections/sections.repository';
 import { plainToInstance } from 'class-transformer';
 import { SectionType } from './enums';
-import { Section } from './entities/section.entity';
 
 @Injectable()
 export class SectionsService {
@@ -13,16 +12,24 @@ export class SectionsService {
     {
       name: 'Channels',
       type: SectionType.CHANNEL,
+      isSystem: true,
     },
     {
       name: 'Direct Messages',
       type: SectionType.DIRECT,
+      isSystem: true,
     },
   ];
 
-  async seedSection(userId: string) {
-    for (let i = 0; i < this.defaultSections.length - 1; i++) {
-      await this.createSection({ ...this.defaultSections[i], userId });
+  async seedDefaultSections() {
+    const sections = await this.sectionsRepository.find();
+
+    for (let i = 0; i < sections.length - 1; i++) {
+      await this.sectionsRepository.removeSection(sections[i].uuid);
+    }
+
+    for (let i = 0; i < this.defaultSections.length; i++) {
+      await this.createSection(this.defaultSections[i]);
     }
   }
 
@@ -39,8 +46,12 @@ export class SectionsService {
     return plainToInstance(SectionDto, [...sections, ...this.defaultSections]);
   }
 
-  async findDefaultSection(sectionType: string): Promise<Section> {
-    return this.sectionsRepository.findDefaultSection(sectionType);
+  async findDefaultSection(sectionType: string): Promise<SectionDto> {
+    const section = await this.sectionsRepository.findDefaultSection(
+      sectionType,
+    );
+
+    return plainToInstance(SectionDto, section);
   }
 
   async updateSection(sectionId: string, updateSectionDto: UpdateSectionDto) {

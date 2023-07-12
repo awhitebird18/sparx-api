@@ -8,6 +8,7 @@ import { ChannelsRepository } from './channels.repository';
 import { plainToInstance } from 'class-transformer';
 import { SectionsRepository } from 'src/sections/sections.repository';
 import { ChannelGateway } from 'src/websockets/channel.gateway';
+import { ChannelType } from './enums/channelType.enum';
 
 @Injectable()
 export class ChannelsService {
@@ -42,12 +43,8 @@ export class ChannelsService {
     this.channelGateway.sendChannelUpdate();
   }
 
-  async findChannels() {
-    return this.channelsRepository.findChannels();
-  }
-
-  async findDirectMessages() {
-    return this.channelsRepository.findDirectMessages();
+  async findChannels(type: ChannelType) {
+    return this.channelsRepository.findChannels(type);
   }
 
   async findSubscribedChannels() {
@@ -55,8 +52,10 @@ export class ChannelsService {
     return plainToInstance(ChannelDto, channels);
   }
 
-  async findOne(uuid: string) {
-    const channel = await this.channelsRepository.findChannelByUuid(uuid);
+  async findOne(searchProperties: any) {
+    const channel = await this.channelsRepository.findOneByProperties(
+      searchProperties,
+    );
 
     return plainToInstance(ChannelDto, channel);
   }

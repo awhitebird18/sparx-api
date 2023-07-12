@@ -17,5 +17,6 @@ import { WebsocketsModule } from 'src/websockets/websockets.module';
   ],
   controllers: [ChannelsController],
   providers: [ChannelsService, ChannelsRepository],
+  exports: [ChannelsService, ChannelsRepository],
 })
 export class ChannelsModule {}

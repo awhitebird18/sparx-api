@@ -13,11 +13,15 @@ import { AuthService } from './auth.service';
 import { Public } from 'src/common/decorators/isPublic.decorator';
 import { RegisterDto } from './dto/RegisterDto';
 import { CreateUserDto } from 'src/users/dto';
+import { UsersService } from 'src/users/users.service';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private userService: UsersService,
+  ) {}
 
   @Public()
   @UseGuards(LocalAuthGuard)
@@ -36,6 +40,9 @@ export class AuthController {
 
   @Get('verify')
   async verifyToken(@Request() req) {
-    return req.user;
+    const populatedUser = await this.userService.initialUserFetch(
+      req.user.uuid,
+    );
+    return populatedUser;
   }
 }

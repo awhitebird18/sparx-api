@@ -21,8 +21,9 @@ export class UsersRepository extends Repository<User> {
 
   async findOneByProperties(
     searchCriteria: FindOptionsWhere<User>,
+    relations?: string[],
   ): Promise<User> {
-    return this.findOne({ where: searchCriteria });
+    return this.findOne({ where: searchCriteria, relations });
   }
 
   findUserByUuid(uuid: string): Promise<User> {

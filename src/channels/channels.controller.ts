@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ChannelsService } from './channels.service';
 import { CreateChannelDto, UpdateChannelDto } from './dto';
@@ -13,6 +14,7 @@ import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { NotFoundException } from '@nestjs/common/exceptions';
 import { HttpStatus } from '@nestjs/common/enums';
+import { ChannelType } from './enums/channelType.enum';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Channels')
@@ -21,7 +23,7 @@ export class ChannelsController {
   constructor(private readonly channelsService: ChannelsService) {}
 
   @ApiBody({ type: CreateChannelDto })
-  @Post('')
+  @Post()
   async createChannel(@Body() createChannelDto: CreateChannelDto) {
     return this.channelsService.createChannel(createChannelDto);
   }
@@ -32,13 +34,8 @@ export class ChannelsController {
   }
 
   @Get('channel')
-  findChannels() {
-    return this.channelsService.findChannels();
-  }
-
-  @Get('direct')
-  findDirectMessages() {
-    return this.channelsService.findDirectMessages();
+  findChannels(@Query('type') type: ChannelType) {
+    return this.channelsService.findChannels(type);
   }
 
   @Get(':uuid')

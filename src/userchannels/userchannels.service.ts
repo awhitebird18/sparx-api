@@ -1,9 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserChannelsRepository } from './userchannel.repository';
 import { UserChannel } from './entity/userchannel.entity';
 import { UserChannelDto } from './dto/UserChannel.dto';
 import { SectionsService } from 'src/sections/sections.service';
-import { plainToClass } from 'class-transformer';
+import { plainToClass, plainToInstance } from 'class-transformer';
 import { ChannelDto } from 'src/channels/dto';
 import { SectionDto } from 'src/sections/dto';
 
@@ -15,34 +20,37 @@ export class UserchannelsService {
   ) {}
 
   async joinChannel(userUuid: string, channelUuid: string) {
-    let userChannel = await this.userChannelsRepository.findOneByProperties(
-      {
-        user: { uuid: userUuid },
-        channel: { uuid: channelUuid },
-      },
-      ['channel'],
-    );
+    const userChannel = await this.userChannelsRepository.findOneByProperties({
+      user: { uuid: userUuid },
+      channel: { uuid: channelUuid },
+    });
 
-    if (userChannel) {
-      userChannel.isSubscribed = true;
-      return this.userChannelsRepository.updateUserChannel(userChannel.uuid, {
-        isSubscribed: true,
-      });
+    if (userChannel.isSubscribed) {
+      throw new HttpException(
+        'User is already subscribed to the channel',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
-    const section = await this.sectionsService.findDefaultSection(
-      userChannel.channel.type,
-    );
+    const newChannel = await this.userChannelsRepository.createUserChannel({
+      userId: userUuid,
+      channelId: channelUuid,
+    });
 
-    userChannel = await this.userChannelsRepository.createUserChannel(
-      {
-        userId: userUuid,
-        channelId: channelUuid,
-      },
-      section,
-    );
+    const channel = plainToInstance(ChannelDto, newChannel);
 
-    return userChannel;
+    return {
+      ...channel,
+      userUuid: newChannel.user.uuid,
+      channelUuid: newChannel.channel.uuid,
+      sectionUuid: newChannel.section.uuid,
+      uuid: newChannel.uuid,
+      updatedAt: newChannel.updatedAt,
+      deletedAt: newChannel.deletedAt,
+      createdAt: newChannel.createdAt,
+      isMuted: newChannel.isMuted,
+      isSubscribed: newChannel.isSubscribed,
+    };
   }
 
   async leaveChannel(userUuid: string, channelUuid: string) {
@@ -80,7 +88,7 @@ export class UserchannelsService {
     });
 
     if (!userChannel) {
-      throw new NotFoundException('UserChannel not found');
+      throw new HttpException('UserChannel not found', HttpStatus.BAD_REQUEST);
     }
 
     return userChannel;
