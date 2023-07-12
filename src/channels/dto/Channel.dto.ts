@@ -12,7 +12,7 @@ export class ChannelDto extends IntersectionType(CreateChannelDto, BaseDto) {
   })
   @IsOptional()
   @IsString()
-  topic: string;
+  topic?: string;
 
   @ApiProperty({
     example: 'This channel is for company announcements',
@@ -21,7 +21,7 @@ export class ChannelDto extends IntersectionType(CreateChannelDto, BaseDto) {
   })
   @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
 
   @ApiProperty({
     example: '77427689-934e-4642-863b-22bf6a77f89c',

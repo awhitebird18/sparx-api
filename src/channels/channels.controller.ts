@@ -9,11 +9,12 @@ import {
 } from '@nestjs/common';
 import { ChannelsService } from './channels.service';
 import { CreateChannelDto, UpdateChannelDto } from './dto';
-import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { NotFoundException } from '@nestjs/common/exceptions';
 import { HttpStatus } from '@nestjs/common/enums';
 
+@ApiBearerAuth('access-token')
 @ApiTags('Channels')
 @Controller('channels')
 export class ChannelsController {
@@ -28,6 +29,16 @@ export class ChannelsController {
   @Get()
   findAll() {
     return this.channelsService.findSubscribedChannels();
+  }
+
+  @Get('channel')
+  findChannels() {
+    return this.channelsService.findChannels();
+  }
+
+  @Get('direct')
+  findDirectMessages() {
+    return this.channelsService.findDirectMessages();
   }
 
   @Get(':uuid')

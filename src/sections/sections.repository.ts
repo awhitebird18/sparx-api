@@ -1,8 +1,13 @@
-import { DataSource, Repository } from 'typeorm';
+import {
+  DataSource,
+  DeleteResult,
+  FindOptionsWhere,
+  Repository,
+  UpdateResult,
+} from 'typeorm';
 import { Section } from './entities/section.entity';
 import { CreateSectionDto, UpdateSectionDto } from './dto';
 import { Injectable } from '@nestjs/common';
-import { NotFoundException } from '@nestjs/common/exceptions';
 
 @Injectable()
 export class SectionsRepository extends Repository<Section> {
@@ -15,30 +20,30 @@ export class SectionsRepository extends Repository<Section> {
   }
 
   async findUserSections(userId: string): Promise<Section[]> {
-    return this.find({ relations: ['channels'] });
+    return this.find({
+      where: { user: { uuid: userId } },
+      relations: ['channels'],
+    });
   }
 
-  findSection(uuid: string): Promise<Section> {
-    return this.findOne({ where: { uuid } });
+  async findDefaultSection(sectionType: string): Promise<Section> {
+    return this.findOne({ where: { isSystem: true, type: sectionType } });
+  }
+
+  findOneByProperties(searchFields: FindOptionsWhere<Section>) {
+    return this.findOne({
+      where: searchFields,
+    });
   }
 
   async updateSection(
     uuid: string,
     updateSectionDto: UpdateSectionDto,
-  ): Promise<Section> {
-    const section = await this.findSection(uuid);
-
-    if (!section) {
-      throw new NotFoundException(`Section with UUID ${uuid} not found`);
-    }
-
-    // Update the fields of the Section
-    Object.assign(section, updateSectionDto);
-
-    return this.save(section);
+  ): Promise<UpdateResult> {
+    return this.update({ uuid }, updateSectionDto);
   }
 
-  async removeSection(uuid: string) {
-    return this.softRemove({ uuid });
+  async removeSection(uuid: string): Promise<DeleteResult> {
+    return this.softDelete({ uuid });
   }
 }

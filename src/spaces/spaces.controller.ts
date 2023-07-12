@@ -10,8 +10,9 @@ import {
 import { SpacesService } from './spaces.service';
 import { CreateSpaceDto } from './dto/CreateSpace.dto';
 import { UpdateSpaceDto } from './dto/UpdateSpace.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiBearerAuth('access-token')
 @ApiTags('Spaces')
 @Controller('spaces')
 export class SpacesController {

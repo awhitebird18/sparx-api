@@ -2,6 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Channel } from 'src/channels/entities/channel.entity';
+import { Section } from 'src/sections/entities/section.entity';
 
 @Entity()
 export class UserChannel extends BaseEntity {
@@ -18,4 +19,7 @@ export class UserChannel extends BaseEntity {
 
   @Column({ default: true })
   isSubscribed: boolean;
+
+  @ManyToOne(() => Section, (section) => section.channels)
+  section: Section;
 }
