@@ -1,16 +1,10 @@
-import { Channel } from 'src/channels/entities/channel.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Company } from 'src/companies/entities/company.entity';
 import { Section } from 'src/sections/entities/section.entity';
 import { Space } from 'src/spaces/entities/space.entity';
-import {
-  Entity,
-  Column,
-  ManyToMany,
-  JoinTable,
-  ManyToOne,
-  OneToMany,
-} from 'typeorm';
+import { Entity, Column, ManyToMany, ManyToOne, OneToMany } from 'typeorm';
+import { PrimaryColor, Theme } from '../enums';
+import { UserChannel } from 'src/userchannels/entity/userchannel.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -24,13 +18,16 @@ export class User extends BaseEntity {
   email: string;
 
   @Column({ nullable: true })
+  address?: string;
+
+  @Column({ nullable: true })
   profileImage: string;
 
-  @Column()
-  theme: string;
+  @Column({ default: Theme.LIGHT })
+  theme: Theme;
 
-  @Column()
-  primaryColor: string;
+  @Column({ default: PrimaryColor.BLUE })
+  primaryColor: PrimaryColor;
 
   @ManyToMany(() => Space, (space) => space.users)
   spaces: Space[];
@@ -39,12 +36,14 @@ export class User extends BaseEntity {
   company: Company;
 
   @OneToMany(() => Section, (section) => section.user)
-  sections: Section;
+  sections: Section[];
 
-  @ManyToMany(() => Channel, (channel) => channel.users)
-  @JoinTable()
-  channels: Channel[];
+  @OneToMany(() => UserChannel, (userChannel) => userChannel.user)
+  userChannels: UserChannel[];
 
-  @Column()
+  @Column({ default: false })
   isAdmin: boolean;
+
+  @Column({ default: 'password' })
+  password: string;
 }

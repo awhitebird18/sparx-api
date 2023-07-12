@@ -1,44 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/CreateUser.dto';
 import { UpdateUserDto } from './dto/UpdateUser.dto';
+import { UsersRepository } from './users.repository';
 
 @Injectable()
 export class UsersService {
-  private readonly users = [
-    {
-      uuid: '3c82abba-2ce9-4805-a978-1bedf848dfe9',
-      email: 'aaron@gmail.com',
-      firstName: 'Aaron',
-      lastName: 'Whitebird',
-      image: '/images/profile-image-1.png',
-      theme: 'dark',
-      password: 'password',
-    },
-    {
-      uuid: '3c82abba-2ce9-4805-a978-1bedf848dfe9',
-      email: 'shanu@gmail.com',
-      firstName: 'Shanu',
-      lastName: 'Shanu',
-      image: '/images/profile-image-1.png',
-      theme: 'dark',
-      password: 'password',
-    },
-  ];
+  constructor(private userRepository: UsersRepository) {}
 
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  async createUser(createUserDto: CreateUserDto) {
+    const newUser = await this.userRepository.createUser(createUserDto);
+
+    return newUser;
   }
 
   findAll() {
     return `This action returns all users`;
   }
 
-  findOne(email: string) {
-    return this.users.find((user) => user.email === email);
+  findOneByEmail(email: string) {
+    return this.userRepository.findOneByProperties({ email });
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+    return updateUserDto;
   }
 
   remove(id: number) {

@@ -14,28 +14,22 @@ import { AuthModule } from './auth/auth.module';
 import { SectionsModule } from './sections/sections.module';
 import { WebsocketsModule } from './websockets/websockets.module';
 import { JwtAuthGuard } from './auth/jwtAuthGuard.guard';
+import { UserchannelsModule } from './userchannels/userchannels.module';
+import { config } from './typeorm';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'db',
-      port: 5432,
-      username: 'postgres',
-      password: 'postgres',
-      database: 'postgres',
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true,
-    }),
     ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRoot(config),
     ChannelsModule,
     MessagesModule,
     SpacesModule,
     CompaniesModule,
+    SectionsModule,
     UsersModule,
     AuthModule,
-    SectionsModule,
     WebsocketsModule,
+    UserchannelsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],

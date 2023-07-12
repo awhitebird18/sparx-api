@@ -20,7 +20,7 @@ export class ChannelsService {
   async createChannel(createChannelDto: CreateChannelDto) {
     // Perform checks
     const section = await this.sectionRepository.findSection(
-      '6780ff5c-44a3-43c9-9be3-a6bf1d16e8e9',
+      '5d0103a5-51d8-4ce7-8038-db4b45b429a7',
     );
 
     if (!section) {
