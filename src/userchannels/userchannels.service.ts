@@ -2,26 +2,40 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserChannelsRepository } from './userchannel.repository';
 import { UserChannel } from './entity/userchannel.entity';
 import { UserChannelDto } from './dto/UserChannel.dto';
+import { SectionsService } from 'src/sections/sections.service';
 
 @Injectable()
 export class UserchannelsService {
-  constructor(private userChannelsRepository: UserChannelsRepository) {}
+  constructor(
+    private userChannelsRepository: UserChannelsRepository,
+    private sectionsService: SectionsService,
+  ) {}
 
   async joinChannel(userUuid: string, channelUuid: string) {
-    let userChannel = await this.userChannelsRepository.findOneByProperties({
-      user: { uuid: userUuid },
-      channel: { uuid: channelUuid },
-    });
+    let userChannel = await this.userChannelsRepository.findOneByProperties(
+      {
+        user: { uuid: userUuid },
+        channel: { uuid: channelUuid },
+      },
+      ['channel'],
+    );
 
     if (userChannel) {
       userChannel.isSubscribed = true;
       return this.userChannelsRepository.updateUserChannel(userChannel);
     }
 
-    userChannel = await this.userChannelsRepository.createUserChannel({
-      userId: userUuid,
-      channelId: channelUuid,
-    });
+    const section = await this.sectionsService.findDefaultSection(
+      userChannel.channel.type,
+    );
+
+    userChannel = await this.userChannelsRepository.createUserChannel(
+      {
+        userId: userUuid,
+        channelId: channelUuid,
+      },
+      section,
+    );
 
     return userChannel;
   }

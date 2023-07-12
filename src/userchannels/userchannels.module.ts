@@ -5,9 +5,14 @@ import { UserChannelsRepository } from './userchannel.repository';
 import { UserChannel } from './entity/userchannel.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from 'src/users/users.module';
+import { SectionsModule } from 'src/sections/sections.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserChannel]), UsersModule],
+  imports: [
+    TypeOrmModule.forFeature([UserChannel]),
+    UsersModule,
+    SectionsModule,
+  ],
   controllers: [UserchannelsController],
   providers: [UserchannelsService, UserChannelsRepository],
   exports: [UserchannelsService, UserChannelsRepository],

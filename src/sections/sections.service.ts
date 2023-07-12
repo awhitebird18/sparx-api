@@ -38,6 +38,10 @@ export class SectionsService {
     return plainToInstance(SectionDto, [...sections, ...this.defaultSections]);
   }
 
+  async findDefaultSection(sectionType: string) {
+    return await this.sectionsRepository.findDefaultSection(sectionType);
+  }
+
   async updateSection(sectionId: string, updateSectionDto: UpdateSectionDto) {
     const updateResult = await this.sectionsRepository.updateSection(
       sectionId,

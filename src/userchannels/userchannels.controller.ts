@@ -9,14 +9,14 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 export class UserchannelsController {
   constructor(private readonly userchannelsService: UserchannelsService) {}
 
-  @Post('join/:channelUuid')
+  @Post('join/:channelId')
   async joinChannel(
     @GetUser() user: User,
-    @Param('channelUuid') channelUuid: string,
+    @Param('channelId') channelId: string,
   ) {
     const userChannel = this.userchannelsService.joinChannel(
       user.uuid,
-      channelUuid,
+      channelId,
     );
 
     return userChannel;
@@ -27,14 +27,14 @@ export class UserchannelsController {
     return this.userchannelsService.getUserSubscribedChannels(user.uuid);
   }
 
-  @Delete('leave/:channelUuid')
+  @Delete('leave/:channelId')
   async leaveChannel(
     @GetUser() user: User,
-    @Param('channelUuid') channelUuid: string,
+    @Param('channelId') channelId: string,
   ) {
     const userChannel = this.userchannelsService.leaveChannel(
       user.uuid,
-      channelUuid,
+      channelId,
     );
 
     return userChannel;

@@ -23,6 +23,10 @@ export class SectionsRepository extends Repository<Section> {
     return this.find({ relations: ['channels'] });
   }
 
+  async findDefaultSection(sectionType: string): Promise<Section> {
+    return this.findOne({ where: { isSystem: true, type: sectionType } });
+  }
+
   findOneByProperties(searchFields: FindOptionsWhere<Section>) {
     return this.findOne({
       where: searchFields,

@@ -1,5 +1,5 @@
-import { Channel } from 'src/channels/entities/channel.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
+import { UserChannel } from 'src/userchannels/entity/userchannel.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Entity, Column, OneToMany, ManyToOne } from 'typeorm';
 
@@ -17,8 +17,8 @@ export class Section extends BaseEntity {
   @Column({ nullable: true })
   emoji?: string;
 
-  @OneToMany(() => Channel, (channel) => channel.section)
-  channels: Channel[];
+  @OneToMany(() => UserChannel, (userchannel) => userchannel.section)
+  channels: UserChannel[];
 
   @ManyToOne(() => User, (user) => user.sections)
   user?: User;

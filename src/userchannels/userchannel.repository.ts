@@ -4,6 +4,7 @@ import { UserChannel } from './entity/userchannel.entity';
 import { CreateUserChannelDto } from './dto/CreateUserChannel.dto';
 import { User } from 'src/users/entities/user.entity';
 import { Channel } from 'src/channels/entities/channel.entity';
+import { Section } from 'src/sections/entities/section.entity';
 
 @Injectable()
 export class UserChannelsRepository extends Repository<UserChannel> {
@@ -11,9 +12,13 @@ export class UserChannelsRepository extends Repository<UserChannel> {
     super(UserChannel, dataSource.createEntityManager());
   }
 
-  findOneByProperties(searchFields: FindOptionsWhere<UserChannel>) {
+  findOneByProperties(
+    searchFields: FindOptionsWhere<UserChannel>,
+    relations?: string[],
+  ) {
     return this.findOne({
       where: searchFields,
+      relations,
     });
   }
 
@@ -23,11 +28,13 @@ export class UserChannelsRepository extends Repository<UserChannel> {
 
   async createUserChannel(
     userChannelDto: CreateUserChannelDto,
+    section: Section,
   ): Promise<UserChannel> {
     const userChannel = new UserChannel();
 
     userChannel.user = { uuid: userChannelDto.userId } as User;
     userChannel.channel = { uuid: userChannelDto.channelId } as Channel;
+    userChannel.section = section;
 
     return this.save(userChannel);
   }

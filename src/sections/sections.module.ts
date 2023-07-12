@@ -9,6 +9,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   imports: [TypeOrmModule.forFeature([Section])],
   controllers: [SectionsController],
   providers: [SectionsService, SectionsRepository],
-  exports: [SectionsRepository],
+  exports: [SectionsService, SectionsRepository],
 })
 export class SectionsModule {}
