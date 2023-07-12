@@ -10,10 +10,11 @@ import {
 import { SectionsService } from './sections.service';
 import { CreateSectionDto } from './dto/CreateSection.dto';
 import { UpdateSectionDto } from './dto/UpdateSection.dto';
-import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorators/getUser.decorator';
 import { User } from 'src/users/entities/user.entity';
 
+@ApiBearerAuth('access-token')
 @ApiTags('Sections')
 @Controller('sections')
 export class SectionsController {

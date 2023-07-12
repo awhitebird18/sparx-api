@@ -2,7 +2,9 @@ import { Controller, Param, Post, Delete, Get } from '@nestjs/common';
 import { UserchannelsService } from './userchannels.service';
 import { GetUser } from 'src/common/decorators/getUser.decorator';
 import { User } from 'src/users/entities/user.entity';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth('access-token')
 @Controller('userchannels')
 export class UserchannelsController {
   constructor(private readonly userchannelsService: UserchannelsService) {}
