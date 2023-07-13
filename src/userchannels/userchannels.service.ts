@@ -1,48 +1,42 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserChannelsRepository } from './userchannel.repository';
-import { UserChannel } from './entity/userchannel.entity';
 import { UserChannelDto } from './dto/UserChannel.dto';
-import { SectionsService } from 'src/sections/sections.service';
 import { plainToClass } from 'class-transformer';
 import { ChannelDto } from 'src/channels/dto';
-import { SectionDto } from 'src/sections/dto';
+import { SectionsRepository } from 'src/sections/sections.repository';
+import { UserChannel } from './entity/userchannel.entity';
 
 @Injectable()
 export class UserchannelsService {
   constructor(
     private userChannelsRepository: UserChannelsRepository,
-    private sectionsService: SectionsService,
+    private sectionsRepository: SectionsRepository,
   ) {}
 
   async joinChannel(userUuid: string, channelUuid: string) {
-    let userChannel = await this.userChannelsRepository.findOneByProperties(
-      {
-        user: { uuid: userUuid },
-        channel: { uuid: channelUuid },
-      },
-      ['channel'],
-    );
+    const userChannel = await this.userChannelsRepository.findOneByProperties({
+      user: { uuid: userUuid },
+      channel: { uuid: channelUuid },
+    });
 
-    if (userChannel) {
-      userChannel.isSubscribed = true;
-      return this.userChannelsRepository.updateUserChannel(userChannel.uuid, {
-        isSubscribed: true,
-      });
+    if (userChannel?.isSubscribed) {
+      throw new HttpException(
+        'User is already subscribed to the channel',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
-    const section = await this.sectionsService.findDefaultSection(
-      userChannel.channel.type,
-    );
+    await this.userChannelsRepository.createUserChannel({
+      userId: userUuid,
+      channelId: channelUuid,
+    });
 
-    userChannel = await this.userChannelsRepository.createUserChannel(
-      {
-        userId: userUuid,
-        channelId: channelUuid,
-      },
-      section,
-    );
-
-    return userChannel;
+    return this.findUserChannel(userUuid, channelUuid);
   }
 
   async leaveChannel(userUuid: string, channelUuid: string) {
@@ -50,6 +44,7 @@ export class UserchannelsService {
       {
         user: { uuid: userUuid },
         channel: { uuid: channelUuid },
+        isSubscribed: true,
       },
       ['channel'],
     );
@@ -58,32 +53,98 @@ export class UserchannelsService {
       throw new NotFoundException('User-Channel link not found');
     }
 
-    const section = await this.sectionsService.findDefaultSection(
+    const section = await this.sectionsRepository.findDefaultSection(
       userChannel.channel.type,
     );
 
-    const sectionDto = plainToClass(SectionDto, section);
-
-    return this.userChannelsRepository.updateUserChannel(userChannel.uuid, {
+    await this.userChannelsRepository.updateUserChannel(userChannel.uuid, {
       isSubscribed: false,
-      section: sectionDto,
+      section,
     });
+    const updatedChannel = await this.findUserChannel(userUuid, channelUuid);
+
+    return updatedChannel;
   }
 
   async findUserChannel(
     userUuid: string,
     channelUuid: string,
-  ): Promise<UserChannel> {
+  ): Promise<UserChannelDto> {
+    const userChannel = await this.userChannelsRepository.findOneByProperties(
+      {
+        user: { uuid: userUuid },
+        channel: { uuid: channelUuid },
+      },
+      ['channel', 'section'],
+    );
+
+    if (!userChannel) {
+      throw new HttpException('UserChannel not found', HttpStatus.BAD_REQUEST);
+    }
+
+    const res = {
+      ...plainToClass(UserChannelDto, userChannel),
+      ...plainToClass(ChannelDto, userChannel.channel),
+      sectionId: userChannel.section.uuid,
+    };
+
+    delete res.section;
+    delete res.channel;
+
+    return res;
+  }
+
+  async updateUserChannel(
+    userUuid: string,
+    channelUuid: string,
+    updatedFields: Partial<UserChannel>,
+  ) {
     const userChannel = await this.userChannelsRepository.findOneByProperties({
       user: { uuid: userUuid },
       channel: { uuid: channelUuid },
     });
 
-    if (!userChannel) {
-      throw new NotFoundException('UserChannel not found');
+    if (userChannel?.isSubscribed) {
+      throw new HttpException(
+        'User is already subscribed to the channel',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
-    return userChannel;
+    await this.userChannelsRepository.updateUserChannel(
+      userChannel.uuid,
+      updatedFields,
+    );
+
+    return await this.findUserChannel(userUuid, channelUuid);
+  }
+
+  async updateChannelSection(
+    userUuid: string,
+    channelUuid: string,
+    sectionUuid: string,
+  ) {
+    const userChannel = await this.userChannelsRepository.findOneByProperties({
+      user: { uuid: userUuid },
+      channel: { uuid: channelUuid },
+    });
+
+    const section = await this.sectionsRepository.findOneByProperties({
+      uuid: sectionUuid,
+    });
+
+    if (!userChannel || !section) {
+      throw new HttpException(
+        'No userchannel or section found',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.userChannelsRepository.updateUserChannel(userChannel.uuid, {
+      section,
+    });
+
+    return await this.findUserChannel(userUuid, channelUuid);
   }
 
   async getUserSubscribedChannels(userId: string): Promise<UserChannelDto[]> {
@@ -91,15 +152,22 @@ export class UserchannelsService {
       await this.userChannelsRepository.findSubscribedChannelsByUserId(userId);
 
     if (!userChannels) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('No user channels found');
     }
 
-    const channels = userChannels.map((userChannel) =>
-      plainToClass(UserChannelDto, {
-        ...userChannel,
-        channel: plainToClass(ChannelDto, userChannel.channel),
-      }),
-    );
+    const channels = userChannels.map((userChannel) => {
+      const res = {
+        ...plainToClass(UserChannelDto, userChannel),
+        ...plainToClass(ChannelDto, userChannel.channel),
+        sectionId: userChannel.section.uuid,
+        channelId: userChannel.channel.uuid,
+      };
+
+      delete res.section;
+      delete res.channel;
+
+      return res;
+    });
 
     return channels;
   }

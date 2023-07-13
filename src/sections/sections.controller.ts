@@ -22,13 +22,18 @@ export class SectionsController {
 
   @ApiBody({ type: CreateSectionDto })
   @Post()
-  create(@Body() createSectionDto: CreateSectionDto) {
-    return this.sectionsService.createSection(createSectionDto);
+  create(@Body() createSectionDto: CreateSectionDto, @GetUser() user: User) {
+    return this.sectionsService.createSection(createSectionDto, user);
   }
 
   @Get()
   findUserSections(@GetUser() user: User) {
     return this.sectionsService.findUserSections(user.uuid);
+  }
+
+  @Get('seed')
+  seedDefaultSections() {
+    return this.sectionsService.seedDefaultSections();
   }
 
   @ApiParam({

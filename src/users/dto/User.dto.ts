@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum } from 'class-validator';
+import { IsArray, IsEnum } from 'class-validator';
 import { PrimaryColor, Theme } from '../enums';
 import {
   IsNotEmpty,
@@ -9,6 +9,8 @@ import {
   MaxLength,
 } from 'class-validator';
 import { BaseDto } from 'src/common/dto/Base.dto';
+import { SectionDto } from 'src/sections/dto';
+import { UserChannelDto } from 'src/userchannels/dto/UserChannel.dto';
 
 export class UserDto extends BaseDto {
   @ApiProperty({ example: 'John', description: 'The first name of the user.' })
@@ -44,4 +46,10 @@ export class UserDto extends BaseDto {
   })
   @IsEnum(PrimaryColor)
   primaryColor: PrimaryColor;
+
+  @IsArray()
+  sections: SectionDto[];
+
+  @IsArray()
+  userChannels: UserChannelDto[];
 }

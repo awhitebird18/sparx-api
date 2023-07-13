@@ -38,4 +38,8 @@ export class ChannelDto extends IntersectionType(CreateChannelDto, BaseDto) {
   @IsOptional()
   @IsUUID(4)
   companyId?: string;
+
+  isSubscribed?: boolean;
+
+  channelId?: string;
 }

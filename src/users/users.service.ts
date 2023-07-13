@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/CreateUser.dto';
 import { UpdateUserDto } from './dto/UpdateUser.dto';
 import { UsersRepository } from './users.repository';
+import { plainToInstance } from 'class-transformer';
+import { UserDto } from './dto';
 
 @Injectable()
 export class UsersService {
@@ -15,6 +17,27 @@ export class UsersService {
 
   findAll() {
     return `This action returns all users`;
+  }
+
+  async findOne(searchProperties: any) {
+    const user = await this.userRepository.findOneByProperties(
+      searchProperties,
+    );
+
+    return plainToInstance(UserDto, user);
+  }
+
+  async findOneByProperties(searchProperties: any, relations?: string[]) {
+    const user = await this.userRepository.findOneByProperties(
+      searchProperties,
+      relations,
+    );
+
+    return plainToInstance(UserDto, user);
+  }
+
+  async initialUserFetch(userUuid: string) {
+    return await this.findOneByProperties({ uuid: userUuid });
   }
 
   findOneByEmail(email: string) {

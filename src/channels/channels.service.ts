@@ -8,6 +8,8 @@ import { ChannelsRepository } from './channels.repository';
 import { plainToInstance } from 'class-transformer';
 import { SectionsRepository } from 'src/sections/sections.repository';
 import { ChannelGateway } from 'src/websockets/channel.gateway';
+import { ChannelType } from './enums/channelType.enum';
+import { UserchannelsService } from 'src/userchannels/userchannels.service';
 
 @Injectable()
 export class ChannelsService {
@@ -15,16 +17,17 @@ export class ChannelsService {
     private channelsRepository: ChannelsRepository,
     private sectionRepository: SectionsRepository,
     private channelGateway: ChannelGateway,
+    private userChannelService: UserchannelsService,
   ) {}
 
-  async createChannel(createChannelDto: CreateChannelDto) {
+  async createChannel(createChannelDto: CreateChannelDto, userId: string) {
     // Perform checks
-    const section = await this.sectionRepository.findOneByProperties({
-      uuid: '5d0103a5-51d8-4ce7-8038-db4b45b429a7',
-    });
+    const section = await this.sectionRepository.findDefaultSection(
+      createChannelDto.type,
+    );
 
     if (!section) {
-      throw new NotFoundException('Section not found');
+      throw new NotFoundException('Default section not found');
     }
 
     const existingChannel = await this.channelsRepository.findOneByProperties({
@@ -36,27 +39,35 @@ export class ChannelsService {
     }
 
     // Create database entry
-    await this.channelsRepository.createChannel(createChannelDto, section);
+    const newChannel = await this.channelsRepository.createChannel(
+      createChannelDto,
+      section,
+    );
+
+    const userChannel = await this.userChannelService.joinChannel(
+      userId,
+      newChannel.uuid,
+    );
 
     // Send new channel over socket
-    this.channelGateway.sendChannelUpdate();
+    // this.channelGateway.sendChannelUpdate();
+
+    return userChannel;
   }
 
-  async findChannels() {
-    return this.channelsRepository.findChannels();
+  async findChannels(type: ChannelType) {
+    return this.channelsRepository.findChannels(type);
   }
 
-  async findDirectMessages() {
-    return this.channelsRepository.findDirectMessages();
-  }
-
-  async findSubscribedChannels() {
-    const channels = await this.channelsRepository.findSubscribedChannels();
+  async findWorkspaceChannels() {
+    const channels = await this.channelsRepository.findWorkspaceChannels();
     return plainToInstance(ChannelDto, channels);
   }
 
-  async findOne(uuid: string) {
-    const channel = await this.channelsRepository.findChannelByUuid(uuid);
+  async findOne(searchProperties: any) {
+    const channel = await this.channelsRepository.findOneByProperties(
+      searchProperties,
+    );
 
     return plainToInstance(ChannelDto, channel);
   }

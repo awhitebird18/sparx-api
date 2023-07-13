@@ -4,17 +4,20 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserChannel } from './entity/userchannel.entity';
-import { CreateUserChannelDto } from './dto/CreateUserChannel.dto';
-import { User } from 'src/users/entities/user.entity';
-import { Channel } from 'src/channels/entities/channel.entity';
-import { Section } from 'src/sections/entities/section.entity';
-import { UpdateUserChannel } from './dto/UpdateUserChannel.dto';
+import { ChannelsRepository } from 'src/channels/channels.repository';
+import { UsersRepository } from 'src/users/users.repository';
+import { SectionsRepository } from 'src/sections/sections.repository';
 
 @Injectable()
 export class UserChannelsRepository extends Repository<UserChannel> {
-  constructor(private dataSource: DataSource) {
+  constructor(
+    private dataSource: DataSource,
+    private channelRepository: ChannelsRepository,
+    private userRepository: UsersRepository,
+    private sectionRepository: SectionsRepository,
+  ) {
     super(UserChannel, dataSource.createEntityManager());
   }
 
@@ -22,7 +25,7 @@ export class UserChannelsRepository extends Repository<UserChannel> {
     searchFields: FindOptionsWhere<UserChannel>,
     relations?: string[],
   ) {
-    return this.findOne({
+    return await this.findOne({
       where: searchFields,
       relations,
     });
@@ -30,19 +33,36 @@ export class UserChannelsRepository extends Repository<UserChannel> {
 
   async updateUserChannel(
     uuid: string,
-    userChannel: UpdateUserChannel,
+    userChannel: Partial<UserChannel>,
   ): Promise<UpdateResult> {
-    return this.update({ uuid }, userChannel);
+    return await this.update({ uuid }, userChannel);
   }
 
-  async createUserChannel(
-    userChannelDto: CreateUserChannelDto,
-    section: Section,
-  ): Promise<UserChannel> {
+  async createUserChannel(userChannelDto: {
+    userId: string;
+    channelId: string;
+  }): Promise<UserChannel> {
+    // Fetch the user and channel
+    const user = await this.userRepository.findOneByProperties({
+      uuid: userChannelDto.userId,
+    });
+    const channel = await this.channelRepository.findOneByProperties({
+      uuid: userChannelDto.channelId,
+    });
+    const section = await this.sectionRepository.findOneByProperties({
+      type: channel.type,
+    });
+
+    // Check if user and channel exist
+    if (!user || !channel || !section) {
+      throw new Error('User, channel, or section does not exist');
+    }
+
+    // Create a new UserChannel
     const userChannel = new UserChannel();
 
-    userChannel.user = { uuid: userChannelDto.userId } as User;
-    userChannel.channel = { uuid: userChannelDto.channelId } as Channel;
+    userChannel.user = user;
+    userChannel.channel = channel;
     userChannel.section = section;
 
     return this.save(userChannel);
@@ -51,9 +71,14 @@ export class UserChannelsRepository extends Repository<UserChannel> {
   async findSubscribedChannelsByUserId(
     userUuid: string,
   ): Promise<UserChannel[]> {
-    return this.find({
-      relations: ['user'],
-      where: { user: { uuid: userUuid } },
-    });
+    return await this.createQueryBuilder('userChannel')
+      .leftJoinAndSelect('userChannel.channel', 'channel')
+      .leftJoinAndSelect('userChannel.section', 'section')
+      .innerJoin('userChannel.user', 'user')
+      .where('user.uuid = :userUuid', { userUuid })
+      .andWhere('userChannel.isSubscribed = :isSubscribed', {
+        isSubscribed: true,
+      })
+      .getMany();
   }
 }

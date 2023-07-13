@@ -21,13 +21,14 @@ export class ChannelsRepository extends Repository<Channel> {
     return this.save(channel);
   }
 
-  async findSubscribedChannels(): Promise<Channel[]> {
+  async findWorkspaceChannels(): Promise<Channel[]> {
     return this.find();
   }
 
-  async findChannels(): Promise<Channel[]> {
-    return this.find({ where: { type: ChannelType.CHANNEL } });
+  async findChannels(type: ChannelType): Promise<Channel[]> {
+    return this.find({ where: { type: type } });
   }
+
   async findDirectMessages(): Promise<Channel[]> {
     return this.find({ where: { type: ChannelType.DIRECT } });
   }

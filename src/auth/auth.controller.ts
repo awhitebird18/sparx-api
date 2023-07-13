@@ -13,11 +13,19 @@ import { AuthService } from './auth.service';
 import { Public } from 'src/common/decorators/isPublic.decorator';
 import { RegisterDto } from './dto/RegisterDto';
 import { CreateUserDto } from 'src/users/dto';
+import { UsersService } from 'src/users/users.service';
+import { SectionsService } from 'src/sections/sections.service';
+import { UserchannelsService } from 'src/userchannels/userchannels.service';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private userService: UsersService,
+    private sectionsService: SectionsService,
+    private userChannelsService: UserchannelsService,
+  ) {}
 
   @Public()
   @UseGuards(LocalAuthGuard)
@@ -36,6 +44,14 @@ export class AuthController {
 
   @Get('verify')
   async verifyToken(@Request() req) {
-    return req.user;
+    const user = await this.userService.initialUserFetch(req.user.uuid);
+
+    const sections = await this.sectionsService.findUserSections(user.uuid);
+
+    const channels = await this.userChannelsService.getUserSubscribedChannels(
+      user.uuid,
+    );
+
+    return { user, sections, channels };
   }
 }

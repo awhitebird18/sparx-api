@@ -1,8 +1,18 @@
-import { Controller, Param, Post, Delete, Get } from '@nestjs/common';
+import {
+  Controller,
+  Param,
+  Post,
+  Delete,
+  Get,
+  Patch,
+  Body,
+} from '@nestjs/common';
 import { UserchannelsService } from './userchannels.service';
 import { GetUser } from 'src/common/decorators/getUser.decorator';
 import { User } from 'src/users/entities/user.entity';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { UserChannel } from './entity/userchannel.entity';
+import { UserChannelDto } from './dto/UserChannel.dto';
 
 @ApiBearerAuth('access-token')
 @Controller('userchannels')
@@ -25,6 +35,32 @@ export class UserchannelsController {
   @Get()
   async getUserSubscribedChannels(@GetUser() user: User) {
     return this.userchannelsService.getUserSubscribedChannels(user.uuid);
+  }
+
+  @Patch(':channelId')
+  async updateUserChannel(
+    @GetUser() user: User,
+    @Param('channelId') channelId: string,
+    @Body() updateUserChannel: Partial<UserChannel>,
+  ) {
+    return this.userchannelsService.updateUserChannel(
+      user.uuid,
+      channelId,
+      updateUserChannel,
+    );
+  }
+
+  @Patch('move/:channelId')
+  async updateChannelSection(
+    @GetUser() user: User,
+    @Param('channelId') channelId: string,
+    @Body() updateUserChannel: UserChannelDto,
+  ) {
+    return await this.userchannelsService.updateChannelSection(
+      user.uuid,
+      channelId,
+      updateUserChannel.sectionId,
+    );
   }
 
   @Delete('leave/:channelId')
