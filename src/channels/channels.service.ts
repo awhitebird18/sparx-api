@@ -9,6 +9,7 @@ import { plainToInstance } from 'class-transformer';
 import { SectionsRepository } from 'src/sections/sections.repository';
 import { ChannelGateway } from 'src/websockets/channel.gateway';
 import { ChannelType } from './enums/channelType.enum';
+import { UserchannelsService } from 'src/userchannels/userchannels.service';
 
 @Injectable()
 export class ChannelsService {
@@ -16,16 +17,17 @@ export class ChannelsService {
     private channelsRepository: ChannelsRepository,
     private sectionRepository: SectionsRepository,
     private channelGateway: ChannelGateway,
+    private userChannelService: UserchannelsService,
   ) {}
 
-  async createChannel(createChannelDto: CreateChannelDto) {
+  async createChannel(createChannelDto: CreateChannelDto, userId: string) {
     // Perform checks
-    const section = await this.sectionRepository.findOneByProperties({
-      uuid: '5d0103a5-51d8-4ce7-8038-db4b45b429a7',
-    });
+    const section = await this.sectionRepository.findDefaultSection(
+      createChannelDto.type,
+    );
 
     if (!section) {
-      throw new NotFoundException('Section not found');
+      throw new NotFoundException('Default section not found');
     }
 
     const existingChannel = await this.channelsRepository.findOneByProperties({
@@ -37,18 +39,30 @@ export class ChannelsService {
     }
 
     // Create database entry
-    await this.channelsRepository.createChannel(createChannelDto, section);
+    const newChannel = await this.channelsRepository.createChannel(
+      createChannelDto,
+      section,
+    );
+
+    const userChannel = await this.userChannelService.joinChannel(
+      userId,
+      newChannel.uuid,
+    );
+
+    console.log('returning this', userChannel);
 
     // Send new channel over socket
-    this.channelGateway.sendChannelUpdate();
+    // this.channelGateway.sendChannelUpdate();
+
+    return userChannel;
   }
 
   async findChannels(type: ChannelType) {
     return this.channelsRepository.findChannels(type);
   }
 
-  async findSubscribedChannels() {
-    const channels = await this.channelsRepository.findSubscribedChannels();
+  async findWorkspaceChannels() {
+    const channels = await this.channelsRepository.findWorkspaceChannels();
     return plainToInstance(ChannelDto, channels);
   }
 

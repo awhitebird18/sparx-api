@@ -9,28 +9,59 @@ import {
   Query,
 } from '@nestjs/common';
 import { ChannelsService } from './channels.service';
-import { CreateChannelDto, UpdateChannelDto } from './dto';
+import { ChannelDto, CreateChannelDto, UpdateChannelDto } from './dto';
 import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { NotFoundException } from '@nestjs/common/exceptions';
 import { HttpStatus } from '@nestjs/common/enums';
 import { ChannelType } from './enums/channelType.enum';
+import { GetUser } from 'src/common/decorators/getUser.decorator';
+import { User } from 'src/users/entities/user.entity';
+import { UserchannelsService } from 'src/userchannels/userchannels.service';
+import { UserChannelDto } from 'src/userchannels/dto/UserChannel.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Channels')
 @Controller('channels')
 export class ChannelsController {
-  constructor(private readonly channelsService: ChannelsService) {}
+  constructor(
+    private readonly channelsService: ChannelsService,
+    private userChannelService: UserchannelsService,
+  ) {}
 
   @ApiBody({ type: CreateChannelDto })
   @Post()
-  async createChannel(@Body() createChannelDto: CreateChannelDto) {
-    return this.channelsService.createChannel(createChannelDto);
+  async createChannel(
+    @Body() createChannelDto: CreateChannelDto,
+    @GetUser() user: User,
+  ) {
+    return this.channelsService.createChannel(createChannelDto, user.uuid);
   }
 
   @Get()
-  findAll() {
-    return this.channelsService.findSubscribedChannels();
+  async findAll(@GetUser() user: User) {
+    const workspaceChannels =
+      await this.channelsService.findWorkspaceChannels();
+
+    const subscribedChannels =
+      await this.userChannelService.getUserSubscribedChannels(user.uuid);
+
+    console.log(subscribedChannels);
+
+    const res = workspaceChannels.map((channelDto: ChannelDto) => {
+      const userChannel = subscribedChannels.find(
+        (el: UserChannelDto) => el.channelId === channelDto.uuid,
+      );
+
+      if (userChannel?.isSubscribed) {
+        channelDto.isSubscribed = true;
+      } else {
+        channelDto.isSubscribed = false;
+      }
+      return channelDto;
+    });
+
+    return res;
   }
 
   @Get('channel')

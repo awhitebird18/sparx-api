@@ -22,19 +22,22 @@ export class UsersService {
   async findOne(searchProperties: any) {
     const user = await this.userRepository.findOneByProperties(
       searchProperties,
-      ['company', 'spaces', 'sections', 'userChannels'],
+    );
+
+    return plainToInstance(UserDto, user);
+  }
+
+  async findOneByProperties(searchProperties: any, relations?: string[]) {
+    const user = await this.userRepository.findOneByProperties(
+      searchProperties,
+      relations,
     );
 
     return plainToInstance(UserDto, user);
   }
 
   async initialUserFetch(userUuid: string) {
-    const user = await this.userRepository.findOneByProperties(
-      { uuid: userUuid },
-      ['sections', 'userChannels'],
-    );
-
-    return user;
+    return await this.findOneByProperties({ uuid: userUuid });
   }
 
   findOneByEmail(email: string) {

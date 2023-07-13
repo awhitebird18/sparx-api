@@ -11,7 +11,7 @@ export class Section extends BaseEntity {
   @Column({ nullable: true })
   type?: string;
 
-  @Column({ nullable: true })
+  @Column({ default: false, nullable: true })
   isSystem?: boolean;
 
   @Column({ nullable: true })

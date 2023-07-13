@@ -21,7 +21,7 @@ export class ChannelsRepository extends Repository<Channel> {
     return this.save(channel);
   }
 
-  async findSubscribedChannels(): Promise<Channel[]> {
+  async findWorkspaceChannels(): Promise<Channel[]> {
     return this.find();
   }
 

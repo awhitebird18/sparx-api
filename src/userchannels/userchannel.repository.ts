@@ -6,9 +6,6 @@ import {
 } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { UserChannel } from './entity/userchannel.entity';
-
-import { UpdateUserChannel } from './dto/UpdateUserChannel.dto';
-import { UserChannelDto } from './dto/UserChannel.dto';
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { UsersRepository } from 'src/users/users.repository';
 import { SectionsRepository } from 'src/sections/sections.repository';
@@ -36,9 +33,9 @@ export class UserChannelsRepository extends Repository<UserChannel> {
 
   async updateUserChannel(
     uuid: string,
-    userChannel: UpdateUserChannel,
+    userChannel: Partial<UserChannel>,
   ): Promise<UpdateResult> {
-    return this.update({ uuid }, userChannel);
+    return await this.update({ uuid }, userChannel);
   }
 
   async createUserChannel(userChannelDto: {
@@ -68,16 +65,20 @@ export class UserChannelsRepository extends Repository<UserChannel> {
     userChannel.channel = channel;
     userChannel.section = section;
 
-    console.log(userChannelDto, section, userChannel);
     return this.save(userChannel);
   }
 
   async findSubscribedChannelsByUserId(
     userUuid: string,
   ): Promise<UserChannel[]> {
-    return this.find({
-      relations: ['user'],
-      where: { user: { uuid: userUuid } },
-    });
+    return await this.createQueryBuilder('userChannel')
+      .innerJoinAndSelect('userChannel.channel', 'channel')
+      .innerJoinAndSelect('userChannel.section', 'section')
+      .innerJoin('userChannel.user', 'user')
+      .where('user.uuid = :userUuid', { userUuid })
+      .andWhere('userChannel.isSubscribed = :isSubscribed', {
+        isSubscribed: true,
+      })
+      .getMany();
   }
 }

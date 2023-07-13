@@ -16,4 +16,8 @@ export class UserChannelDto extends BaseDto {
 
   @IsBoolean()
   isSubscribed: boolean;
+
+  sectionId: string;
+
+  channelId?: string;
 }
