@@ -46,8 +46,6 @@ export class ChannelsController {
     const subscribedChannels =
       await this.userChannelService.getUserSubscribedChannels(user.uuid);
 
-    console.log(subscribedChannels);
-
     const res = workspaceChannels.map((channelDto: ChannelDto) => {
       const userChannel = subscribedChannels.find(
         (el: UserChannelDto) => el.channelId === channelDto.uuid,

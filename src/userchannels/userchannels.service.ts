@@ -9,6 +9,7 @@ import { UserChannelDto } from './dto/UserChannel.dto';
 import { plainToClass } from 'class-transformer';
 import { ChannelDto } from 'src/channels/dto';
 import { SectionsRepository } from 'src/sections/sections.repository';
+import { UserChannel } from './entity/userchannel.entity';
 
 @Injectable()
 export class UserchannelsService {
@@ -48,8 +49,6 @@ export class UserchannelsService {
       ['channel'],
     );
 
-    console.log(userChannel);
-
     if (!userChannel) {
       throw new NotFoundException('User-Channel link not found');
     }
@@ -63,8 +62,6 @@ export class UserchannelsService {
       section,
     });
     const updatedChannel = await this.findUserChannel(userUuid, channelUuid);
-
-    console.log(updatedChannel);
 
     return updatedChannel;
   }
@@ -95,6 +92,59 @@ export class UserchannelsService {
     delete res.channel;
 
     return res;
+  }
+
+  async updateUserChannel(
+    userUuid: string,
+    channelUuid: string,
+    updatedFields: Partial<UserChannel>,
+  ) {
+    const userChannel = await this.userChannelsRepository.findOneByProperties({
+      user: { uuid: userUuid },
+      channel: { uuid: channelUuid },
+    });
+
+    if (userChannel?.isSubscribed) {
+      throw new HttpException(
+        'User is already subscribed to the channel',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.userChannelsRepository.updateUserChannel(
+      userChannel.uuid,
+      updatedFields,
+    );
+
+    return await this.findUserChannel(userUuid, channelUuid);
+  }
+
+  async updateChannelSection(
+    userUuid: string,
+    channelUuid: string,
+    sectionUuid: string,
+  ) {
+    const userChannel = await this.userChannelsRepository.findOneByProperties({
+      user: { uuid: userUuid },
+      channel: { uuid: channelUuid },
+    });
+
+    const section = await this.sectionsRepository.findOneByProperties({
+      uuid: sectionUuid,
+    });
+
+    if (!userChannel || !section) {
+      throw new HttpException(
+        'No userchannel or section found',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.userChannelsRepository.updateUserChannel(userChannel.uuid, {
+      section,
+    });
+
+    return await this.findUserChannel(userUuid, channelUuid);
   }
 
   async getUserSubscribedChannels(userId: string): Promise<UserChannelDto[]> {

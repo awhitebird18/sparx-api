@@ -4,7 +4,7 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserChannel } from './entity/userchannel.entity';
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { UsersRepository } from 'src/users/users.repository';
@@ -72,8 +72,8 @@ export class UserChannelsRepository extends Repository<UserChannel> {
     userUuid: string,
   ): Promise<UserChannel[]> {
     return await this.createQueryBuilder('userChannel')
-      .innerJoinAndSelect('userChannel.channel', 'channel')
-      .innerJoinAndSelect('userChannel.section', 'section')
+      .leftJoinAndSelect('userChannel.channel', 'channel')
+      .leftJoinAndSelect('userChannel.section', 'section')
       .innerJoin('userChannel.user', 'user')
       .where('user.uuid = :userUuid', { userUuid })
       .andWhere('userChannel.isSubscribed = :isSubscribed', {

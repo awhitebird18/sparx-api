@@ -49,8 +49,6 @@ export class ChannelsService {
       newChannel.uuid,
     );
 
-    console.log('returning this', userChannel);
-
     // Send new channel over socket
     // this.channelGateway.sendChannelUpdate();
 

@@ -45,8 +45,8 @@ export class SectionsRepository extends Repository<Section> {
     return this.find({ where: { isSystem: true } });
   }
 
-  findOneByProperties(searchFields: FindOptionsWhere<Section>) {
-    return this.findOne({
+  async findOneByProperties(searchFields: FindOptionsWhere<Section>) {
+    return await this.findOne({
       where: searchFields,
     });
   }
