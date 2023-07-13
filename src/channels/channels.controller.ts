@@ -40,6 +40,7 @@ export class ChannelsController {
 
   @Get()
   async findAll(@GetUser() user: User) {
+    // TODO: Need to do this in the service
     const workspaceChannels =
       await this.channelsService.findWorkspaceChannels();
 
