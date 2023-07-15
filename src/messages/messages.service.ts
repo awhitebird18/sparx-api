@@ -68,7 +68,7 @@ export class MessagesService {
     return plainToInstance(MessageDto, updatedMessage);
   }
 
-  remove(uuid: string) {
-    return this.messageRepository.removeMessage(uuid);
+  async remove(uuid: string) {
+    return await this.messageRepository.removeMessage(uuid);
   }
 }

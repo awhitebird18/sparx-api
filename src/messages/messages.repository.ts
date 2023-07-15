@@ -27,6 +27,7 @@ export class MessagesRepository extends Repository<Message> {
       .innerJoin('message.user', 'user')
       .innerJoin('message.channel', 'channel')
       .where('channel.uuid = :channelId', { channelId })
+      .andWhere('message.deletedAt IS NULL') // exclude soft-deleted records
       .select([
         'message.id',
         'message.content',
@@ -75,6 +76,11 @@ export class MessagesRepository extends Repository<Message> {
   }
 
   async removeMessage(uuid: string) {
-    return this.softRemove({ uuid });
+    const message = await this.findOneByProperties({ uuid });
+    if (message) {
+      return await this.softRemove(message);
+    } else {
+      throw new Error(`Message with UUID: ${uuid} not found`);
+    }
   }
 }
