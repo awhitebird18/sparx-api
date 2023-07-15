@@ -10,9 +10,16 @@ export class Message extends BaseEntity {
   content: string;
 
   @ManyToOne(() => Channel, (channel) => channel.messages)
+  @JoinColumn({ name: 'channelId' })
   channel: Channel;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
   user: User;
+
+  @Column()
+  userId: string;
+
+  @Column()
+  channelId: string;
 }

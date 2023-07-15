@@ -6,11 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/CreateMessage.dto';
 import { UpdateMessageDto } from './dto/UpdateMessage.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { MessageDto } from './dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Messages')
@@ -19,7 +21,7 @@ export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
   @Post()
-  create(@Body() createMessageDto: CreateMessageDto) {
+  create(@Body() createMessageDto: CreateMessageDto): Promise<MessageDto> {
     return this.messagesService.create(createMessageDto);
   }
 
@@ -28,18 +30,31 @@ export class MessagesController {
     return this.messagesService.findAll();
   }
 
+  @Get('channel/:channelId')
+  async findChannelMessages(
+    @Query('page') page: number,
+    @Param('channelId') channelId: string,
+  ): Promise<MessageDto[]> {
+    const messages = await this.messagesService.findChannelMessages(
+      channelId,
+      page,
+    );
+
+    return messages;
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.messagesService.findOne(+id);
+    return this.messagesService.findOneByProperties(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateMessageDto: UpdateMessageDto) {
-    return this.messagesService.update(+id, updateMessageDto);
+    return this.messagesService.update(id, updateMessageDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.messagesService.remove(+id);
+    return this.messagesService.remove(id);
   }
 }
