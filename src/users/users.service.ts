@@ -15,7 +15,7 @@ export class UsersService {
     return newUser;
   }
 
-  findAll() {
+  async findAll() {
     return this.userRepository.find();
   }
 

@@ -52,6 +52,8 @@ export class AuthController {
       user.uuid,
     );
 
-    return { user, sections, channels };
+    const workspaceUsers = await this.userService.findAll();
+
+    return { user, sections, channels, workspaceUsers };
   }
 }
