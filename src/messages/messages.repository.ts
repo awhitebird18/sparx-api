@@ -27,7 +27,12 @@ export class MessagesRepository extends Repository<Message> {
       .innerJoin('message.user', 'user')
       .innerJoin('message.channel', 'channel')
       .where('channel.uuid = :channelId', { channelId })
-      .select(['message.id', 'message.content', 'message.createdAt'])
+      .select([
+        'message.id',
+        'message.content',
+        'message.createdAt',
+        'message.uuid',
+      ])
       .addSelect('user.uuid', 'userId')
       .addSelect('channel.uuid', 'channelId')
       .take(take)
@@ -41,6 +46,7 @@ export class MessagesRepository extends Repository<Message> {
           content: item.message_content,
           userId: item.userId,
           channelId: item.channelId,
+          uuid: item.message_uuid,
         })),
       );
   }
@@ -59,16 +65,15 @@ export class MessagesRepository extends Repository<Message> {
     uuid: string,
     updateMessageDto: UpdateMessageDto,
   ): Promise<Message> {
-    const Message = await this.findMessageByUuid(uuid);
+    console.log(updateMessageDto, 'before');
+    const res = await this.update({ uuid }, updateMessageDto);
+    console.log(updateMessageDto, 'after');
 
-    if (!Message) {
+    if (!res.affected) {
       throw new NotFoundException(`Message with UUID ${uuid} not found`);
     }
 
-    // Update the fields of the Message
-    Object.assign(Message, updateMessageDto);
-
-    return this.save(Message);
+    return await this.findOneByProperties({ uuid });
   }
 
   async removeMessage(uuid: string) {

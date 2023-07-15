@@ -12,4 +12,6 @@ export class MessageDto extends IntersectionType(CreateMessageDto, BaseDto) {
   channelId: string;
 
   userId: string;
+
+  uuid: string;
 }

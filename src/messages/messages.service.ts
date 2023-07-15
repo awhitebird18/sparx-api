@@ -56,8 +56,18 @@ export class MessagesService {
     return this.messageRepository.findOneByProperties({ uuid });
   }
 
-  update(uuid: string, updateMessageDto: UpdateMessageDto) {
-    return this.messageRepository.updateMessage(uuid, updateMessageDto);
+  async update(
+    uuid: string,
+    updateMessageDto: UpdateMessageDto,
+  ): Promise<MessageDto> {
+    const updatedMessage = await this.messageRepository.updateMessage(
+      uuid,
+      updateMessageDto,
+    );
+
+    console.log(updatedMessage, 'end');
+
+    return plainToInstance(MessageDto, updatedMessage);
   }
 
   remove(uuid: string) {
