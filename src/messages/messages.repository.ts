@@ -65,9 +65,7 @@ export class MessagesRepository extends Repository<Message> {
     uuid: string,
     updateMessageDto: UpdateMessageDto,
   ): Promise<Message> {
-    console.log(updateMessageDto, 'before');
     const res = await this.update({ uuid }, updateMessageDto);
-    console.log(updateMessageDto, 'after');
 
     if (!res.affected) {
       throw new NotFoundException(`Message with UUID ${uuid} not found`);

@@ -65,8 +65,6 @@ export class MessagesService {
       updateMessageDto,
     );
 
-    console.log(updatedMessage, 'end');
-
     return plainToInstance(MessageDto, updatedMessage);
   }
 
