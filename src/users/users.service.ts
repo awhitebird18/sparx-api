@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/CreateUser.dto';
 import { UpdateUserDto } from './dto/UpdateUser.dto';
 import { UsersRepository } from './users.repository';
 import { plainToInstance } from 'class-transformer';
 import { UserDto } from './dto';
+import { v4 as uuid } from 'uuid';
+import { saveBase64Image } from 'src/utils/saveBase64Image';
+import * as path from 'path';
 
 @Injectable()
 export class UsersService {
@@ -37,15 +40,46 @@ export class UsersService {
   }
 
   async initialUserFetch(userUuid: string) {
-    return await this.findOneByProperties({ uuid: userUuid });
+    const user = await this.findOneByProperties({ uuid: userUuid });
+    user.profileImage = 'http://localhost:3000' + user.profileImage;
+
+    return user;
   }
 
-  findOneByEmail(email: string) {
-    return this.userRepository.findOneByProperties({ email });
+  async findOneByEmail(email: string) {
+    return await this.userRepository.findOneByProperties({ email });
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
     return updateUserDto;
+  }
+
+  async updateProfileImage(id: string, profileImage: string) {
+    const user = await this.userRepository.findUserByUuid(id);
+
+    if (!user) {
+      throw new NotFoundException(`User with UUID ${id} not found`);
+    }
+
+    const imageId = uuid();
+
+    // const clientId = 'clientA';
+
+    const folderPath = `/static/`;
+
+    const imagePath = path.join(folderPath, imageId);
+
+    saveBase64Image(profileImage, imagePath);
+
+    console.log(user);
+    // Update user with image path
+    user.profileImage = imagePath;
+
+    const newUser = await this.userRepository.save(user);
+
+    console.log(newUser);
+
+    return newUser;
   }
 
   remove(id: number) {

@@ -33,6 +33,13 @@ export class UsersController {
     return this.usersService.findOneByEmail(id);
   }
 
+  @Patch(':id/image-upload')
+  updateProfileImage(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.usersService.updateProfileImage(id, updateUserDto.profileImage);
+  }
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(+id, updateUserDto);
