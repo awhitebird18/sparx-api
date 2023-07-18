@@ -15,8 +15,6 @@ async function bootstrap() {
 
   app.use('/static', express.static(join(__dirname, '..', 'static')));
 
-  console.log(join(__dirname, '..', 'static'));
-
   // Create a Swagger document
   const config = new DocumentBuilder()
     .setTitle('Your API Title')

@@ -71,13 +71,10 @@ export class UsersService {
 
     saveBase64Image(profileImage, imagePath);
 
-    console.log(user);
     // Update user with image path
     user.profileImage = imagePath;
 
     const newUser = await this.userRepository.save(user);
-
-    console.log(newUser);
 
     return newUser;
   }

@@ -11,8 +11,6 @@ export function saveBase64Image(base64Image: string, imagePath: string) {
   // Create full path
   const fullPath = path.join(__dirname, '..', '..', imagePath);
 
-  console.log(fullPath);
-
   // Make sure the directory exists
   // fs.mkdirSync(path.dirname(fullPath), { recursive: true });
 
