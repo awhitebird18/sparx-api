@@ -50,8 +50,16 @@ export class UsersService {
     return await this.userRepository.findOneByProperties({ email });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return updateUserDto;
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    const user = await this.userRepository.findUserByUuid(id);
+
+    if (!user) {
+      throw new NotFoundException(`User with UUID ${id} not found`);
+    }
+
+    Object.assign(user, updateUserDto);
+
+    return this.userRepository.save(user);
   }
 
   async updateProfileImage(id: string, profileImage: string) {
