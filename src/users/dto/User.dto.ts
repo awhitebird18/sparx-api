@@ -27,6 +27,9 @@ export class UserDto extends BaseDto {
   @IsString()
   lastName: string;
 
+  @IsString()
+  profileImage: string;
+
   @ApiProperty({
     example: 'john@email.com',
     description: 'The email of the user.',
