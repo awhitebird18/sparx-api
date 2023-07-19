@@ -21,6 +21,9 @@ export class Channel extends BaseEntity {
   @Column({ default: false })
   isPrivate?: boolean;
 
+  @Column({ nullable: true })
+  icon?: string;
+
   @Column({
     type: 'enum',
     enum: ChannelType,

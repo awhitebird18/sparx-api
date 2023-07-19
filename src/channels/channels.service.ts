@@ -10,6 +10,9 @@ import { SectionsRepository } from 'src/sections/sections.repository';
 import { ChannelGateway } from 'src/websockets/channel.gateway';
 import { ChannelType } from './enums/channelType.enum';
 import { UserchannelsService } from 'src/userchannels/userchannels.service';
+import { v4 as uuid } from 'uuid';
+import * as path from 'path';
+import { saveBase64Image } from 'src/utils/saveBase64Image';
 
 @Injectable()
 export class ChannelsService {
@@ -72,13 +75,25 @@ export class ChannelsService {
     return plainToInstance(ChannelDto, channel);
   }
 
-  async updateChannel(uuid: string, updateChannelDto: UpdateChannelDto) {
-    const channel = await this.channelsRepository.updateChannel(
-      uuid,
-      updateChannelDto,
-    );
+  async updateChannel(id: string, updateChannelDto: UpdateChannelDto) {
+    const channel = await this.channelsRepository.findChannelByUuid(id);
+    if (updateChannelDto.icon) {
+      const imageId = uuid();
 
-    return plainToInstance(ChannelDto, channel);
+      const folderPath = `/static/`;
+
+      const imagePath = path.join(folderPath, imageId);
+
+      saveBase64Image(updateChannelDto.icon, imagePath);
+      channel.icon = imagePath;
+      delete updateChannelDto.icon;
+    }
+
+    Object.assign(channel, updateChannelDto);
+
+    // Update user with image path
+
+    return await this.channelsRepository.save(channel);
   }
 
   async removeChannel(uuid: string): Promise<boolean> {
