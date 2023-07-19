@@ -39,6 +39,13 @@ export class ChannelDto extends IntersectionType(CreateChannelDto, BaseDto) {
   @IsUUID(4)
   companyId?: string;
 
+  @ApiProperty({
+    example: '/app/static/77427689-934e-4642-863b-22bf6a77f89c',
+    description: 'Channel icon. Path to image.',
+  })
+  @IsOptional()
+  icon?: string;
+
   isSubscribed?: boolean;
 
   channelId?: string;

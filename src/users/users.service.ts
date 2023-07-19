@@ -82,9 +82,7 @@ export class UsersService {
     // Update user with image path
     user.profileImage = imagePath;
 
-    const newUser = await this.userRepository.save(user);
-
-    return newUser;
+    return await this.userRepository.save(user);
   }
 
   remove(id: number) {
