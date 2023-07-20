@@ -3,9 +3,10 @@ import { Company } from 'src/companies/entities/company.entity';
 import { Message } from 'src/messages/entities/message.entity';
 import { Section } from 'src/sections/entities/section.entity';
 import { Space } from 'src/spaces/entities/space.entity';
-import { Entity, Column, OneToMany, ManyToOne } from 'typeorm';
+import { Entity, Column, OneToMany, ManyToOne, ManyToMany } from 'typeorm';
 import { ChannelType } from '../enums/channelType.enum';
 import { UserChannel } from 'src/userchannels/entity/userchannel.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Entity()
 export class Channel extends BaseEntity {

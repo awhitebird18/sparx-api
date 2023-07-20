@@ -4,11 +4,12 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserChannel } from './entity/userchannel.entity';
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { UsersRepository } from 'src/users/users.repository';
 import { SectionsRepository } from 'src/sections/sections.repository';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class UserChannelsRepository extends Repository<UserChannel> {
@@ -29,6 +30,19 @@ export class UserChannelsRepository extends Repository<UserChannel> {
       where: searchFields,
       relations,
     });
+  }
+
+  async findUsersByChannelId(channelId: string): Promise<User[]> {
+    const userChannels = await this.createQueryBuilder('userChannel')
+      .innerJoinAndSelect('userChannel.user', 'user')
+      .innerJoin('userChannel.channel', 'channel')
+      .where('channel.uuid = :channelId', { channelId })
+      .andWhere('userChannel.isSubscribed = :isSubscribed', {
+        isSubscribed: true,
+      })
+      .getMany();
+
+    return userChannels.map((userChannel) => userChannel.user);
   }
 
   async updateUserChannel(

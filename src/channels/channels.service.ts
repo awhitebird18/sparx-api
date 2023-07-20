@@ -7,7 +7,6 @@ import { ChannelDto, CreateChannelDto, UpdateChannelDto } from './dto';
 import { ChannelsRepository } from './channels.repository';
 import { plainToInstance } from 'class-transformer';
 import { SectionsRepository } from 'src/sections/sections.repository';
-import { ChannelGateway } from 'src/websockets/channel.gateway';
 import { ChannelType } from './enums/channelType.enum';
 import { UserchannelsService } from 'src/userchannels/userchannels.service';
 import { v4 as uuid } from 'uuid';
@@ -19,7 +18,6 @@ export class ChannelsService {
   constructor(
     private channelsRepository: ChannelsRepository,
     private sectionRepository: SectionsRepository,
-    private channelGateway: ChannelGateway,
     private userChannelService: UserchannelsService,
   ) {}
 
@@ -51,9 +49,6 @@ export class ChannelsService {
       userId,
       newChannel.uuid,
     );
-
-    // Send new channel over socket
-    // this.channelGateway.sendChannelUpdate();
 
     return userChannel;
   }
