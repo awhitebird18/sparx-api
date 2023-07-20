@@ -48,6 +48,14 @@ export class MessagesController {
     return this.messagesService.findOneByProperties(id);
   }
 
+  @Patch(':id/reaction')
+  updateMessageReactions(
+    @Param('id') id: string,
+    @Body() updateMessageDto: UpdateMessageDto,
+  ) {
+    return this.messagesService.updateMessageReactions(id, updateMessageDto);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateMessageDto: UpdateMessageDto) {
     return this.messagesService.update(id, updateMessageDto);

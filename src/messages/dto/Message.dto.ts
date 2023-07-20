@@ -3,6 +3,7 @@ import { IntersectionType } from '@nestjs/mapped-types';
 import { CreateMessageDto } from './CreateMessage.dto';
 import { ChannelDto } from 'src/channels/dto';
 import { UserDto } from 'src/users/dto';
+import { ReactionDto } from '../dto/Reaction.dto';
 
 export class MessageDto extends IntersectionType(CreateMessageDto, BaseDto) {
   channel: ChannelDto;
@@ -14,4 +15,6 @@ export class MessageDto extends IntersectionType(CreateMessageDto, BaseDto) {
   userId: string;
 
   uuid: string;
+
+  reactions: Partial<ReactionDto>[];
 }

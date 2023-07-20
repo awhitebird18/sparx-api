@@ -1,4 +1,5 @@
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
+import { DefaultNamingStrategy } from 'typeorm';
 
 export const config: PostgresConnectionOptions = {
   type: process.env.DB_TYPE as any,
@@ -9,4 +10,5 @@ export const config: PostgresConnectionOptions = {
   database: process.env.PG_DB,
   entities: [__dirname + '/**/*.entity{.ts,.js}'],
   synchronize: true,
+  namingStrategy: new DefaultNamingStrategy(),
 };
