@@ -1,9 +1,9 @@
 import { DataSource, Repository, FindOptionsWhere } from 'typeorm';
-import { UpdateMessageDto } from './dto';
 import { Injectable } from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common/exceptions';
 import { Message } from './entities/message.entity';
 import { groupBy } from 'lodash';
+import { UpdateMessageDto } from './dto';
 
 @Injectable()
 export class MessagesRepository extends Repository<Message> {
@@ -28,9 +28,13 @@ export class MessagesRepository extends Repository<Message> {
       .leftJoinAndSelect('message.reactions', 'reactions')
       .innerJoinAndSelect('message.user', 'user')
       .innerJoinAndSelect('message.channel', 'channel')
-      .leftJoinAndSelect('message.childMessages', 'childMessages') // Add this line
+      .leftJoinAndSelect('message.childMessages', 'childMessages') // Joined childMessages
+      .leftJoinAndSelect('childMessages.user', 'childUser') // Joined user of childMessages
+      .leftJoinAndSelect('childMessages.channel', 'childChannel') // J
+      .leftJoinAndSelect('childMessages.reactions', 'childReactions') // J
       .where('channel.uuid = :channelId', { channelId })
       .andWhere('message.deletedAt IS NULL')
+      .andWhere('message.parentId IS NULL') // Add this line
       .select([
         'message.id',
         'message.content',
@@ -40,6 +44,9 @@ export class MessagesRepository extends Repository<Message> {
         'channel.uuid',
         'reactions',
         'childMessages',
+        'childUser.uuid',
+        'childChannel.uuid',
+        'childReactions',
       ])
       .take(take)
       .skip(skip)
@@ -57,6 +64,30 @@ export class MessagesRepository extends Repository<Message> {
         }),
       );
 
+      const childMessages = message.childMessages.map((childMessage) => {
+        const childGroupedReactions = groupBy(
+          childMessage.reactions,
+          'emojiId',
+        );
+        const childReactions = Object.entries(childGroupedReactions).map(
+          ([emojiId, reactions]: any) => ({
+            uuid: reactions[0].uuid,
+            emojiId,
+            users: reactions.map((reaction) => reaction.userId),
+          }),
+        );
+
+        return {
+          uuid: childMessage.uuid,
+          createdAt: childMessage.createdAt,
+          content: childMessage.content,
+          userId: childMessage.user.uuid,
+          channelId: childMessage.channel.uuid,
+          reactions: childReactions,
+          childMessages: [], // Assuming childMessages can't have further nested childMessages
+        };
+      });
+
       return {
         uuid: message.uuid,
         createdAt: message.createdAt,
@@ -64,7 +95,7 @@ export class MessagesRepository extends Repository<Message> {
         userId: message.user.uuid,
         channelId: message.channel.uuid,
         reactions,
-        childMessages: message.childMessages, // Add this line
+        childMessages,
       };
     });
 
@@ -79,10 +110,27 @@ export class MessagesRepository extends Repository<Message> {
   }
 
   async findMessageByUuid(uuid: string): Promise<Message | any> {
-    const message = await this.findOne({
-      where: { uuid },
-      relations: ['reactions', 'user', 'channel'],
-    });
+    const message = await this.createQueryBuilder('message')
+      .leftJoinAndSelect('message.reactions', 'reactions')
+      .innerJoinAndSelect('message.user', 'user')
+      .innerJoinAndSelect('message.channel', 'channel')
+      .leftJoinAndSelect('message.childMessages', 'childMessages') // Joined childMessages
+      .leftJoinAndSelect('childMessages.user', 'childUser') // Joined user of childMessages
+      .leftJoinAndSelect('childMessages.channel', 'childChannel') // Joined channel of childMessages
+      .where('message.uuid = :uuid', { uuid })
+      .select([
+        'message.id',
+        'message.content',
+        'message.createdAt',
+        'message.uuid',
+        'user.uuid',
+        'channel.uuid',
+        'reactions',
+        'childMessages',
+        'childUser.uuid',
+        'childChannel.uuid',
+      ])
+      .getOne();
 
     return message;
   }

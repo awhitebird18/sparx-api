@@ -4,6 +4,7 @@ import { CreateMessageDto } from './CreateMessage.dto';
 import { ChannelDto } from 'src/channels/dto';
 import { UserDto } from 'src/users/dto';
 import { ReactionDto } from '../dto/Reaction.dto';
+import { Message } from '../entities/message.entity';
 
 export class MessageDto extends IntersectionType(CreateMessageDto, BaseDto) {
   channel: ChannelDto;
@@ -18,5 +19,5 @@ export class MessageDto extends IntersectionType(CreateMessageDto, BaseDto) {
 
   reactions: Partial<ReactionDto>[];
 
-  childrenMessages?: MessageDto[];
+  childMessages?: Message[];
 }

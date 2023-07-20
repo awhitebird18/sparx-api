@@ -1,4 +1,9 @@
-import { PartialType } from '@nestjs/swagger';
+import { OmitType } from '@nestjs/swagger';
 import { MessageDto } from './Message.dto';
 
-export class UpdateMessageDto extends PartialType(MessageDto) {}
+export class UpdateMessageDto extends OmitType(MessageDto, [
+  'parentId',
+  'channel',
+  'reactions',
+  'user',
+]) {}
