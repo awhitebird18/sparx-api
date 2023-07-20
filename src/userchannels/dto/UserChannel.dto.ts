@@ -3,6 +3,7 @@ import { ChannelDto } from 'src/channels/dto';
 import { BaseDto } from 'src/common/dto';
 import { SectionDto } from 'src/sections/dto';
 import { UserDto } from 'src/users/dto';
+import { User } from 'src/users/entities/user.entity';
 
 export class UserChannelDto extends BaseDto {
   user: UserDto;
@@ -20,4 +21,6 @@ export class UserChannelDto extends BaseDto {
   sectionId: string;
 
   channelId?: string;
+
+  users: User[];
 }

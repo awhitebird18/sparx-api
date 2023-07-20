@@ -155,19 +155,25 @@ export class UserchannelsService {
       throw new NotFoundException('No user channels found');
     }
 
-    const channels = userChannels.map((userChannel) => {
-      const res = {
-        ...plainToClass(UserChannelDto, userChannel),
-        ...plainToClass(ChannelDto, userChannel.channel),
-        sectionId: userChannel.section.uuid,
-        channelId: userChannel.channel.uuid,
-      };
+    const channels = await Promise.all(
+      userChannels.map(async (userChannel) => {
+        const users = await this.userChannelsRepository.findUsersByChannelId(
+          userChannel.channel.uuid,
+        );
+        const res = {
+          ...plainToClass(UserChannelDto, userChannel),
+          ...plainToClass(ChannelDto, userChannel.channel),
+          sectionId: userChannel.section.uuid,
+          channelId: userChannel.channel.uuid,
+          users,
+        };
 
-      delete res.section;
-      delete res.channel;
+        delete res.section;
+        delete res.channel;
 
-      return res;
-    });
+        return res;
+      }),
+    );
 
     return channels;
   }
