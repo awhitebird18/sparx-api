@@ -11,9 +11,9 @@ export class MessagesRepository extends Repository<Message> {
     super(Message, dataSource.createEntityManager());
   }
   async createMessage(createMessageDto: Partial<Message>): Promise<Message> {
-    const Message = this.create(createMessageDto);
+    const message = this.create(createMessageDto);
 
-    return this.save(Message);
+    return this.save(message);
   }
 
   async findAllMessages(): Promise<Message[]> {
@@ -28,6 +28,7 @@ export class MessagesRepository extends Repository<Message> {
       .leftJoinAndSelect('message.reactions', 'reactions')
       .innerJoinAndSelect('message.user', 'user')
       .innerJoinAndSelect('message.channel', 'channel')
+      .leftJoinAndSelect('message.childMessages', 'childMessages') // Add this line
       .where('channel.uuid = :channelId', { channelId })
       .andWhere('message.deletedAt IS NULL')
       .select([
@@ -38,6 +39,7 @@ export class MessagesRepository extends Repository<Message> {
         'user.uuid',
         'channel.uuid',
         'reactions',
+        'childMessages',
       ])
       .take(take)
       .skip(skip)
@@ -62,6 +64,7 @@ export class MessagesRepository extends Repository<Message> {
         userId: message.user.uuid,
         channelId: message.channel.uuid,
         reactions,
+        childMessages: message.childMessages, // Add this line
       };
     });
 

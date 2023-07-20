@@ -30,6 +30,13 @@ export class MessagesService {
       uuid: createMessageDto.channelId,
     });
 
+    if (createMessageDto.parentMessage) {
+      const parentMessage = await this.messageRepository.findMessageByUuid(
+        createMessageDto.parentMessage.uuid,
+      );
+      createMessageDto.parentMessage = parentMessage;
+    }
+
     const savedMessage = await this.messageRepository.createMessage({
       ...createMessageDto,
       user,
