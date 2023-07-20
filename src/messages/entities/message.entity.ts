@@ -21,18 +21,20 @@ export class Message extends BaseEntity {
   @JoinColumn({ name: 'parentId' })
   parentMessage: Message;
 
-  @OneToMany(() => Message, (message) => message.parentMessage)
-  childMessages: Message[];
+  @OneToMany(() => Message, (message) => message.parentMessage, {
+    nullable: true,
+  })
+  childMessages?: Message[];
 
-  @OneToMany(() => Reaction, (reaction) => reaction.message)
-  reactions: Reaction[];
+  @OneToMany(() => Reaction, (reaction) => reaction.message, { nullable: true })
+  reactions?: Reaction[];
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
   user: User;
 
   @Column({ nullable: true })
-  parentId: number;
+  parentId?: number;
 
   @Column()
   userId: string;

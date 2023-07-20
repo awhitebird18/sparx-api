@@ -30,17 +30,19 @@ export class MessagesService {
       uuid: createMessageDto.channelId,
     });
 
-    if (createMessageDto.parentMessage) {
+    let parentId = null;
+    if (createMessageDto.parentId) {
       const parentMessage = await this.messageRepository.findMessageByUuid(
-        createMessageDto.parentMessage.uuid,
+        createMessageDto.parentId,
       );
-      createMessageDto.parentMessage = parentMessage;
+      parentId = parentMessage.id; // Assuming 'id' is your primary key in Message entity
     }
 
     const savedMessage = await this.messageRepository.createMessage({
       ...createMessageDto,
       user,
       channel,
+      parentId,
     });
 
     return await this.findPopulatedMessage(savedMessage.uuid);
@@ -67,9 +69,6 @@ export class MessagesService {
   async findPopulatedMessage(uuid: string) {
     const message = await this.messageRepository.findMessageByUuid(uuid);
 
-    message.userId = message.user.uuid;
-    message.channelId = message.channel.uuid;
-
     const groupedReactions = groupBy(message.reactions, 'emojiId');
 
     const reactions = Object.entries(groupedReactions).map(
@@ -80,9 +79,40 @@ export class MessagesService {
       }),
     );
 
-    message.reactions = reactions;
+    const childMessages = message.childMessages.map((childMessage) => {
+      const childGroupedReactions = groupBy(childMessage.reactions, 'emojiId');
+      const childReactions = Object.entries(childGroupedReactions).map(
+        ([emojiId, reactions]: any) => ({
+          uuid: reactions[0].uuid,
+          emojiId,
+          users: reactions.map((reaction) => reaction.userId),
+        }),
+      );
 
-    return plainToInstance(MessageDto, message);
+      return {
+        uuid: childMessage.uuid,
+        createdAt: childMessage.createdAt,
+        content: childMessage.content,
+        userId: childMessage.user.uuid,
+        channelId: childMessage.channel.uuid,
+        reactions: childReactions,
+        childMessages: [], // Assuming childMessages can't have further nested childMessages
+      };
+    });
+
+    const populatedMessage = {
+      uuid: message.uuid,
+      createdAt: message.createdAt,
+      content: message.content,
+      userId: message.user.uuid,
+      channelId: message.channel.uuid,
+      reactions,
+      childMessages,
+    };
+
+    console.log(populatedMessage);
+
+    return plainToInstance(MessageDto, populatedMessage);
   }
 
   findOneByProperties(uuid: string) {
