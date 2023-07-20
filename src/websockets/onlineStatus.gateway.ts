@@ -20,7 +20,7 @@ export class OnlineStatusGateway
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleConnection(client: Socket, ...args: any[]) {
     const userId = client.handshake.query.userId;
-    console.log(userId);
+
     if (!userId) {
       client.disconnect();
       return;
