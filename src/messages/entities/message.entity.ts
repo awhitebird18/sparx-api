@@ -14,12 +14,25 @@ export class Message extends BaseEntity {
   @JoinColumn({ name: 'channelId' })
   channel: Channel;
 
+  @ManyToOne(() => Message, (message) => message.childMessages, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'parentId' })
+  parentMessage: Message;
+
+  @OneToMany(() => Message, (message) => message.parentMessage)
+  childMessages: Message[];
+
   @OneToMany(() => Reaction, (reaction) => reaction.message)
   reactions: Reaction[];
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
   user: User;
+
+  @Column({ nullable: true })
+  parentId: number;
 
   @Column()
   userId: string;

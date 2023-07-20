@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Message } from '../entities/message.entity';
 
 export class CreateMessageDto {
   @ApiProperty({
@@ -25,4 +26,7 @@ export class CreateMessageDto {
   @IsNotEmpty()
   @IsUUID(4)
   userId: string;
+
+  @IsOptional()
+  parentMessage?: Message;
 }

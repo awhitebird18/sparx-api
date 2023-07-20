@@ -17,4 +17,6 @@ export class MessageDto extends IntersectionType(CreateMessageDto, BaseDto) {
   uuid: string;
 
   reactions: Partial<ReactionDto>[];
+
+  childrenMessages?: MessageDto[];
 }
