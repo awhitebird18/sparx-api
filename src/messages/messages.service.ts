@@ -110,8 +110,6 @@ export class MessagesService {
       childMessages,
     };
 
-    console.log(populatedMessage);
-
     return plainToInstance(MessageDto, populatedMessage);
   }
 
