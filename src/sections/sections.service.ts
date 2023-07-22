@@ -4,10 +4,14 @@ import { SectionsRepository } from 'src/sections/sections.repository';
 import { plainToInstance } from 'class-transformer';
 import { SectionType } from './enums';
 import { User } from 'src/users/entities/user.entity';
+import { ChatGateway } from 'src/websockets/chat.gateway';
 
 @Injectable()
 export class SectionsService {
-  constructor(private sectionsRepository: SectionsRepository) {}
+  constructor(
+    private sectionsRepository: SectionsRepository,
+    private chatGateway: ChatGateway,
+  ) {}
 
   private readonly defaultSections = [
     {
@@ -38,12 +42,16 @@ export class SectionsService {
     createSectionDto: CreateSectionDto,
     user: User,
   ): Promise<SectionDto> {
-    const section = await this.sectionsRepository.createSection(
+    const newSection = await this.sectionsRepository.createSection(
       createSectionDto,
       user,
     );
 
-    return plainToInstance(SectionDto, section);
+    const section = plainToInstance(SectionDto, newSection);
+
+    this.chatGateway.handleNewSectionSocket(section);
+
+    return section;
   }
 
   async findUserSections(userId: string) {

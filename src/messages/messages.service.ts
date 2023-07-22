@@ -11,6 +11,7 @@ import { ReactionDto } from './dto/Reaction.dto';
 import { ReactionRepository } from './reactions.repository';
 import { UpdateReactionDto } from './dto/UpdateReaction.dto';
 import { groupBy } from 'lodash';
+import { ChatGateway } from 'src/websockets/chat.gateway';
 
 @Injectable()
 export class MessagesService {
@@ -19,6 +20,7 @@ export class MessagesService {
     private reactionRepository: ReactionRepository,
     private userRepository: UsersRepository,
     private channelRepository: ChannelsRepository,
+    private chatGateway: ChatGateway,
   ) {}
 
   async create(createMessageDto: CreateMessageDto) {
@@ -45,7 +47,11 @@ export class MessagesService {
       parentId,
     });
 
-    return await this.findPopulatedMessage(savedMessage.uuid);
+    const message = await this.findPopulatedMessage(savedMessage.uuid);
+
+    this.chatGateway.handleSendMessageSocket(message);
+
+    return message;
   }
 
   findAll() {

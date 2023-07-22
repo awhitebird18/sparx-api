@@ -8,12 +8,14 @@ import { ChannelsModule } from 'src/channels/channels.module';
 import { UsersModule } from 'src/users/users.module';
 import { Reaction } from './entities/reaction.entity';
 import { ReactionRepository } from './reactions.repository';
+import { WebsocketsModule } from 'src/websockets/websockets.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Message, Reaction]),
     ChannelsModule,
     UsersModule,
+    WebsocketsModule,
   ],
   controllers: [MessagesController],
   providers: [MessagesService, MessagesRepository, ReactionRepository],
