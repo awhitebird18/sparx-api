@@ -7,13 +7,21 @@ import { UserDto } from './dto';
 import { v4 as uuid } from 'uuid';
 import { saveBase64Image } from 'src/utils/saveBase64Image';
 import * as path from 'path';
+import { UsersGateway } from 'src/websockets/user.gateway';
 
 @Injectable()
 export class UsersService {
-  constructor(private userRepository: UsersRepository) {}
+  constructor(
+    private userRepository: UsersRepository,
+    private usersGatway: UsersGateway,
+  ) {}
 
   async createUser(createUserDto: CreateUserDto) {
     const newUser = await this.userRepository.createUser(createUserDto);
+
+    const filteredUser = plainToInstance(UserDto, newUser);
+
+    this.usersGatway.handleNewUserSocket(filteredUser);
 
     return newUser;
   }
@@ -41,7 +49,6 @@ export class UsersService {
 
   async initialUserFetch(userUuid: string) {
     const user = await this.findOneByProperties({ uuid: userUuid });
-    user.profileImage = 'http://localhost:3000' + user.profileImage;
 
     return user;
   }
@@ -59,7 +66,13 @@ export class UsersService {
 
     Object.assign(user, updateUserDto);
 
-    return this.userRepository.save(user);
+    const updatedUser = await this.userRepository.save(user);
+
+    const filteredUser = plainToInstance(UserDto, updatedUser);
+
+    this.usersGatway.handleUserUpdateSocket(filteredUser);
+
+    return updatedUser;
   }
 
   async updateProfileImage(id: string, profileImage: string) {
@@ -82,7 +95,13 @@ export class UsersService {
     // Update user with image path
     user.profileImage = imagePath;
 
-    return await this.userRepository.save(user);
+    const updatedUser = await this.userRepository.save(user);
+
+    const filteredUser = plainToInstance(UserDto, updatedUser);
+
+    this.usersGatway.handleUserUpdateSocket(filteredUser);
+
+    return filteredUser;
   }
 
   remove(id: number) {

@@ -132,9 +132,9 @@ export class MessagesService {
       updateMessageDto,
     );
 
-    const message = await this.messageRepository.findMessageByUuid(
-      updatedMessage.uuid,
-    );
+    const message = await this.findPopulatedMessage(updatedMessage.uuid);
+
+    this.chatGateway.handleUpdateMessageSocket(message);
 
     return await this.findPopulatedMessage(message.uuid);
   }
@@ -185,10 +185,22 @@ export class MessagesService {
 
     const newMessage = await this.messageRepository.save(message);
 
-    return await this.findPopulatedMessage(newMessage.uuid);
+    const messageToReturn = await this.findPopulatedMessage(newMessage.uuid);
+    console.log('here', messageToReturn);
+    this.chatGateway.handleSendMessageSocket(messageToReturn);
+
+    return messageToReturn;
   }
 
   async remove(uuid: string) {
-    return await this.messageRepository.removeMessage(uuid);
+    const message = await this.findPopulatedMessage(uuid);
+
+    if (!message) {
+      throw new NotFoundException('Unable to find reaction to remove');
+    }
+
+    await this.messageRepository.removeMessage(message.uuid);
+
+    this.chatGateway.handleRemoveMessageSocket(message.channelId, message.uuid);
   }
 }

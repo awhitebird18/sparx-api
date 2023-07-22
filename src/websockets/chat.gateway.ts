@@ -28,6 +28,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   // This is a message handler for 'chatToServer' events
+  handleUpdateMessageSocket(message: MessageDto) {
+    this.server.emit(`messages/${message.channelId}/update`, message);
+  }
+
+  // This is a message handler for 'chatToServer' events
+  handleRemoveMessageSocket(channelId: string, messageId: string) {
+    this.server.emit(`messages/${channelId}/remove`, messageId);
+  }
+
+  // This is a message handler for 'chatToServer' events
   handleNewSectionSocket(section: SectionDto) {
     this.server.emit('sections', section);
   }

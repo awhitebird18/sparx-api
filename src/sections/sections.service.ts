@@ -4,13 +4,13 @@ import { SectionsRepository } from 'src/sections/sections.repository';
 import { plainToInstance } from 'class-transformer';
 import { SectionType } from './enums';
 import { User } from 'src/users/entities/user.entity';
-import { ChatGateway } from 'src/websockets/chat.gateway';
+import { SectionsGateway } from 'src/websockets/section.gateway';
 
 @Injectable()
 export class SectionsService {
   constructor(
     private sectionsRepository: SectionsRepository,
-    private chatGateway: ChatGateway,
+    private sectionsGateway: SectionsGateway,
   ) {}
 
   private readonly defaultSections = [
@@ -49,7 +49,7 @@ export class SectionsService {
 
     const section = plainToInstance(SectionDto, newSection);
 
-    this.chatGateway.handleNewSectionSocket(section);
+    this.sectionsGateway.handleNewSectionSocket(section);
 
     return section;
   }
@@ -87,13 +87,24 @@ export class SectionsService {
     const updatedSection = await this.sectionsRepository.findOneByProperties({
       uuid: sectionId,
     });
-    return plainToInstance(SectionDto, updatedSection);
+
+    const filteredSection = plainToInstance(SectionDto, updatedSection);
+
+    this.sectionsGateway.handleUpdateSectionSocket(filteredSection);
+
+    return filteredSection;
   }
 
   async removeSection(uuid: string): Promise<boolean> {
     const removeResult = await this.sectionsRepository.removeSection(uuid);
+    const sectionRemoved = removeResult.affected > 0;
 
-    // Check if any row was affected (i.e., any section was removed)
-    return removeResult.affected > 0;
+    if (sectionRemoved) {
+      throw new NotFoundException(`Section with UUID ${uuid} not found`);
+    }
+
+    this.sectionsGateway.handleRemoveSectionSocket(uuid);
+
+    return sectionRemoved;
   }
 }
