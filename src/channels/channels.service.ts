@@ -12,6 +12,7 @@ import { UserchannelsService } from 'src/userchannels/userchannels.service';
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
 import { saveBase64Image } from 'src/utils/saveBase64Image';
+import { ChannelGateway } from 'src/websockets/channel.gateway';
 
 @Injectable()
 export class ChannelsService {
@@ -19,6 +20,7 @@ export class ChannelsService {
     private channelsRepository: ChannelsRepository,
     private sectionRepository: SectionsRepository,
     private userChannelService: UserchannelsService,
+    private channelGateway: ChannelGateway,
   ) {}
 
   async createChannel(createChannelDto: CreateChannelDto, userId: string) {
@@ -72,6 +74,7 @@ export class ChannelsService {
 
   async updateChannel(id: string, updateChannelDto: UpdateChannelDto) {
     const channel = await this.channelsRepository.findChannelByUuid(id);
+
     if (updateChannelDto.icon) {
       const imageId = uuid();
 
@@ -86,9 +89,11 @@ export class ChannelsService {
 
     Object.assign(channel, updateChannelDto);
 
-    // Update user with image path
+    const updatedChannel = await this.channelsRepository.save(channel);
 
-    return await this.channelsRepository.save(channel);
+    this.channelGateway.handleUpdateChannelSocket(updatedChannel);
+
+    return updatedChannel;
   }
 
   async removeChannel(uuid: string): Promise<boolean> {
