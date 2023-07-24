@@ -3,10 +3,10 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  SubscribeMessage,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { Channel } from 'src/channels/entities/channel.entity';
+import { ChannelDto, UpdateChannelDto } from 'src/channels/dto';
+import { UserChannelDto } from 'src/userchannels/dto/UserChannel.dto';
 
 @WebSocketGateway({
   cors: { origin: 'http://localhost:5173' },
@@ -20,42 +20,32 @@ export class ChannelGateway
   server: Server;
 
   handleConnection(client: any) {
-    // Generate an ID for the client and save the reference
     const clientId = 'Some ID';
     client.clientId = clientId;
     this.clients.set(clientId, client);
   }
 
   handleDisconnect(client: any) {
-    // Remove the client when disconnected
     this.clients.delete(client.clientId);
   }
 
-  sendChannelUpdate() {
-    this.server.emit('channelUpdate');
+  handleNewChannelSocket(channel: ChannelDto) {
+    this.server.emit('channels', channel);
   }
 
-  @SubscribeMessage('signal')
-  handleSignal({
-    senderId,
-    recipientId,
-    signal,
-  }: {
-    senderId: string;
-    recipientId: string;
-    signal: any;
-  }) {
-    const recipientSocket = this.clients.get(recipientId);
-    if (!recipientSocket) {
-      return;
-    }
-    recipientSocket.emit('signal', {
-      signal,
-      senderId: senderId,
-    });
+  handleUpdateChannelSocket(channel: UpdateChannelDto) {
+    this.server.emit('channels/update', channel);
   }
 
-  private transformChannelData(channel: Channel) {
-    return channel;
+  handleRemoveChannelSocket() {
+    this.server.emit('channels/remove');
+  }
+
+  handleLeaveChannelSocket(channelId: string) {
+    this.server.emit('userchannels/leave', channelId);
+  }
+
+  handleJoinChannelSocket(userChannel: UserChannelDto) {
+    this.server.emit('userchannels/join', userChannel);
   }
 }

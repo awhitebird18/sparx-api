@@ -186,7 +186,7 @@ export class MessagesService {
     const newMessage = await this.messageRepository.save(message);
 
     const messageToReturn = await this.findPopulatedMessage(newMessage.uuid);
-    console.log('here', messageToReturn);
+
     this.chatGateway.handleSendMessageSocket(messageToReturn);
 
     return messageToReturn;

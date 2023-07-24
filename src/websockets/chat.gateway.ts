@@ -14,16 +14,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   async handleConnection() {
-    console.log('connected');
+    console.info('connected');
   }
 
   async handleDisconnect() {
-    console.log('disconnected');
+    console.info('disconnected');
   }
 
   // This is a message handler for 'chatToServer' events
   handleSendMessageSocket(message: MessageDto) {
-    console.log(message);
     this.server.emit(`messages/${message.channelId}`, message);
   }
 
