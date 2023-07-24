@@ -10,12 +10,14 @@ import { plainToClass } from 'class-transformer';
 import { ChannelDto } from 'src/channels/dto';
 import { SectionsRepository } from 'src/sections/sections.repository';
 import { UserChannel } from './entity/userchannel.entity';
+import { ChannelGateway } from 'src/websockets/channel.gateway';
 
 @Injectable()
 export class UserchannelsService {
   constructor(
     private userChannelsRepository: UserChannelsRepository,
     private sectionsRepository: SectionsRepository,
+    private channelGateway: ChannelGateway,
   ) {}
 
   async joinChannel(userUuid: string, channelUuid: string) {
@@ -36,7 +38,14 @@ export class UserchannelsService {
       channelId: channelUuid,
     });
 
-    return this.findUserChannel(userUuid, channelUuid);
+    const userChannelToReturn = await this.findUserChannel(
+      userUuid,
+      channelUuid,
+    );
+
+    this.channelGateway.handleJoinChannelSocket(userChannelToReturn);
+
+    return userChannelToReturn;
   }
 
   async leaveChannel(userUuid: string, channelUuid: string) {
@@ -57,13 +66,15 @@ export class UserchannelsService {
       userChannel.channel.type,
     );
 
-    await this.userChannelsRepository.updateUserChannel(userChannel.uuid, {
-      isSubscribed: false,
-      section,
-    });
-    const updatedChannel = await this.findUserChannel(userUuid, channelUuid);
+    const userChannelToReturn =
+      await this.userChannelsRepository.updateUserChannel(userChannel.uuid, {
+        isSubscribed: false,
+        section,
+      });
 
-    return updatedChannel;
+    this.channelGateway.handleLeaveChannelSocket(channelUuid);
+
+    return userChannelToReturn;
   }
 
   async findUserChannel(
@@ -77,6 +88,14 @@ export class UserchannelsService {
       },
       ['channel', 'section'],
     );
+
+    if (!userChannel.section) {
+      const defaultSection = await this.sectionsRepository.findDefaultSection(
+        userChannel.channel.type,
+      );
+
+      userChannel.section = defaultSection;
+    }
 
     if (!userChannel) {
       throw new HttpException('UserChannel not found', HttpStatus.BAD_REQUEST);

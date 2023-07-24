@@ -7,6 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from 'src/users/users.module';
 import { SectionsModule } from 'src/sections/sections.module';
 import { ChannelsModule } from 'src/channels/channels.module';
+import { WebsocketsModule } from 'src/websockets/websockets.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ChannelsModule } from 'src/channels/channels.module';
     SectionsModule,
     forwardRef(() => ChannelsModule),
     UsersModule,
+    WebsocketsModule,
   ],
   controllers: [UserchannelsController],
   providers: [UserchannelsService, UserChannelsRepository],
