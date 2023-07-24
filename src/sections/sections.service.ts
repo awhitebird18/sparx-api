@@ -99,7 +99,7 @@ export class SectionsService {
     const removeResult = await this.sectionsRepository.removeSection(uuid);
     const sectionRemoved = removeResult.affected > 0;
 
-    if (sectionRemoved) {
+    if (!sectionRemoved) {
       throw new NotFoundException(`Section with UUID ${uuid} not found`);
     }
 
