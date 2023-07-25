@@ -154,8 +154,6 @@ export class UserchannelsService {
       uuid: sectionUuid,
     });
 
-    console.log(section, userChannel);
-
     if (!userChannel || !section) {
       throw new HttpException(
         'No userchannel or section found',
