@@ -6,35 +6,39 @@ import { SectionType } from './enums';
 import { User } from 'src/users/entities/user.entity';
 import { SectionsGateway } from 'src/websockets/section.gateway';
 
+import { Section } from './entities/section.entity';
+import { UserchannelsService } from 'src/userchannels/userchannels.service';
+
 @Injectable()
 export class SectionsService {
   constructor(
     private sectionsRepository: SectionsRepository,
     private sectionsGateway: SectionsGateway,
+    private userChannelService: UserchannelsService,
   ) {}
 
   private readonly defaultSections = [
     {
       name: 'Channels',
       type: SectionType.CHANNEL,
-      isSystem: true,
     },
     {
       name: 'Direct Messages',
       type: SectionType.DIRECT,
-      isSystem: true,
     },
   ];
 
-  async seedDefaultSections() {
-    const sections = await this.sectionsRepository.find();
-
-    for (let i = 0; i < sections.length - 1; i++) {
-      await this.sectionsRepository.removeSection(sections[i].uuid);
-    }
-
+  async seedUserDefaultSections(user: User) {
+    const maxOrderIndex = await this.sectionsRepository.getMaxOrderIndex(user);
     for (let i = 0; i < this.defaultSections.length; i++) {
-      await this.sectionsRepository.createSection(this.defaultSections[i]);
+      await this.sectionsRepository.createSection(
+        {
+          ...this.defaultSections[i],
+          orderIndex: maxOrderIndex,
+          isSystem: true,
+        },
+        user,
+      );
     }
   }
 
@@ -42,8 +46,10 @@ export class SectionsService {
     createSectionDto: CreateSectionDto,
     user: User,
   ): Promise<SectionDto> {
+    const maxOrderIndex = await this.sectionsRepository.getMaxOrderIndex(user);
+
     const newSection = await this.sectionsRepository.createSection(
-      createSectionDto,
+      { ...createSectionDto, orderIndex: maxOrderIndex + 1 },
       user,
     );
 
@@ -60,16 +66,20 @@ export class SectionsService {
     return plainToInstance(SectionDto, sections);
   }
 
-  async findDefaultSection(sectionType: string): Promise<SectionDto> {
+  async findDefaultSection(
+    sectionType: string,
+    userId: string,
+  ): Promise<SectionDto> {
     const section = await this.sectionsRepository.findDefaultSection(
       sectionType,
+      userId,
     );
 
     return plainToInstance(SectionDto, section);
   }
 
-  async findDefaultSections(): Promise<SectionDto[]> {
-    const section = await this.sectionsRepository.findDefaultSections();
+  async findDefaultSections(userId: string): Promise<SectionDto[]> {
+    const section = await this.sectionsRepository.findDefaultSections(userId);
 
     return plainToInstance(SectionDto, section);
   }
@@ -95,12 +105,39 @@ export class SectionsService {
     return filteredSection;
   }
 
-  async removeSection(uuid: string): Promise<boolean> {
+  async removeSection(uuid: string, userId: string): Promise<boolean> {
+    const sectionToRemove = await this.sectionsRepository.findUserSection(uuid);
+
+    const userChannels = sectionToRemove.channels;
+
+    const userDefaultSections =
+      await this.sectionsRepository.findDefaultSections(userId);
+
+    for (let i = 0; i < userChannels.length; i++) {
+      const defaultSection = userDefaultSections.find(
+        (section: Section) => section.type === 'channel',
+      );
+
+      await this.userChannelService.updateChannelSection(
+        userChannels[i].userId,
+        userChannels[i].channel.uuid,
+        defaultSection.uuid,
+      );
+    }
+
+    if (!sectionToRemove) {
+      throw new NotFoundException(`Section with UUID ${uuid} not found`);
+    }
+
     const removeResult = await this.sectionsRepository.removeSection(uuid);
     const sectionRemoved = removeResult.affected > 0;
 
-    if (!sectionRemoved) {
-      throw new NotFoundException(`Section with UUID ${uuid} not found`);
+    if (sectionRemoved) {
+      // Shift down orderIndex for remaining sections
+      await this.sectionsRepository.decrementOrderIndexes(
+        sectionToRemove.user,
+        sectionToRemove.orderIndex,
+      );
     }
 
     this.sectionsGateway.handleRemoveSectionSocket(uuid);

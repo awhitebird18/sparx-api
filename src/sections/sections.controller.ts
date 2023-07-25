@@ -31,11 +31,6 @@ export class SectionsController {
     return this.sectionsService.findUserSections(user.uuid);
   }
 
-  @Get('seed')
-  seedDefaultSections() {
-    return this.sectionsService.seedDefaultSections();
-  }
-
   @ApiParam({
     name: 'uuid',
     required: true,
@@ -66,7 +61,7 @@ export class SectionsController {
     example: 'ddb2cd52-1f80-41c4-9bf1-43d18b814488',
   })
   @Delete(':sectionId')
-  removeSection(@Param('sectionId') sectionId: string) {
-    return this.sectionsService.removeSection(sectionId);
+  removeSection(@GetUser() user: User, @Param('sectionId') sectionId: string) {
+    return this.sectionsService.removeSection(sectionId, user.uuid);
   }
 }

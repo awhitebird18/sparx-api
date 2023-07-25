@@ -8,16 +8,20 @@ import { v4 as uuid } from 'uuid';
 import { saveBase64Image } from 'src/utils/saveBase64Image';
 import * as path from 'path';
 import { UsersGateway } from 'src/websockets/user.gateway';
+import { SectionsService } from 'src/sections/sections.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private userRepository: UsersRepository,
     private usersGatway: UsersGateway,
+    private sectionsService: SectionsService,
   ) {}
 
   async createUser(createUserDto: CreateUserDto) {
     const newUser = await this.userRepository.createUser(createUserDto);
+
+    this.sectionsService.seedUserDefaultSections(newUser);
 
     const filteredUser = plainToInstance(UserDto, newUser);
 

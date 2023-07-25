@@ -20,6 +20,9 @@ export class Section extends BaseEntity {
   @Column({ nullable: true })
   emoji?: string;
 
+  @Column({ nullable: true })
+  orderIndex: number;
+
   @OneToMany(() => UserChannel, (userchannel) => userchannel.section)
   channels: UserChannel[];
 

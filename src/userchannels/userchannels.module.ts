@@ -13,9 +13,8 @@ import { WebsocketsModule } from 'src/websockets/websockets.module';
   imports: [
     TypeOrmModule.forFeature([UserChannel]),
     UsersModule,
-    SectionsModule,
+    forwardRef(() => SectionsModule),
     forwardRef(() => ChannelsModule),
-    UsersModule,
     WebsocketsModule,
   ],
   controllers: [UserchannelsController],
