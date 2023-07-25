@@ -23,6 +23,13 @@ export class SectionDto extends IntersectionType(CreateSectionDto, BaseDto) {
   isSystem: boolean;
 
   @ApiProperty({
+    example: true,
+    description: 'Defines if section is open',
+  })
+  @IsBoolean()
+  isOpen: boolean;
+
+  @ApiProperty({
     example: 'channel',
     description: 'Type of the section',
   })

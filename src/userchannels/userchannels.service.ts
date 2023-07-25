@@ -64,6 +64,7 @@ export class UserchannelsService {
 
     const section = await this.sectionsRepository.findDefaultSection(
       userChannel.channel.type,
+      userUuid,
     );
 
     const userChannelToReturn =
@@ -92,6 +93,7 @@ export class UserchannelsService {
     if (!userChannel.section) {
       const defaultSection = await this.sectionsRepository.findDefaultSection(
         userChannel.channel.type,
+        userUuid,
       );
 
       userChannel.section = defaultSection;

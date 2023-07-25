@@ -27,6 +27,7 @@ export class ChannelsService {
     // Perform checks
     const section = await this.sectionRepository.findDefaultSection(
       createChannelDto.type,
+      userId,
     );
 
     if (!section) {

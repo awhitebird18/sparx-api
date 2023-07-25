@@ -1,6 +1,7 @@
 import {
   IsBoolean,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -22,6 +23,13 @@ export class CreateSectionDto {
   })
   @IsUUID(4)
   userId?: string;
+
+  @ApiProperty({
+    example: '1',
+    description: 'The order of the user section',
+  })
+  @IsNumber()
+  orderIndex?: number;
 
   @ApiProperty({
     example: true,
