@@ -12,7 +12,10 @@ export class Section extends BaseEntity {
   type?: string;
 
   @Column({ default: false, nullable: true })
-  isSystem?: boolean;
+  isSystem: boolean;
+
+  @Column({ default: true })
+  isOpen: boolean;
 
   @Column({ nullable: true })
   emoji?: string;
