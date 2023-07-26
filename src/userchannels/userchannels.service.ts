@@ -136,7 +136,14 @@ export class UserchannelsService {
       updatedFields,
     );
 
-    return await this.findUserChannel(userUuid, channelUuid);
+    const updatedUserChannel = await this.findUserChannel(
+      userUuid,
+      channelUuid,
+    );
+
+    this.channelGateway.handleUpdateChannelSocket(updatedUserChannel);
+
+    return updatedUserChannel;
   }
 
   async updateChannelSection(
@@ -164,7 +171,14 @@ export class UserchannelsService {
       section,
     });
 
-    return await this.findUserChannel(userUuid, channelUuid);
+    const updatedUserChannel = await this.findUserChannel(
+      userUuid,
+      channelUuid,
+    );
+
+    this.channelGateway.handleUpdateChannelSocket(updatedUserChannel);
+
+    return updatedUserChannel;
   }
 
   async getUserSubscribedChannels(userId: string): Promise<UserChannelDto[]> {
