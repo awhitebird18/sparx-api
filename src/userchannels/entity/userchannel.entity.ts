@@ -22,4 +22,7 @@ export class UserChannel extends BaseEntity {
 
   @ManyToOne(() => Section, (section) => section.channels)
   section: Section;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastRead: Date;
 }

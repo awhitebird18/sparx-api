@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { MessagesController } from './messages.controller';
 import { Message } from './entities/message.entity';
@@ -13,11 +13,12 @@ import { WebsocketsModule } from 'src/websockets/websockets.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Message, Reaction]),
-    ChannelsModule,
-    UsersModule,
+    forwardRef(() => ChannelsModule),
+    forwardRef(() => UsersModule),
     WebsocketsModule,
   ],
   controllers: [MessagesController],
   providers: [MessagesService, MessagesRepository, ReactionRepository],
+  exports: [MessagesService, MessagesRepository, ReactionRepository],
 })
 export class MessagesModule {}

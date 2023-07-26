@@ -11,6 +11,7 @@ import { ChannelDto } from 'src/channels/dto';
 import { SectionsRepository } from 'src/sections/sections.repository';
 import { UserChannel } from './entity/userchannel.entity';
 import { ChannelGateway } from 'src/websockets/channel.gateway';
+import { MessagesRepository } from 'src/messages/messages.repository';
 
 @Injectable()
 export class UserchannelsService {
@@ -18,6 +19,7 @@ export class UserchannelsService {
     private userChannelsRepository: UserChannelsRepository,
     private sectionsRepository: SectionsRepository,
     private channelGateway: ChannelGateway,
+    private messageRepository: MessagesRepository,
   ) {}
 
   async joinChannel(userUuid: string, channelUuid: string) {
@@ -125,11 +127,8 @@ export class UserchannelsService {
       channel: { uuid: channelUuid },
     });
 
-    if (userChannel?.isSubscribed) {
-      throw new HttpException(
-        'User is already subscribed to the channel',
-        HttpStatus.BAD_REQUEST,
-      );
+    if (!userChannel) {
+      throw new NotFoundException('No user channels found');
     }
 
     await this.userChannelsRepository.updateUserChannel(
@@ -197,5 +196,27 @@ export class UserchannelsService {
     );
 
     return channels;
+  }
+
+  async getUserUnreadMessagesCount(
+    userUuid: string,
+  ): Promise<{ channelId: string; unreadCount: number }[]> {
+    // Fetch user's channels with their lastRead timestamp
+    const userChannels =
+      await this.userChannelsRepository.findSubscribedChannelsByUserId(
+        userUuid,
+      );
+
+    // For each channel, get the count of unread messages
+    const unreadCountsPromises = userChannels.map((userChannel) =>
+      this.messageRepository
+        .countUnreadMessages(userChannel.channel.uuid, userChannel.lastRead)
+        .then((unreadCount) => ({
+          channelId: userChannel.channel.uuid,
+          unreadCount,
+        })),
+    );
+
+    return Promise.all(unreadCountsPromises);
   }
 }

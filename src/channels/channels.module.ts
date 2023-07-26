@@ -13,9 +13,9 @@ import { UserchannelsModule } from 'src/userchannels/userchannels.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Channel]),
-    SectionsModule,
+    forwardRef(() => SectionsModule),
     forwardRef(() => UserchannelsModule),
-    WebsocketsModule,
+    forwardRef(() => WebsocketsModule),
   ],
   controllers: [ChannelsController],
   providers: [ChannelsService, ChannelsRepository],
