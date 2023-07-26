@@ -52,8 +52,11 @@ export class AuthController {
       user.uuid,
     );
 
+    const channelUnreads =
+      await this.userChannelsService.getUserUnreadMessagesCount(user.uuid);
+
     const workspaceUsers = await this.userService.findAll();
 
-    return { user, sections, channels, workspaceUsers };
+    return { user, sections, channels, workspaceUsers, channelUnreads };
   }
 }

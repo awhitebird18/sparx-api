@@ -23,4 +23,6 @@ export class UserChannelDto extends BaseDto {
   channelId?: string;
 
   users: User[];
+
+  lastRead?: string | Date;
 }

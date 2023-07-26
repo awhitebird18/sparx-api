@@ -10,8 +10,8 @@ import { UserchannelsModule } from 'src/userchannels/userchannels.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Section]),
-    WebsocketsModule,
     forwardRef(() => UserchannelsModule),
+    WebsocketsModule,
   ],
   controllers: [SectionsController],
   providers: [SectionsService, SectionsRepository],

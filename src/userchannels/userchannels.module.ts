@@ -8,13 +8,15 @@ import { UsersModule } from 'src/users/users.module';
 import { SectionsModule } from 'src/sections/sections.module';
 import { ChannelsModule } from 'src/channels/channels.module';
 import { WebsocketsModule } from 'src/websockets/websockets.module';
+import { MessagesModule } from 'src/messages/messages.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserChannel]),
-    UsersModule,
+    forwardRef(() => UsersModule),
     forwardRef(() => SectionsModule),
     forwardRef(() => ChannelsModule),
+    forwardRef(() => MessagesModule),
     WebsocketsModule,
   ],
   controllers: [UserchannelsController],

@@ -102,6 +102,17 @@ export class MessagesRepository extends Repository<Message> {
     return populatedMessages;
   }
 
+  async countUnreadMessages(
+    channelId: string,
+    lastRead: Date,
+  ): Promise<number> {
+    return await this.createQueryBuilder('message')
+      .innerJoin('message.channel', 'channel')
+      .where('channel.uuid = :channelId', { channelId })
+      .andWhere('message.createdAt > :lastRead', { lastRead })
+      .getCount();
+  }
+
   async findOneByProperties(
     searchCriteria: FindOptionsWhere<Message>,
     relations?: string[],

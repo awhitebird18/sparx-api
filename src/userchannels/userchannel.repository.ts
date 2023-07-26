@@ -95,4 +95,16 @@ export class UserChannelsRepository extends Repository<UserChannel> {
       })
       .getMany();
   }
+
+  async findUserChannelsWithLastRead(userUuid: string): Promise<UserChannel[]> {
+    return await this.createQueryBuilder('userChannel')
+      .leftJoinAndSelect('userChannel.channel', 'channel')
+      .innerJoin('userChannel.user', 'user')
+      .where('user.uuid = :userUuid', { userUuid })
+      .andWhere('userChannel.isSubscribed = :isSubscribed', {
+        isSubscribed: true,
+      })
+      .select(['userChannel.uuid', 'userChannel.lastRead', 'channel.uuid'])
+      .getMany();
+  }
 }

@@ -11,8 +11,8 @@ import { WebsocketsModule } from 'src/websockets/websockets.module';
   imports: [
     TypeOrmModule.forFeature([User]),
     forwardRef(() => SectionsModule),
-    WebsocketsModule,
     forwardRef(() => SectionsModule),
+    forwardRef(() => WebsocketsModule),
   ],
   controllers: [UsersController],
   providers: [UsersService, UsersRepository],
