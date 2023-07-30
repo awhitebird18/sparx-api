@@ -3,3 +3,8 @@ export enum SectionType {
   CHANNEL = 'channel',
   ANY = 'any',
 }
+
+export enum SortBy {
+  ALPHA = 'alpha',
+  RECENT = 'recent',
+}
