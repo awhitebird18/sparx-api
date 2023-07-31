@@ -9,16 +9,15 @@ import {
   Query,
 } from '@nestjs/common';
 import { ChannelsService } from './channels.service';
-import { ChannelDto, CreateChannelDto, UpdateChannelDto } from './dto';
+import { CreateChannelDto, UpdateChannelDto } from './dto';
 import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { NotFoundException } from '@nestjs/common/exceptions';
 import { HttpStatus } from '@nestjs/common/enums';
-import { ChannelType } from './enums/channelType.enum';
+
 import { GetUser } from 'src/common/decorators/getUser.decorator';
 import { User } from 'src/users/entities/user.entity';
 import { UserchannelsService } from 'src/userchannels/userchannels.service';
-import { UserChannelDto } from 'src/userchannels/dto/UserChannel.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Channels')
@@ -39,33 +38,11 @@ export class ChannelsController {
   }
 
   @Get()
-  async findAll(@GetUser() user: User) {
-    // TODO: Need to do this in the service
-    const workspaceChannels =
-      await this.channelsService.findWorkspaceChannels();
-
-    const subscribedChannels =
-      await this.userChannelService.getUserSubscribedChannels(user.uuid);
-
-    const res = workspaceChannels.map((channelDto: ChannelDto) => {
-      const userChannel = subscribedChannels.find(
-        (el: UserChannelDto) => el.channelId === channelDto.uuid,
-      );
-
-      if (userChannel?.isSubscribed) {
-        channelDto.isSubscribed = true;
-      } else {
-        channelDto.isSubscribed = false;
-      }
-      return channelDto;
-    });
-
-    return res;
-  }
-
-  @Get('channel')
-  findChannels(@Query('type') type: ChannelType) {
-    return this.channelsService.findChannels(type);
+  findWorkspaceChannels(
+    @Query('page') page: number,
+    @Query('pageSize') pageSize: number,
+  ) {
+    return this.channelsService.findWorkspaceChannels(page, pageSize);
   }
 
   @Get(':uuid')
@@ -91,7 +68,7 @@ export class ChannelsController {
     schema: {
       type: 'object',
       properties: {
-        topic: { type: 'string', example: 'New discussion topicdfgdfgdfgfdg' },
+        topic: { type: 'string', example: 'New discussion topic' },
       },
     },
   })

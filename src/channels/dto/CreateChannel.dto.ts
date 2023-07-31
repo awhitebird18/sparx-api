@@ -24,7 +24,6 @@ export class CreateChannelDto {
     description:
       'Sets a channel to be private. Private channels are invite only',
   })
-  @IsNotEmpty()
   @IsBoolean()
-  isPrivate: boolean;
+  isPrivate?: boolean;
 }

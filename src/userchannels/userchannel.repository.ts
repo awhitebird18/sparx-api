@@ -52,6 +52,15 @@ export class UserChannelsRepository extends Repository<UserChannel> {
     return await this.update({ uuid }, userChannel);
   }
 
+  async getChannelUsersCount(channelId: number) {
+    return await this.createQueryBuilder('userChannel')
+      .where('userChannel.channelId = :channelId', { channelId })
+      .andWhere('userChannel.isSubscribed = :isSubscribed', {
+        isSubscribed: true,
+      })
+      .getCount();
+  }
+
   async createUserChannel(userChannelDto: {
     userId: string;
     channelId: string;

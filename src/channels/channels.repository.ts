@@ -21,12 +21,13 @@ export class ChannelsRepository extends Repository<Channel> {
     return this.save(channel);
   }
 
-  async findWorkspaceChannels(): Promise<Channel[]> {
-    return this.find();
-  }
-
-  async findChannels(type: ChannelType): Promise<Channel[]> {
-    return this.find({ where: { type: type } });
+  async findWorkspaceChannels(page: number, pageSize = 15): Promise<Channel[]> {
+    return await this.createQueryBuilder('channel')
+      .where({ type: ChannelType.CHANNEL })
+      .orderBy('channel.name', 'ASC')
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getMany();
   }
 
   async findDirectMessages(): Promise<Channel[]> {
