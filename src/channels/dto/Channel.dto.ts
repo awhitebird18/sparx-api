@@ -49,4 +49,7 @@ export class ChannelDto extends IntersectionType(CreateChannelDto, BaseDto) {
   isSubscribed?: boolean;
 
   channelId?: string;
+
+  @IsOptional()
+  userCount?: number;
 }

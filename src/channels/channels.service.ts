@@ -7,7 +7,6 @@ import { ChannelDto, CreateChannelDto, UpdateChannelDto } from './dto';
 import { ChannelsRepository } from './channels.repository';
 import { plainToInstance } from 'class-transformer';
 import { SectionsRepository } from 'src/sections/sections.repository';
-import { ChannelType } from './enums/channelType.enum';
 import { UserchannelsService } from 'src/userchannels/userchannels.service';
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
@@ -56,13 +55,23 @@ export class ChannelsService {
     return userChannel;
   }
 
-  async findChannels(type: ChannelType) {
-    return this.channelsRepository.findChannels(type);
-  }
+  async findWorkspaceChannels(page: number, pageSize: number) {
+    const channels = await this.channelsRepository.findWorkspaceChannels(
+      page,
+      pageSize,
+    );
 
-  async findWorkspaceChannels() {
-    const channels = await this.channelsRepository.findWorkspaceChannels();
-    return plainToInstance(ChannelDto, channels);
+    const channelsWithUserCount = await Promise.all(
+      channels.map(async (channel) => {
+        const userCount = await this.userChannelService.getUserChannelCount(
+          channel.id,
+        );
+
+        return { ...channel, userCount };
+      }),
+    );
+
+    return channelsWithUserCount;
   }
 
   async findOne(searchProperties: any) {

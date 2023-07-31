@@ -80,6 +80,10 @@ export class UserchannelsService {
     return userChannelToReturn;
   }
 
+  async getUserChannelCount(channelId: number) {
+    return this.userChannelsRepository.getChannelUsersCount(channelId);
+  }
+
   async findUserChannel(
     userUuid: string,
     channelUuid: string,
