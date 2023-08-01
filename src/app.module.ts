@@ -16,6 +16,7 @@ import { WebsocketsModule } from './websockets/websockets.module';
 import { JwtAuthGuard } from './auth/jwtAuthGuard.guard';
 import { UserchannelsModule } from './userchannels/userchannels.module';
 import { config } from './typeorm';
+import { UserpreferencesModule } from './userpreferences/userpreferences.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { config } from './typeorm';
     CompaniesModule,
     SectionsModule,
     UsersModule,
+    UserpreferencesModule,
     AuthModule,
     WebsocketsModule,
     UserchannelsModule,

@@ -6,10 +6,12 @@ import { User } from './entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SectionsModule } from 'src/sections/sections.module';
 import { WebsocketsModule } from 'src/websockets/websockets.module';
+import { UserpreferencesModule } from 'src/userpreferences/userpreferences.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
+    UserpreferencesModule,
     forwardRef(() => SectionsModule),
     forwardRef(() => SectionsModule),
     forwardRef(() => WebsocketsModule),
