@@ -28,17 +28,25 @@ export class UserchannelsService {
       channel: { uuid: channelUuid },
     });
 
-    if (userChannel?.isSubscribed) {
+    if (!userChannel) {
+      await this.userChannelsRepository.createUserChannel({
+        userId: userUuid,
+        channelId: channelUuid,
+      });
+    }
+
+    if (!userChannel.isSubscribed) {
+      await this.updateUserChannel(userUuid, channelUuid, {
+        isSubscribed: true,
+      });
+    }
+
+    if (userChannel.isSubscribed) {
       throw new HttpException(
         'User is already subscribed to the channel',
         HttpStatus.BAD_REQUEST,
       );
     }
-
-    await this.userChannelsRepository.createUserChannel({
-      userId: userUuid,
-      channelId: channelUuid,
-    });
 
     const userChannelToReturn = await this.findUserChannel(
       userUuid,
@@ -155,10 +163,13 @@ export class UserchannelsService {
     channelUuid: string,
     sectionUuid: string,
   ) {
-    const userChannel = await this.userChannelsRepository.findOneByProperties({
-      user: { uuid: userUuid },
-      channel: { uuid: channelUuid },
-    });
+    const userChannel = await this.userChannelsRepository.findOneByProperties(
+      {
+        user: { uuid: userUuid },
+        channel: { uuid: channelUuid },
+      },
+      ['channel'],
+    );
 
     const section = await this.sectionsRepository.findOneByProperties({
       uuid: sectionUuid,
@@ -186,8 +197,13 @@ export class UserchannelsService {
   }
 
   async getUserSubscribedChannels(userId: string): Promise<UserChannelDto[]> {
-    const userChannels =
-      await this.userChannelsRepository.findSubscribedChannelsByUserId(userId);
+    const userChannels = await this.userChannelsRepository.findByProperties(
+      {
+        user: { uuid: userId },
+        isSubscribed: true,
+      },
+      ['channel', 'section'],
+    );
 
     if (!userChannels) {
       throw new NotFoundException('No user channels found');
