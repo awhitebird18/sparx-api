@@ -219,6 +219,7 @@ export class UserchannelsService {
           ...plainToClass(ChannelDto, userChannel.channel),
           sectionId: userChannel.section.uuid,
           channelId: userChannel.channel.uuid,
+          isSubscribed: true,
           users,
         };
 
