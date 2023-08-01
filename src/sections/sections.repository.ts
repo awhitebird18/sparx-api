@@ -79,7 +79,7 @@ export class SectionsRepository extends Repository<Section> {
     userId: string,
   ): Promise<Section> {
     return this.createQueryBuilder('section')
-      .innerJoin('section.user', 'user')
+      .leftJoinAndSelect('section.user', 'user')
       .where('section.isSystem = :isSystem', { isSystem: true })
       .andWhere('section.type = :type', { type: sectionType })
       .andWhere('user.uuid = :userId', { userId })

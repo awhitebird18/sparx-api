@@ -32,6 +32,25 @@ export class UserChannelsRepository extends Repository<UserChannel> {
     });
   }
 
+  async findByProperties(
+    searchFields: FindOptionsWhere<UserChannel>,
+    relations?: string[],
+  ) {
+    return await this.find({
+      where: searchFields,
+      relations,
+    });
+  }
+
+  async findSubscribedChannelsByUserId(
+    userUuid: string,
+  ): Promise<UserChannel[]> {
+    return await this.find({
+      where: { user: { uuid: userUuid }, isSubscribed: true },
+      relations: ['channel', 'section'],
+    });
+  }
+
   async findUsersByChannelId(channelId: string): Promise<User[]> {
     const userChannels = await this.createQueryBuilder('userChannel')
       .innerJoinAndSelect('userChannel.user', 'user')
@@ -72,9 +91,10 @@ export class UserChannelsRepository extends Repository<UserChannel> {
     const channel = await this.channelRepository.findOneByProperties({
       uuid: userChannelDto.channelId,
     });
-    const section = await this.sectionRepository.findOneByProperties({
-      type: channel.type,
-    });
+    const section = await this.sectionRepository.findDefaultSection(
+      channel.type,
+      user.uuid,
+    );
 
     // Check if user and channel exist
     if (!user || !channel || !section) {
@@ -89,20 +109,6 @@ export class UserChannelsRepository extends Repository<UserChannel> {
     userChannel.section = section;
 
     return this.save(userChannel);
-  }
-
-  async findSubscribedChannelsByUserId(
-    userUuid: string,
-  ): Promise<UserChannel[]> {
-    return await this.createQueryBuilder('userChannel')
-      .leftJoinAndSelect('userChannel.channel', 'channel')
-      .leftJoinAndSelect('userChannel.section', 'section')
-      .innerJoin('userChannel.user', 'user')
-      .where('user.uuid = :userUuid', { userUuid })
-      .andWhere('userChannel.isSubscribed = :isSubscribed', {
-        isSubscribed: true,
-      })
-      .getMany();
   }
 
   async findUserChannelsWithLastRead(userUuid: string): Promise<UserChannel[]> {
