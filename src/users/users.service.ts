@@ -9,6 +9,7 @@ import { saveBase64Image } from 'src/utils/saveBase64Image';
 import * as path from 'path';
 import { UsersGateway } from 'src/websockets/user.gateway';
 import { SectionsService } from 'src/sections/sections.service';
+import { UserpreferencesService } from 'src/userpreferences/userpreferences.service';
 
 @Injectable()
 export class UsersService {
@@ -16,12 +17,15 @@ export class UsersService {
     private userRepository: UsersRepository,
     private usersGatway: UsersGateway,
     private sectionsService: SectionsService,
+    private userPreferencesService: UserpreferencesService,
   ) {}
 
   async createUser(createUserDto: CreateUserDto) {
     const newUser = await this.userRepository.createUser(createUserDto);
 
-    this.sectionsService.seedUserDefaultSections(newUser);
+    await this.sectionsService.seedUserDefaultSections(newUser);
+
+    await this.userPreferencesService.createUserPreferences(newUser);
 
     const filteredUser = plainToInstance(UserDto, newUser);
 

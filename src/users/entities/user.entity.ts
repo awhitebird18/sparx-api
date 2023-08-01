@@ -2,9 +2,18 @@ import { BaseEntity } from 'src/common/entities/base.entity';
 import { Company } from 'src/companies/entities/company.entity';
 import { Section } from 'src/sections/entities/section.entity';
 import { Space } from 'src/spaces/entities/space.entity';
-import { Entity, Column, ManyToMany, ManyToOne, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
 import { PrimaryColor, Theme } from '../enums';
 import { UserChannel } from 'src/userchannels/entity/userchannel.entity';
+import { Userpreferences } from 'src/userpreferences/entities/userpreference.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -46,4 +55,8 @@ export class User extends BaseEntity {
 
   @Column({ default: 'password' })
   password: string;
+
+  @OneToOne(() => Userpreferences, (userpreferences) => userpreferences.user)
+  @JoinColumn()
+  preferences: Userpreferences;
 }

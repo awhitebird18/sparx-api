@@ -16,6 +16,7 @@ import { CreateUserDto } from 'src/users/dto';
 import { UsersService } from 'src/users/users.service';
 import { SectionsService } from 'src/sections/sections.service';
 import { UserchannelsService } from 'src/userchannels/userchannels.service';
+import { UserpreferencesService } from 'src/userpreferences/userpreferences.service';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -25,6 +26,7 @@ export class AuthController {
     private userService: UsersService,
     private sectionsService: SectionsService,
     private userChannelsService: UserchannelsService,
+    private userPreferencesService: UserpreferencesService,
   ) {}
 
   @Public()
@@ -52,11 +54,21 @@ export class AuthController {
       user.uuid,
     );
 
+    const userPreferences =
+      await this.userPreferencesService.findUserPreferences(user.uuid);
+
     const channelUnreads =
       await this.userChannelsService.getUserUnreadMessagesCount(user.uuid);
 
     const workspaceUsers = await this.userService.findAll();
 
-    return { user, sections, channels, workspaceUsers, channelUnreads };
+    return {
+      user,
+      sections,
+      channels,
+      workspaceUsers,
+      channelUnreads,
+      userPreferences,
+    };
   }
 }
