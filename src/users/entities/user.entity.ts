@@ -29,6 +29,9 @@ export class User extends BaseEntity {
   @Column({ nullable: true })
   address?: string;
 
+  @Column({ default: false })
+  isBot?: boolean;
+
   @Column({ nullable: true })
   profileImage: string;
 

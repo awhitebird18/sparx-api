@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsEnum } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum } from 'class-validator';
 import { PrimaryColor, Theme } from '../enums';
 import {
   IsNotEmpty,
@@ -37,6 +37,13 @@ export class UserDto extends BaseDto {
   @IsNotEmpty()
   @IsEmail()
   email: string;
+
+  @ApiProperty({
+    example: false,
+    description: 'Is user a bot account?',
+  })
+  @IsBoolean()
+  isBot: boolean;
 
   @ApiProperty({ enum: Theme, enumName: 'Theme', example: Theme.LIGHT })
   @IsEnum(Theme)

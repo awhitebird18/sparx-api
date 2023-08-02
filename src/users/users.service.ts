@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/CreateUser.dto';
 import { UpdateUserDto } from './dto/UpdateUser.dto';
 import { UsersRepository } from './users.repository';
@@ -10,6 +14,7 @@ import * as path from 'path';
 import { UsersGateway } from 'src/websockets/user.gateway';
 import { SectionsService } from 'src/sections/sections.service';
 import { UserpreferencesService } from 'src/userpreferences/userpreferences.service';
+import * as fs from 'fs';
 
 @Injectable()
 export class UsersService {
@@ -32,6 +37,35 @@ export class UsersService {
     this.usersGatway.handleNewUserSocket(filteredUser);
 
     return newUser;
+  }
+
+  async seedBot() {
+    const botExists = await this.findOneByProperties({ isBot: true });
+
+    if (botExists) {
+      throw new ConflictException('Bot already exists!');
+    }
+
+    const newUser = await this.userRepository.createUser({
+      firstName: 'Sparx',
+      lastName: 'Bot',
+      email: 'bot@sparx.com',
+      password: 'password1',
+      isBot: true,
+    });
+
+    // Get the absolute path to the bot.png file in the static folder.
+    const botImagePath = path.join(__dirname, 'static', 'bot.png');
+
+    // Read the bot.png file from the filesystem and convert it to base64 format.
+    const botImageBase64 = fs.readFileSync(botImagePath).toString('base64');
+
+    // Upload the bot profile image.
+    await this.updateProfileImage(newUser.uuid, botImageBase64);
+
+    const filteredUser = plainToInstance(UserDto, newUser);
+
+    return filteredUser;
   }
 
   async findAll() {
@@ -83,11 +117,11 @@ export class UsersService {
     return updatedUser;
   }
 
-  async updateProfileImage(id: string, profileImage: string) {
-    const user = await this.userRepository.findUserByUuid(id);
+  async updateProfileImage(userId: string, profileImage: string) {
+    const user = await this.userRepository.findUserByUuid(userId);
 
     if (!user) {
-      throw new NotFoundException(`User with UUID ${id} not found`);
+      throw new NotFoundException(`User with UUID ${userId} not found`);
     }
 
     const imageId = uuid();
