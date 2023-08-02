@@ -54,21 +54,20 @@ export class ChannelGateway
 
   @SubscribeMessage('joinRoom')
   handleJoinRoom(client: Socket, channelId: string): void {
-    client.join(channelId);
+    client.join(`${channelId}/usertyping`);
   }
 
   @SubscribeMessage('leaveRoom')
   handleLeaveRoom(client: Socket, channelId: string): void {
-    client.leave(channelId);
+    client.leave(`${channelId}/usertyping`);
   }
 
   @SubscribeMessage('typing')
   handleTyping(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { user: string; channelId: string },
+    @MessageBody()
+    data: { userId: string; userName: string; channelId: string },
   ): void {
-    if (client) {
-      client.to(data.channelId).emit('typing', data);
-    }
+    client.to(`${data.channelId}/usertyping`).emit('typing', data);
   }
 }
