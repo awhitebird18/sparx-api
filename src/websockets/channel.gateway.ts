@@ -3,8 +3,11 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  SubscribeMessage,
+  MessageBody,
+  ConnectedSocket,
 } from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { ChannelDto, UpdateChannelDto } from 'src/channels/dto';
 import { UserChannelDto } from 'src/userchannels/dto/UserChannel.dto';
 
@@ -47,5 +50,25 @@ export class ChannelGateway
 
   handleJoinChannelSocket(userChannel: UserChannelDto) {
     this.server.emit('userchannels/join', userChannel);
+  }
+
+  @SubscribeMessage('joinRoom')
+  handleJoinRoom(client: Socket, channelId: string): void {
+    client.join(channelId);
+  }
+
+  @SubscribeMessage('leaveRoom')
+  handleLeaveRoom(client: Socket, channelId: string): void {
+    client.leave(channelId);
+  }
+
+  @SubscribeMessage('typing')
+  handleTyping(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { user: string; channelId: string },
+  ): void {
+    if (client) {
+      client.to(data.channelId).emit('typing', data);
+    }
   }
 }
