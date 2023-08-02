@@ -23,6 +23,11 @@ export class UsersController {
     return this.usersService.createUser(createUserDto);
   }
 
+  @Post('seed-bot')
+  seedBot() {
+    return this.usersService.seedBot();
+  }
+
   @Get()
   findAll() {
     return this.usersService.findAll();
