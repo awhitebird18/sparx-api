@@ -90,4 +90,19 @@ export class UserchannelsController {
 
     return userChannel;
   }
+
+  @Delete('remove/:channelId/:userId')
+  async removeUserFromChannel(
+    @Param('channelId') channelId: string,
+    @Param('userId') userId: string,
+    @GetUser() currentUser: User,
+  ) {
+    const userChannel = this.userchannelsService.removeUserFromChannel(
+      userId,
+      channelId,
+      currentUser.uuid,
+    );
+
+    return userChannel;
+  }
 }
