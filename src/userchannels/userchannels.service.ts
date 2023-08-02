@@ -103,13 +103,44 @@ export class UserchannelsService {
       userUuid,
     );
 
-    const userChannelToReturn =
-      await this.userChannelsRepository.updateUserChannel(userChannel.uuid, {
-        isSubscribed: false,
-        section,
-      });
+    await this.userChannelsRepository.updateUserChannel(userChannel.uuid, {
+      isSubscribed: false,
+      section,
+    });
+
+    const channelUsers = await this.userChannelsRepository.findUsersByChannelId(
+      channelUuid,
+    );
+
+    const userChannelToReturn = await this.findUserChannel(
+      userUuid,
+      channelUuid,
+    );
+
+    userChannelToReturn.users = channelUsers;
 
     this.channelGateway.handleLeaveChannelSocket(channelUuid);
+
+    return userChannelToReturn;
+  }
+
+  async removeUserFromChannel(
+    userId: string,
+    channelId: string,
+    currentUserId: string,
+  ) {
+    await this.leaveChannel(userId, channelId);
+
+    const channelUsers = await this.userChannelsRepository.findUsersByChannelId(
+      channelId,
+    );
+
+    const userChannelToReturn = await this.findUserChannel(
+      currentUserId,
+      channelId,
+    );
+
+    userChannelToReturn.users = channelUsers;
 
     return userChannelToReturn;
   }
