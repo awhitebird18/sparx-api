@@ -35,13 +35,13 @@ export class UserchannelsService {
       });
     }
 
-    if (!userChannel.isSubscribed) {
+    if (!userChannel?.isSubscribed) {
       await this.updateUserChannel(userUuid, channelUuid, {
         isSubscribed: true,
       });
     }
 
-    if (userChannel.isSubscribed) {
+    if (userChannel?.isSubscribed) {
       throw new HttpException(
         'User is already subscribed to the channel',
         HttpStatus.BAD_REQUEST,
@@ -54,6 +54,32 @@ export class UserchannelsService {
     );
 
     this.channelGateway.handleJoinChannelSocket(userChannelToReturn);
+
+    return userChannelToReturn;
+  }
+
+  async inviteUsers(
+    channelId: string,
+    userIds: string[],
+    currentUserId: string,
+  ) {
+    for (let i = 0; i < userIds.length; i++) {
+      try {
+        await this.joinChannel(userIds[i], channelId);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    const channelUsers = await this.userChannelsRepository.findUsersByChannelId(
+      channelId,
+    );
+
+    const userChannelToReturn = await this.findUserChannel(
+      currentUserId,
+      channelId,
+    );
+
+    userChannelToReturn.users = channelUsers;
 
     return userChannelToReturn;
   }
