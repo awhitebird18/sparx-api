@@ -24,6 +24,7 @@ export class ChannelsRepository extends Repository<Channel> {
   async findWorkspaceChannels(page: number, pageSize = 15): Promise<Channel[]> {
     return await this.createQueryBuilder('channel')
       .where({ type: ChannelType.CHANNEL })
+      .andWhere({ isPrivate: false })
       .orderBy('channel.name', 'ASC')
       .skip((page - 1) * pageSize)
       .take(pageSize)
