@@ -32,6 +32,21 @@ export class UserchannelsController {
     return userChannel;
   }
 
+  @Post('invite/:channelId')
+  async inviteUsers(
+    @Param('channelId') channelId: string,
+    @Body() userIds: string[],
+    @GetUser() currentUser: User,
+  ) {
+    const userChannel = await this.userchannelsService.inviteUsers(
+      channelId,
+      userIds,
+      currentUser.uuid,
+    );
+
+    return userChannel;
+  }
+
   @Get()
   async getUserSubscribedChannels(@GetUser() user: User) {
     return this.userchannelsService.getUserSubscribedChannels(user.uuid);
