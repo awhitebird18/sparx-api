@@ -25,14 +25,6 @@ export class ChannelDto extends IntersectionType(CreateChannelDto, BaseDto) {
 
   @ApiProperty({
     example: '77427689-934e-4642-863b-22bf6a77f89c',
-    description: 'Space id in which the channel belongs to.',
-  })
-  @IsOptional()
-  @IsUUID(4)
-  spaceId?: string;
-
-  @ApiProperty({
-    example: '77427689-934e-4642-863b-22bf6a77f89c',
     description: 'Company id in which the channel belongs to.',
   })
   @IsOptional()
