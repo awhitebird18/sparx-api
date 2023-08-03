@@ -4,10 +4,8 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-
 import { ChannelsModule } from './channels/channels.module';
 import { MessagesModule } from './messages/messages.module';
-import { SpacesModule } from './spaces/spaces.module';
 import { CompaniesModule } from './companies/companies.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
@@ -24,7 +22,6 @@ import { UserpreferencesModule } from './userpreferences/userpreferences.module'
     TypeOrmModule.forRoot(config),
     ChannelsModule,
     MessagesModule,
-    SpacesModule,
     CompaniesModule,
     SectionsModule,
     UsersModule,
