@@ -4,7 +4,7 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserChannel } from './entity/userchannel.entity';
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { UsersRepository } from 'src/users/users.repository';
@@ -16,10 +16,37 @@ export class UserChannelsRepository extends Repository<UserChannel> {
   constructor(
     private dataSource: DataSource,
     private channelRepository: ChannelsRepository,
-    private userRepository: UsersRepository,
-    private sectionRepository: SectionsRepository,
+    private usersRepository: UsersRepository,
+    private sectionsRepository: SectionsRepository,
   ) {
     super(UserChannel, dataSource.createEntityManager());
+  }
+
+  async createAndSave(
+    userUuid: string,
+    channelUuid: string,
+    sectionUuid: string,
+  ): Promise<UserChannel> {
+    const user = await this.usersRepository.findOneByProperties({
+      uuid: userUuid,
+    });
+    if (!user) {
+      throw new NotFoundException(`User with UUID ${userUuid} not found`);
+    }
+    const channel = await this.channelRepository.findOneByProperties({
+      uuid: channelUuid,
+    });
+    if (!channel) {
+      throw new NotFoundException(`Channel with UUID ${channelUuid} not found`);
+    }
+    const section = await this.sectionsRepository.findOneByProperties({
+      uuid: sectionUuid,
+    });
+    if (!section) {
+      throw new NotFoundException(`Section with UUID ${sectionUuid} not found`);
+    }
+    const directChannelMember = this.create({ user, channel, section });
+    return this.save(directChannelMember);
   }
 
   async findOneByProperties(
@@ -85,13 +112,13 @@ export class UserChannelsRepository extends Repository<UserChannel> {
     channelId: string;
   }): Promise<UserChannel> {
     // Fetch the user and channel
-    const user = await this.userRepository.findOneByProperties({
+    const user = await this.usersRepository.findOneByProperties({
       uuid: userChannelDto.userId,
     });
     const channel = await this.channelRepository.findOneByProperties({
       uuid: userChannelDto.channelId,
     });
-    const section = await this.sectionRepository.findDefaultSection(
+    const section = await this.sectionsRepository.findDefaultSection(
       channel.type,
       user.uuid,
     );

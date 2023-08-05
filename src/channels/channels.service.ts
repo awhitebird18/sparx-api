@@ -12,19 +12,21 @@ import { v4 as uuid } from 'uuid';
 import * as path from 'path';
 import { saveBase64Image } from 'src/utils/saveBase64Image';
 import { ChannelGateway } from 'src/websockets/channel.gateway';
+import { SectionType } from 'src/sections/enums';
+import { ChannelType } from './enums/channelType.enum';
 
 @Injectable()
 export class ChannelsService {
   constructor(
     private channelsRepository: ChannelsRepository,
-    private sectionRepository: SectionsRepository,
+    private sectionsRepository: SectionsRepository,
     private userChannelService: UserchannelsService,
     private channelGateway: ChannelGateway,
   ) {}
 
   async createChannel(createChannelDto: CreateChannelDto, userId: string) {
     // Perform checks
-    const section = await this.sectionRepository.findDefaultSection(
+    const section = await this.sectionsRepository.findDefaultSection(
       createChannelDto.type,
       userId,
     );
@@ -55,6 +57,45 @@ export class ChannelsService {
     return userChannel;
   }
 
+  async createDirectChannel(memberIds: string[]) {
+    const channel = await this.channelsRepository.findDirectChannelByUserUuids(
+      memberIds,
+    );
+    if (channel) {
+      throw new ConflictException(
+        `A direct channel with members [${memberIds.join(
+          ', ',
+        )}] already exists.`,
+      );
+    }
+
+    const createdChannel = this.channelsRepository.create({
+      type: ChannelType.DIRECT,
+    });
+    // Create channel
+    const newChannel = await this.channelsRepository.save(createdChannel);
+    // Add members to the channel
+    const memberPromises = memberIds.map(async (memberId) => {
+      const section = await this.sectionsRepository.findDefaultSection(
+        SectionType.DIRECT,
+        memberId,
+      );
+      return this.userChannelService.createAndSave(
+        memberId,
+        newChannel.uuid,
+        section.uuid,
+      );
+    });
+    await Promise.all(memberPromises);
+    return newChannel;
+  }
+
+  async findDirectChannelByUserUuids(createDirectChannelDto: any) {
+    return await this.channelsRepository.findDirectChannelByUserUuids(
+      createDirectChannelDto.memberIds,
+    );
+  }
+
   async findWorkspaceChannels(page: number, pageSize: number) {
     const channels = await this.channelsRepository.findWorkspaceChannels(
       page,
@@ -67,7 +108,10 @@ export class ChannelsService {
           channel.id,
         );
 
-        return { ...channel, userCount };
+        return {
+          ...channel,
+          userCount,
+        };
       }),
     );
 
