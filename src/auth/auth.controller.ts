@@ -34,7 +34,7 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @Post('login')
   async login(@Request() req) {
-    return this.authService.login(req.user);
+    return this.authService.generateJWT(req.user);
   }
 
   @Public()
