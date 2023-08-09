@@ -11,6 +11,7 @@ import { SectionsModule } from 'src/sections/sections.module';
 import { UserchannelsModule } from 'src/userchannels/userchannels.module';
 import { ChannelsModule } from 'src/channels/channels.module';
 import { UserpreferencesModule } from 'src/userpreferences/userpreferences.module';
+import { RefreshJWTStrategy } from './strategies/refresh.strategy';
 
 @Module({
   imports: [
@@ -22,11 +23,11 @@ import { UserpreferencesModule } from 'src/userpreferences/userpreferences.modul
     UserpreferencesModule,
     JwtModule.register({
       secret: jwtConstants.secret,
-      signOptions: { expiresIn: '10000s' },
+      signOptions: { expiresIn: '60s' },
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, RefreshJWTStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { LoginDto } from './dto/LoginDto';
-import { LocalAuthGuard } from './localAuthGuard.guard';
+import { LocalAuthGuard } from './guards/localAuthGuard.guard';
 import { AuthService } from './auth.service';
 import { Public } from 'src/common/decorators/isPublic.decorator';
 import { RegisterDto } from './dto/RegisterDto';
@@ -17,6 +17,7 @@ import { UsersService } from 'src/users/users.service';
 import { SectionsService } from 'src/sections/sections.service';
 import { UserchannelsService } from 'src/userchannels/userchannels.service';
 import { UserpreferencesService } from 'src/userpreferences/userpreferences.service';
+import { RefreshJwtAuthGuard } from './guards/refresh-jwt-auth.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -34,7 +35,7 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @Post('login')
   async login(@Request() req) {
-    return this.authService.generateJWT(req.user);
+    return this.authService.login(req.user);
   }
 
   @Public()
@@ -42,6 +43,13 @@ export class AuthController {
   @Post('register')
   async register(@Body() createUserDto: CreateUserDto) {
     return this.authService.register(createUserDto);
+  }
+
+  @Public()
+  @UseGuards(RefreshJwtAuthGuard)
+  @Post('refresh')
+  async refreshToken(@Request() req) {
+    return this.authService.refreshToken(req.user);
   }
 
   @Get('verify')

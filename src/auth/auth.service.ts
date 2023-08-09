@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
-import { CreateUserDto } from 'src/users/dto';
-import { compare, hash } from 'bcrypt';
+import { CreateUserDto, UserDto } from 'src/users/dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -14,7 +14,7 @@ export class AuthService {
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findOneByEmail(email);
 
-    if (user && (await compare(pass, user.password))) {
+    if (user && (await bcrypt.compare(pass, user.password))) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
       return result;
@@ -23,7 +23,16 @@ export class AuthService {
     return null;
   }
 
-  async generateJWT(user: any) {
+  async login(user: any) {
+    const payload = { email: user.email, sub: user.uuid };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      refresh_token: this.jwtService.sign(payload, { expiresIn: '7d' }),
+    };
+  }
+
+  async refreshToken(user: UserDto) {
     const payload = { email: user.email, sub: user.uuid };
 
     return {
@@ -32,7 +41,7 @@ export class AuthService {
   }
 
   async register(createUserDto: CreateUserDto) {
-    const hashedPassword = await hash(createUserDto.password, 10);
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
     const user = await this.usersService.createUser({
       ...createUserDto,
