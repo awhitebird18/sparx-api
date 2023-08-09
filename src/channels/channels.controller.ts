@@ -37,12 +37,27 @@ export class ChannelsController {
     return this.channelsService.createChannel(createChannelDto, user.uuid);
   }
 
+  @Post('direct-channel')
+  async createDirectChannel(@Body() data: { memberIds: string[] }) {
+    return this.channelsService.createDirectChannel(data.memberIds);
+  }
+
   @Get()
   findWorkspaceChannels(
     @Query('page') page: number,
     @Query('pageSize') pageSize: number,
   ) {
     return this.channelsService.findWorkspaceChannels(page, pageSize);
+  }
+
+  @Get('direct')
+  async findDirectChannel(
+    @GetUser() currentUser: User,
+    @Query('userUuid') userUuid: string,
+  ) {
+    return await this.channelsService.findDirectChannelByUserUuids({
+      memberIds: [currentUser.uuid, userUuid],
+    });
   }
 
   @Get(':uuid')

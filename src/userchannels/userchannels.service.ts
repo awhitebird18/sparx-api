@@ -12,6 +12,8 @@ import { SectionsRepository } from 'src/sections/sections.repository';
 import { UserChannel } from './entity/userchannel.entity';
 import { ChannelGateway } from 'src/websockets/channel.gateway';
 import { MessagesRepository } from 'src/messages/messages.repository';
+import { ChannelType } from 'src/channels/enums/channelType.enum';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class UserchannelsService {
@@ -56,6 +58,14 @@ export class UserchannelsService {
     this.channelGateway.handleJoinChannelSocket(userChannelToReturn);
 
     return userChannelToReturn;
+  }
+
+  async createAndSave(userId: string, channelId: string, sectionId: string) {
+    return await this.userChannelsRepository.createAndSave(
+      userId,
+      channelId,
+      sectionId,
+    );
   }
 
   async inviteUsers(
@@ -271,6 +281,15 @@ export class UserchannelsService {
         const users = await this.userChannelsRepository.findUsersByChannelId(
           userChannel.channel.uuid,
         );
+
+        let directChannelName;
+
+        if (userChannel.channel.type === ChannelType.DIRECT) {
+          const otherUser = users.find((user: User) => user.uuid !== userId);
+
+          directChannelName = `${otherUser.firstName} ${otherUser.lastName}`;
+        }
+
         const res = {
           ...plainToClass(UserChannelDto, userChannel),
           ...plainToClass(ChannelDto, userChannel.channel),
@@ -278,6 +297,10 @@ export class UserchannelsService {
           channelId: userChannel.channel.uuid,
           isSubscribed: true,
           users,
+          name:
+            userChannel.channel.type === ChannelType.DIRECT
+              ? directChannelName
+              : userChannel.channel.name,
         };
 
         delete res.section;

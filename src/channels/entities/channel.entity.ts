@@ -9,7 +9,7 @@ import { UserChannel } from 'src/userchannels/entity/userchannel.entity';
 @Entity()
 export class Channel extends BaseEntity {
   @Column({ nullable: true })
-  name: string;
+  name?: string;
 
   @Column({ nullable: true })
   topic?: string;
