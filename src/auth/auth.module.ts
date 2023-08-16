@@ -12,6 +12,7 @@ import { UserchannelsModule } from 'src/userchannels/userchannels.module';
 import { ChannelsModule } from 'src/channels/channels.module';
 import { UserpreferencesModule } from 'src/userpreferences/userpreferences.module';
 import { RefreshJWTStrategy } from './strategies/refresh.strategy';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { RefreshJWTStrategy } from './strategies/refresh.strategy';
     ChannelsModule,
     PassportModule,
     UserpreferencesModule,
+    MailerModule,
     JwtModule.register({
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '60s' },

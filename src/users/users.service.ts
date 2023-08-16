@@ -26,6 +26,14 @@ export class UsersService {
   ) {}
 
   async createUser(createUserDto: CreateUserDto) {
+    const existingUser = await this.userRepository.findOneByProperties({
+      email: createUserDto.email,
+    });
+
+    if (existingUser) {
+      throw new ConflictException('Email is already registered');
+    }
+
     const newUser = await this.userRepository.createUser(createUserDto);
 
     await this.sectionsService.seedUserDefaultSections(newUser);
@@ -78,6 +86,14 @@ export class UsersService {
     );
 
     return plainToInstance(UserDto, user);
+  }
+
+  async markAsVerified(email: any) {
+    const user = await this.userRepository.findOneByProperties({ email });
+
+    return await this.userRepository.updateUser(user.uuid, {
+      isVerified: true,
+    });
   }
 
   async findOneByProperties(searchProperties: any, relations?: string[]) {

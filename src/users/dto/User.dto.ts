@@ -45,6 +45,9 @@ export class UserDto extends BaseDto {
   @IsBoolean()
   isBot: boolean;
 
+  @IsBoolean()
+  isVerified: boolean;
+
   @ApiProperty({ enum: Theme, enumName: 'Theme', example: Theme.LIGHT })
   @IsEnum(Theme)
   theme: Theme;
