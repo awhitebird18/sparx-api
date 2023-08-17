@@ -1,3 +1,3 @@
-export * from './CreateMessage.dto';
-export * from './UpdateMessage.dto';
-export * from './Message.dto';
+export * from './create-message.dto';
+export * from './update-message.dto';
+export * from './message.dto';

@@ -7,14 +7,14 @@ import { User } from 'src/users/entities/user.entity';
 import { SectionsGateway } from 'src/websockets/section.gateway';
 
 import { Section } from './entities/section.entity';
-import { UserchannelsService } from 'src/userchannels/userchannels.service';
+import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
 
 @Injectable()
 export class SectionsService {
   constructor(
     private sectionsRepository: SectionsRepository,
     private sectionsGateway: SectionsGateway,
-    private userChannelService: UserchannelsService,
+    private channelSubscriptionsService: ChannelSubscriptionsService,
   ) {}
 
   private readonly defaultSections = [
@@ -108,19 +108,19 @@ export class SectionsService {
   async removeSection(uuid: string, userId: string): Promise<boolean> {
     const sectionToRemove = await this.sectionsRepository.findUserSection(uuid);
 
-    const userChannels = sectionToRemove.channels;
+    const channelSubscriptions = sectionToRemove.channels;
 
     const userDefaultSections =
       await this.sectionsRepository.findDefaultSections(userId);
 
-    for (let i = 0; i < userChannels.length; i++) {
+    for (let i = 0; i < channelSubscriptions.length; i++) {
       const defaultSection = userDefaultSections.find(
         (section: Section) => section.type === 'channel',
       );
 
-      await this.userChannelService.updateChannelSection(
-        userChannels[i].userId,
-        userChannels[i].channel.uuid,
+      await this.channelSubscriptionsService.updateChannelSection(
+        channelSubscriptions[i].userId,
+        channelSubscriptions[i].channel.uuid,
         defaultSection.uuid,
       );
     }

@@ -8,9 +8,9 @@ import { jwtConstants } from './constants';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { SectionsModule } from 'src/sections/sections.module';
-import { UserchannelsModule } from 'src/userchannels/userchannels.module';
+import { ChannelSubscriptionsModule } from 'src/channel-subscriptions/channel-subscriptions.module';
 import { ChannelsModule } from 'src/channels/channels.module';
-import { UserpreferencesModule } from 'src/userpreferences/userpreferences.module';
+import { UserpreferencesModule } from 'src/user-preferences/user-preferences.module';
 import { RefreshJWTStrategy } from './strategies/refresh.strategy';
 import { MailerModule } from '@nestjs-modules/mailer';
 
@@ -18,7 +18,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
   imports: [
     UsersModule,
     SectionsModule,
-    UserchannelsModule,
+    ChannelSubscriptionsModule,
     ChannelsModule,
     PassportModule,
     UserpreferencesModule,

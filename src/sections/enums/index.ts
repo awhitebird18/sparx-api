@@ -1,10 +1,2 @@
-export enum SectionType {
-  DIRECT = 'direct',
-  CHANNEL = 'channel',
-  ANY = 'any',
-}
-
-export enum SortBy {
-  ALPHA = 'alpha',
-  RECENT = 'recent',
-}
+export * from './section-type.enum';
+export * from './sort-by.enum';

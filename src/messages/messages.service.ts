@@ -1,15 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateMessageDto } from './dto/CreateMessage.dto';
-import { UpdateMessageDto } from './dto/UpdateMessage.dto';
+import { CreateMessageDto } from './dto/create-message.dto';
+import { UpdateMessageDto } from './dto/update-message.dto';
 import { MessagesRepository } from './messages.repository';
 import { UsersRepository } from 'src/users/users.repository';
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { plainToInstance } from 'class-transformer';
 import { MessageDto } from './dto';
 import { Message } from './entities/message.entity';
-import { ReactionDto } from './dto/Reaction.dto';
+import { ReactionDto } from './dto/reaction.dto';
 import { ReactionRepository } from './reactions.repository';
-import { UpdateReactionDto } from './dto/UpdateReaction.dto';
+import { UpdateReactionDto } from './dto/update-reaction.dto';
 import { groupBy } from 'lodash';
 import { ChatGateway } from 'src/websockets/chat.gateway';
 

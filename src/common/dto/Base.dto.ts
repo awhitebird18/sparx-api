@@ -25,4 +25,3 @@ export class BaseDto {
   @IsOptional()
   deletedAt: Date;
 }
-// Todo: add createdBy, updatedBy, deletedBy

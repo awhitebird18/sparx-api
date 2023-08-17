@@ -12,12 +12,12 @@ import { AuthModule } from './auth/auth.module';
 import { SectionsModule } from './sections/sections.module';
 import { WebsocketsModule } from './websockets/websockets.module';
 import { JwtAuthGuard } from './auth/guards/jwtAuthGuard.guard';
-import { UserchannelsModule } from './userchannels/userchannels.module';
+import { ChannelSubscriptionsModule } from './channel-subscriptions/channel-subscriptions.module';
 import { config } from './typeorm';
-import { UserpreferencesModule } from './userpreferences/userpreferences.module';
+import { UserpreferencesModule } from './user-preferences/user-preferences.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
-import { PreviewController } from './preview/preview.controller';
+import { FilesModule } from './files/files.module';
 import * as path from 'path';
 import * as Mailgun from 'nodemailer-mailgun-transport';
 
@@ -51,9 +51,10 @@ import * as Mailgun from 'nodemailer-mailgun-transport';
     UserpreferencesModule,
     AuthModule,
     WebsocketsModule,
-    UserchannelsModule,
+    ChannelSubscriptionsModule,
+    FilesModule,
   ],
-  controllers: [AppController, PreviewController],
+  controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
 })
 export class AppModule {}

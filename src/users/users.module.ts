@@ -6,7 +6,7 @@ import { User } from './entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SectionsModule } from 'src/sections/sections.module';
 import { WebsocketsModule } from 'src/websockets/websockets.module';
-import { UserpreferencesModule } from 'src/userpreferences/userpreferences.module';
+import { UserpreferencesModule } from 'src/user-preferences/user-preferences.module';
 
 @Module({
   imports: [

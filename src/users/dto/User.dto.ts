@@ -8,9 +8,9 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
-import { BaseDto } from 'src/common/dto/Base.dto';
+import { BaseDto } from 'src/common/dto/base.dto';
 import { SectionDto } from 'src/sections/dto';
-import { UserChannelDto } from 'src/userchannels/dto/UserChannel.dto';
+import { ChannelSubscriptionDto } from 'src/channel-subscriptions/dto/channel-subscription.dto';
 
 export class UserDto extends BaseDto {
   @ApiProperty({ example: 'John', description: 'The first name of the user.' })
@@ -64,5 +64,5 @@ export class UserDto extends BaseDto {
   sections: SectionDto[];
 
   @IsArray()
-  userChannels: UserChannelDto[];
+  channelSubscriptions: ChannelSubscriptionDto[];
 }

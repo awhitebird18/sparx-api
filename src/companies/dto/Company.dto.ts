@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { BaseDto } from 'src/common/dto/Base.dto';
+import { BaseDto } from 'src/common/dto/base.dto';
 import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class CompanyDto extends BaseDto {

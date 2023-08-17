@@ -3,17 +3,17 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/CreateUser.dto';
-import { UpdateUserDto } from './dto/UpdateUser.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersRepository } from './users.repository';
 import { plainToInstance } from 'class-transformer';
 import { UserDto } from './dto';
 import { v4 as uuid } from 'uuid';
-import { saveBase64Image } from 'src/utils/saveBase64Image';
+import { saveBase64Image } from 'src/utils';
 import * as path from 'path';
 import { UsersGateway } from 'src/websockets/user.gateway';
 import { SectionsService } from 'src/sections/sections.service';
-import { UserpreferencesService } from 'src/userpreferences/userpreferences.service';
+import { UserpreferencesService } from 'src/user-preferences/user-preferences.service';
 import * as fs from 'fs';
 
 @Injectable()

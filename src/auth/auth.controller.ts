@@ -12,13 +12,13 @@ import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { LoginDto } from './dto/LoginDto';
 import { LocalAuthGuard } from './guards/localAuthGuard.guard';
 import { AuthService } from './auth.service';
-import { Public } from 'src/common/decorators/isPublic.decorator';
+import { Public } from 'src/common/decorators/is-public';
 import { RegisterDto } from './dto/RegisterDto';
 import { CreateUserDto } from 'src/users/dto';
 import { UsersService } from 'src/users/users.service';
 import { SectionsService } from 'src/sections/sections.service';
-import { UserchannelsService } from 'src/userchannels/userchannels.service';
-import { UserpreferencesService } from 'src/userpreferences/userpreferences.service';
+import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
+import { UserpreferencesService } from 'src/user-preferences/user-preferences.service';
 import { RefreshJwtAuthGuard } from './guards/refresh-jwt-auth.guard';
 import { Response } from 'express';
 import { JwtAuthGuard } from './guards/jwtAuthGuard.guard';
@@ -30,7 +30,7 @@ export class AuthController {
     private authService: AuthService,
     private usersService: UsersService,
     private sectionsService: SectionsService,
-    private userChannelsService: UserchannelsService,
+    private channelSubscriptionsService: ChannelSubscriptionsService,
     private userPreferencesService: UserpreferencesService,
   ) {}
 
@@ -53,8 +53,8 @@ export class AuthController {
   @Public()
   @ApiBody({ type: RegisterDto })
   @Post('register')
-  async register(@Body() createUserDto: CreateUserDto) {
-    return this.authService.register(createUserDto);
+  async register(@Body() registerDto: RegisterDto) {
+    return this.authService.register(registerDto);
   }
 
   @Public()
@@ -73,15 +73,18 @@ export class AuthController {
 
     const sections = await this.sectionsService.findUserSections(user.uuid);
 
-    const channels = await this.userChannelsService.getUserSubscribedChannels(
-      user.uuid,
-    );
+    const channels =
+      await this.channelSubscriptionsService.getUserSubscribedChannels(
+        user.uuid,
+      );
 
     const userPreferences =
       await this.userPreferencesService.findUserPreferences(user.uuid);
 
     const channelUnreads =
-      await this.userChannelsService.getUserUnreadMessagesCount(user.uuid);
+      await this.channelSubscriptionsService.getUserUnreadMessagesCount(
+        user.uuid,
+      );
 
     const workspaceUsers = await this.usersService.findAll();
 

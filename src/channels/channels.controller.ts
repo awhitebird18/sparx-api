@@ -15,18 +15,14 @@ import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { NotFoundException } from '@nestjs/common/exceptions';
 import { HttpStatus } from '@nestjs/common/enums';
 
-import { GetUser } from 'src/common/decorators/getUser.decorator';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { User } from 'src/users/entities/user.entity';
-import { UserchannelsService } from 'src/userchannels/userchannels.service';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Channels')
 @Controller('channels')
 export class ChannelsController {
-  constructor(
-    private readonly channelsService: ChannelsService,
-    private userChannelService: UserchannelsService,
-  ) {}
+  constructor(private readonly channelsService: ChannelsService) {}
 
   @ApiBody({ type: CreateChannelDto })
   @Post()
@@ -55,9 +51,10 @@ export class ChannelsController {
     @GetUser() currentUser: User,
     @Query('userUuid') userUuid: string,
   ) {
-    return await this.channelsService.findDirectChannelByUserUuids({
-      memberIds: [currentUser.uuid, userUuid],
-    });
+    return await this.channelsService.findDirectChannelByUserUuids([
+      currentUser.uuid,
+      userUuid,
+    ]);
   }
 
   @Get(':uuid')

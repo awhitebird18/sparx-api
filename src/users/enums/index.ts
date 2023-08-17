@@ -1,2 +1,2 @@
-export * from './PrimaryColor.enum';
-export * from './Theme.enum';
+export * from './primary-color.enum';
+export * from './theme.enum';

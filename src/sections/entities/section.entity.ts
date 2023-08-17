@@ -1,5 +1,5 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { UserChannel } from 'src/userchannels/entity/userchannel.entity';
+import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Entity, Column, OneToMany, ManyToOne } from 'typeorm';
 import { SortBy } from '../enums';
@@ -27,8 +27,8 @@ export class Section extends BaseEntity {
   @Column({ type: 'enum', enum: SortBy, default: SortBy.ALPHA })
   sortBy: SortBy;
 
-  @OneToMany(() => UserChannel, (userchannel) => userchannel.section)
-  channels: UserChannel[];
+  @OneToMany(() => ChannelSubscription, (userchannel) => userchannel.section)
+  channels: ChannelSubscription[];
 
   @ManyToOne(() => User, (user) => user.sections)
   user?: User;

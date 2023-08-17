@@ -38,6 +38,7 @@
     "class-validator": "^0.14.0",
     "cookie-parser": "^1.4.6",
     "handlebars": "^4.7.8",
+    "nestjs-spelunker": "^1.1.5",
     "nodemailer": "^6.9.4",
     "nodemailer-mailgun-transport": "^2.1.5",
     "passport": "^0.6.0",

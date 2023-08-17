@@ -9,7 +9,7 @@ import { Section } from './entities/section.entity';
 import { CreateSectionDto, UpdateSectionDto } from './dto';
 import { Injectable } from '@nestjs/common';
 import { User } from 'src/users/entities/user.entity';
-import { UserChannel } from 'src/userchannels/entity/userchannel.entity';
+import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 
 @Injectable()
 export class SectionsRepository extends Repository<Section> {
@@ -48,7 +48,7 @@ export class SectionsRepository extends Repository<Section> {
 
     for (const channel of section.channels) {
       channel.channel = await this.createQueryBuilder()
-        .relation(UserChannel, 'channel')
+        .relation(ChannelSubscription, 'channel')
         .of(channel)
         .loadOne();
     }
