@@ -5,7 +5,7 @@ import { UserDto } from 'src/users/dto';
 import * as bcrypt from 'bcrypt';
 import { Response } from 'express';
 import { MailerService } from '@nestjs-modules/mailer';
-import { RegisterDto } from './dto/RegisterDto';
+import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {

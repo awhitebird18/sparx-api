@@ -6,7 +6,7 @@ import {
   Matches,
   IsNotEmpty,
 } from 'class-validator';
-import { IsPasswordMatching } from '../validators/IsPasswordMatching';
+import { IsPasswordMatching } from '../validators/is-password-matching';
 
 export class RegisterDto {
   @IsEmail({}, { message: 'Invalid email address.' })

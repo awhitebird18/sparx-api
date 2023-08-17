@@ -9,19 +9,18 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
-import { LoginDto } from './dto/LoginDto';
-import { LocalAuthGuard } from './guards/localAuthGuard.guard';
+import { LoginDto } from './dto/login.dto';
+import { LocalAuthGuard } from './guards/local-auth.guard';
 import { AuthService } from './auth.service';
 import { Public } from 'src/common/decorators/is-public';
-import { RegisterDto } from './dto/RegisterDto';
-import { CreateUserDto } from 'src/users/dto';
+import { RegisterDto } from './dto/register.dto';
 import { UsersService } from 'src/users/users.service';
 import { SectionsService } from 'src/sections/sections.service';
 import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
 import { UserpreferencesService } from 'src/user-preferences/user-preferences.service';
-import { RefreshJwtAuthGuard } from './guards/refresh-jwt-auth.guard';
+import { RefreshJwtAuthGuard } from './guards/jwt-refresh.guard';
 import { Response } from 'express';
-import { JwtAuthGuard } from './guards/jwtAuthGuard.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
