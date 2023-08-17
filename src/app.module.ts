@@ -11,7 +11,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { SectionsModule } from './sections/sections.module';
 import { WebsocketsModule } from './websockets/websockets.module';
-import { JwtAuthGuard } from './auth/guards/jwtAuthGuard.guard';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { ChannelSubscriptionsModule } from './channel-subscriptions/channel-subscriptions.module';
 import { config } from './typeorm';
 import { UserpreferencesModule } from './user-preferences/user-preferences.module';
