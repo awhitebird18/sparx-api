@@ -1,10 +1,9 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Company } from 'src/companies/entities/company.entity';
 import { Message } from 'src/messages/entities/message.entity';
-import { Section } from 'src/sections/entities/section.entity';
 import { Entity, Column, OneToMany, ManyToOne } from 'typeorm';
-import { ChannelType } from '../enums/channelType.enum';
-import { UserChannel } from 'src/userchannels/entity/userchannel.entity';
+import { ChannelType } from '../enums/channel-type.enum';
+import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 
 @Entity()
 export class Channel extends BaseEntity {
@@ -36,9 +35,9 @@ export class Channel extends BaseEntity {
   @OneToMany(() => Message, (message) => message.channel)
   messages: Message[];
 
-  @OneToMany(() => UserChannel, (userChannel) => userChannel.channel)
-  userChannels: UserChannel[];
-
-  @ManyToOne(() => Section, (section) => section.channels)
-  section: Section;
+  @OneToMany(
+    () => ChannelSubscription,
+    (channelSubscription) => channelSubscription.channel,
+  )
+  channelSubscriptions: ChannelSubscription[];
 }

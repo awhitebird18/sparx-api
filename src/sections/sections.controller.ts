@@ -8,10 +8,10 @@ import {
   Delete,
 } from '@nestjs/common';
 import { SectionsService } from './sections.service';
-import { CreateSectionDto } from './dto/CreateSection.dto';
-import { UpdateSectionDto } from './dto/UpdateSection.dto';
+import { CreateSectionDto } from './dto/create-section.dto';
+import { UpdateSectionDto } from './dto/update-section.dto';
 import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
-import { GetUser } from 'src/common/decorators/getUser.decorator';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { User } from 'src/users/entities/user.entity';
 
 @ApiBearerAuth('access-token')

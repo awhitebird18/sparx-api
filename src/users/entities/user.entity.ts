@@ -10,8 +10,8 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { PrimaryColor, Theme } from '../enums';
-import { UserChannel } from 'src/userchannels/entity/userchannel.entity';
-import { Userpreferences } from 'src/userpreferences/entities/userpreference.entity';
+import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
+import { UserPreferences } from 'src/user-preferences/entities/user-preference.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -45,8 +45,11 @@ export class User extends BaseEntity {
   @OneToMany(() => Section, (section) => section.user)
   sections: Section[];
 
-  @OneToMany(() => UserChannel, (userChannel) => userChannel.user)
-  userChannels: UserChannel[];
+  @OneToMany(
+    () => ChannelSubscription,
+    (channelSubscription) => channelSubscription.user,
+  )
+  channelSubscriptions: ChannelSubscription[];
 
   @Column({ default: false })
   isAdmin: boolean;
@@ -57,7 +60,7 @@ export class User extends BaseEntity {
   @Column({ default: 'password' })
   password: string;
 
-  @OneToOne(() => Userpreferences, (userpreferences) => userpreferences.user)
+  @OneToOne(() => UserPreferences, (userPreferences) => userPreferences.user)
   @JoinColumn()
-  preferences: Userpreferences;
+  preferences: UserPreferences;
 }

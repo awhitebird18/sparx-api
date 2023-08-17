@@ -9,7 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ChannelDto, UpdateChannelDto } from 'src/channels/dto';
-import { UserChannelDto } from 'src/userchannels/dto/UserChannel.dto';
+import { ChannelSubscriptionDto } from 'src/channel-subscriptions/dto/channel-subscription.dto';
 
 @WebSocketGateway({
   cors: { origin: 'http://localhost:5173' },
@@ -45,11 +45,11 @@ export class ChannelGateway
   }
 
   handleLeaveChannelSocket(channelId: string) {
-    this.server.emit('userchannels/leave', channelId);
+    this.server.emit('ChannelSubscriptions/leave', channelId);
   }
 
-  handleJoinChannelSocket(userChannel: UserChannelDto) {
-    this.server.emit('userchannels/join', userChannel);
+  handleJoinChannelSocket(channelSubscription: ChannelSubscriptionDto) {
+    this.server.emit('ChannelSubscriptions/join', channelSubscription);
   }
 
   @SubscribeMessage('joinRoom')

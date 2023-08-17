@@ -1,8 +1,7 @@
 import { BaseDto } from 'src/common/dto';
 import { IsOptional, IsString, IsUUID } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-import { IntersectionType } from '@nestjs/mapped-types';
-import { CreateChannelDto } from './CreateChannel.dto';
+import { ApiProperty, IntersectionType } from '@nestjs/swagger';
+import { CreateChannelDto } from './create-channel.dto';
 
 export class ChannelDto extends IntersectionType(CreateChannelDto, BaseDto) {
   @ApiProperty({

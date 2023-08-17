@@ -7,34 +7,24 @@ import { ChannelDto, CreateChannelDto, UpdateChannelDto } from './dto';
 import { ChannelsRepository } from './channels.repository';
 import { plainToInstance } from 'class-transformer';
 import { SectionsRepository } from 'src/sections/sections.repository';
-import { UserchannelsService } from 'src/userchannels/userchannels.service';
-import { v4 as uuid } from 'uuid';
-import * as path from 'path';
-import { saveBase64Image } from 'src/utils/saveBase64Image';
+import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
 import { ChannelGateway } from 'src/websockets/channel.gateway';
 import { SectionType } from 'src/sections/enums';
-import { ChannelType } from './enums/channelType.enum';
+import { ChannelType } from './enums/channel-type.enum';
+import { FilesService } from 'src/files/files.service';
 
 @Injectable()
 export class ChannelsService {
   constructor(
     private channelsRepository: ChannelsRepository,
     private sectionsRepository: SectionsRepository,
-    private userChannelService: UserchannelsService,
+    private ChannelSubscriptionservice: ChannelSubscriptionsService,
     private channelGateway: ChannelGateway,
+    private filesService: FilesService,
   ) {}
 
   async createChannel(createChannelDto: CreateChannelDto, userId: string) {
-    // Perform checks
-    const section = await this.sectionsRepository.findDefaultSection(
-      createChannelDto.type,
-      userId,
-    );
-
-    if (!section) {
-      throw new NotFoundException('Default section not found');
-    }
-
+    // Check if channel name already exists. If so, throw error.
     const existingChannel = await this.channelsRepository.findOneByProperties({
       name: createChannelDto.name,
     });
@@ -46,15 +36,16 @@ export class ChannelsService {
     // Create database entry
     const newChannel = await this.channelsRepository.createChannel(
       createChannelDto,
-      section,
     );
 
-    const userChannel = await this.userChannelService.joinChannel(
-      userId,
-      newChannel.uuid,
-    );
+    // Add current user to channel
+    const channelSubscription =
+      await this.ChannelSubscriptionservice.joinChannel(
+        userId,
+        newChannel.uuid,
+      );
 
-    return userChannel;
+    return channelSubscription;
   }
 
   async createDirectChannel(memberIds: string[]) {
@@ -80,7 +71,7 @@ export class ChannelsService {
         SectionType.DIRECT,
         memberId,
       );
-      return this.userChannelService.createAndSave(
+      return this.ChannelSubscriptionservice.createAndSave(
         memberId,
         newChannel.uuid,
         section.uuid,
@@ -90,9 +81,9 @@ export class ChannelsService {
     return newChannel;
   }
 
-  async findDirectChannelByUserUuids(createDirectChannelDto: any) {
+  async findDirectChannelByUserUuids(memberIds: string[]) {
     return await this.channelsRepository.findDirectChannelByUserUuids(
-      createDirectChannelDto.memberIds,
+      memberIds,
     );
   }
 
@@ -104,9 +95,8 @@ export class ChannelsService {
 
     const channelsWithUserCount = await Promise.all(
       channels.map(async (channel) => {
-        const userCount = await this.userChannelService.getUserChannelCount(
-          channel.id,
-        );
+        const userCount =
+          await this.ChannelSubscriptionservice.getUserChannelCount(channel.id);
 
         return {
           ...channel,
@@ -127,31 +117,34 @@ export class ChannelsService {
   }
 
   async updateChannel(id: string, updateChannelDto: UpdateChannelDto) {
-    const channel = await this.channelsRepository.findChannelByUuid(id);
+    // Check if channel exists
+    const channel = await this.channelsRepository.findByUuid(id);
 
+    if (!channel) {
+      throw new NotFoundException('Channel not found');
+    }
+
+    // Handle image storage
     if (updateChannelDto.icon) {
-      const imageId = uuid();
-
-      const folderPath = `/static/`;
-
-      const imagePath = path.join(folderPath, imageId);
-
-      saveBase64Image(updateChannelDto.icon, imagePath);
+      const imagePath = await this.filesService.saveImage(
+        updateChannelDto.icon,
+      );
       channel.icon = imagePath;
       delete updateChannelDto.icon;
     }
 
+    // Update channel
     Object.assign(channel, updateChannelDto);
-
     const updatedChannel = await this.channelsRepository.save(channel);
 
+    // Send updated channel by socket
     this.channelGateway.handleUpdateChannelSocket(updatedChannel);
 
     return updatedChannel;
   }
 
   async removeChannel(uuid: string): Promise<boolean> {
-    const channel = await this.channelsRepository.findChannelByUuid(uuid);
+    const channel = await this.channelsRepository.findByUuid(uuid);
 
     if (!channel) {
       return false;

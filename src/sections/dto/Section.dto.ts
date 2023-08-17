@@ -2,18 +2,18 @@ import { BaseDto } from 'src/common/dto';
 import { IsArray, IsBoolean, IsEnum, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { IntersectionType } from '@nestjs/mapped-types';
-import { CreateSectionDto } from './CreateSection.dto';
+import { CreateSectionDto } from './create-section.dto';
 
 import { SectionType } from '../enums';
-import { UserChannelDto } from 'src/userchannels/dto/UserChannel.dto';
+import { ChannelSubscriptionDto } from 'src/channel-subscriptions/dto/channel-subscription.dto';
 
 export class SectionDto extends IntersectionType(CreateSectionDto, BaseDto) {
   @ApiProperty({
-    example: [UserChannelDto],
+    example: [ChannelSubscriptionDto],
     description: 'Channels that exist under this section',
   })
   @IsArray()
-  channels: UserChannelDto[];
+  channels: ChannelSubscriptionDto[];
 
   @ApiProperty({
     example: true,

@@ -1,9 +1,9 @@
-import { BaseDto } from 'src/common/dto/Base.dto';
+import { BaseDto } from 'src/common/dto/base.dto';
 import { IntersectionType } from '@nestjs/mapped-types';
-import { CreateMessageDto } from './CreateMessage.dto';
+import { CreateMessageDto } from './create-message.dto';
 import { ChannelDto } from 'src/channels/dto';
 import { UserDto } from 'src/users/dto';
-import { ReactionDto } from '../dto/Reaction.dto';
+import { ReactionDto } from './reaction.dto';
 import { Message } from '../entities/message.entity';
 
 export class MessageDto extends IntersectionType(CreateMessageDto, BaseDto) {

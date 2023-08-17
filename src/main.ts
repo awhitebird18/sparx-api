@@ -5,11 +5,29 @@ import { join } from 'path';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
+import { ValidationPipe } from '@nestjs/common';
+import { SpelunkerModule } from 'nestjs-spelunker';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'verbose', 'debug', 'log'],
   });
+  const tree = SpelunkerModule.explore(app);
+  const root = SpelunkerModule.graph(tree);
+  const edges = SpelunkerModule.findGraphEdges(root);
+  const mermaidEdges = edges.map(
+    ({ from, to }) => `  ${from.module.name}-->${to.module.name}`,
+  );
+  console.log(mermaidEdges.join('\n'));
+
+  // app.useGlobalPipes(
+  //   new ValidationPipe({
+  //     whitelist: true,
+  //     forbidNonWhitelisted: true,
+  //     transform: true,
+  //     // validationError: { target: false },
+  //   }),
+  // );
 
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));

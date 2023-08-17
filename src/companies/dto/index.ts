@@ -1,3 +1,3 @@
-export * from './CreateCompany.dto';
-export * from './UpdateCompany.dto';
-export * from './Company.dto';
+export * from './create-company.dto';
+export * from './update-company.dto';
+export * from './company.dto';

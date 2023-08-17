@@ -1,3 +1,3 @@
-export * from './CreateSection.dto';
-export * from './UpdateSection.dto';
-export * from './Section.dto';
+export * from './create-section.dto';
+export * from './update-section.dto';
+export * from './section.dto';

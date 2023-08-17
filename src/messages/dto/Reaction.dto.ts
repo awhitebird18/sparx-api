@@ -1,4 +1,4 @@
-import { BaseDto } from 'src/common/dto/Base.dto';
+import { BaseDto } from 'src/common/dto/base.dto';
 
 export class ReactionDto extends BaseDto {
   userId: string;
