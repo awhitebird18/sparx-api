@@ -29,8 +29,9 @@ export class SectionsRepository extends Repository<Section> {
 
   async findUserSections(userId: string): Promise<Section[]> {
     const sections = await this.createQueryBuilder('section')
-      .leftJoin('section.channels', 'channels')
+      .leftJoin('section.channels', 'channel')
       .leftJoin('section.user', 'user')
+      .addSelect('channel.uuid', 'channelId')
       .where('user.uuid = :userId', { userId })
       .orderBy('section.orderIndex', 'ASC')
       .getMany();

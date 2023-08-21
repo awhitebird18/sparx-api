@@ -44,14 +44,30 @@ export class ChannelsRepository extends Repository<Channel> {
     return undefined;
   }
 
-  async findWorkspaceChannels(page: number, pageSize = 15): Promise<Channel[]> {
+  async findUserChannels(userUuid: string): Promise<Channel[]> {
     return await this.createQueryBuilder('channel')
-      .where({ type: ChannelType.CHANNEL })
-      .andWhere({ isPrivate: false })
+      .leftJoin('channel.channelSubscriptions', 'channelSubscription')
+      .innerJoin('channelSubscription.user', 'user') // Join the user relationship in ChannelSubscription
+      .select('channel')
+      .where('user.uuid = :userUuid', { userUuid })
+      .getMany();
+  }
+
+  async findWorkspaceChannelsWithUserCounts(
+    page: number,
+    pageSize = 15,
+  ): Promise<any> {
+    return await this.createQueryBuilder('channel')
+      .leftJoin('channel.channelSubscriptions', 'channelSubscription')
+      .select('channel') // This selects all fields of the `channel` entity
+      .addSelect('COUNT(channelSubscription.uuid)', 'usercount')
+      .where('channel.type = :type', { type: ChannelType.CHANNEL })
+      .andWhere('channel.isPrivate = :isPrivate', { isPrivate: false })
+      .groupBy('channel.id')
       .orderBy('channel.name', 'ASC')
       .skip((page - 1) * pageSize)
       .take(pageSize)
-      .getMany();
+      .getRawAndEntities();
   }
 
   async findChannelsByIds(channelIds: string[]): Promise<Channel[]> {

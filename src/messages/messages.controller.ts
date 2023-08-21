@@ -45,7 +45,7 @@ export class MessagesController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.messagesService.findOneByProperties(id);
+    return this.messagesService.findOne(id);
   }
 
   @Patch(':id/reaction')

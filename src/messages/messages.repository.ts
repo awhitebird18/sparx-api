@@ -102,7 +102,7 @@ export class MessagesRepository extends Repository<Message> {
     return populatedMessages;
   }
 
-  async countUnreadMessages(
+  async getUnreadMessageCount(
     channelId: string,
     lastRead: Date,
   ): Promise<number> {

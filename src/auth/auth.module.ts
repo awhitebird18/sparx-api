@@ -10,23 +10,23 @@ import { AuthController } from './auth.controller';
 import { SectionsModule } from 'src/sections/sections.module';
 import { ChannelSubscriptionsModule } from 'src/channel-subscriptions/channel-subscriptions.module';
 import { ChannelsModule } from 'src/channels/channels.module';
-import { UserpreferencesModule } from 'src/user-preferences/user-preferences.module';
+import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
 import { RefreshJWTStrategy } from './strategies/refresh.strategy';
 import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
+    JwtModule.register({
+      secret: jwtConstants.secret,
+      signOptions: { expiresIn: '60s' },
+    }),
     UsersModule,
     SectionsModule,
     ChannelSubscriptionsModule,
     ChannelsModule,
     PassportModule,
-    UserpreferencesModule,
+    UserPreferencesModule,
     MailerModule,
-    JwtModule.register({
-      secret: jwtConstants.secret,
-      signOptions: { expiresIn: '60s' },
-    }),
   ],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy, RefreshJWTStrategy],

@@ -13,14 +13,14 @@ import { MessagesModule } from 'src/messages/messages.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([ChannelSubscription]),
-    forwardRef(() => UsersModule),
-    forwardRef(() => SectionsModule),
     forwardRef(() => ChannelsModule),
-    forwardRef(() => MessagesModule),
+    UsersModule,
+    SectionsModule,
+    MessagesModule,
     WebsocketsModule,
   ],
   controllers: [ChannelSubscriptionsController],
   providers: [ChannelSubscriptionsService, ChannelSubscriptionsRepository],
-  exports: [ChannelSubscriptionsService, ChannelSubscriptionsRepository],
+  exports: [ChannelSubscriptionsService],
 })
 export class ChannelSubscriptionsModule {}

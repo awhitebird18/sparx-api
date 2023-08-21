@@ -1,13 +1,13 @@
 import { Controller, Post, Body, Patch } from '@nestjs/common';
-import { UserpreferencesService } from './user-preferences.service';
+import { UserPreferencesService } from './user-preferences.service';
 import { UpdateUserpreferenceDto } from './dto/update-user-preferences';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { User } from 'src/users/entities/user.entity';
 
 @Controller('user-preferences')
-export class UserpreferencesController {
+export class UserPreferencesController {
   constructor(
-    private readonly userpreferencesService: UserpreferencesService,
+    private readonly userpreferencesService: UserPreferencesService,
   ) {}
 
   @Post()

@@ -28,6 +28,10 @@ export class SectionsService {
     },
   ];
 
+  async findOne(searchProperties: any) {
+    return await this.sectionsRepository.findOneBy(searchProperties);
+  }
+
   async seedUserDefaultSections(user: User) {
     const maxOrderIndex = await this.sectionsRepository.getMaxOrderIndex(user);
     for (let i = 0; i < this.defaultSections.length; i++) {
@@ -66,16 +70,11 @@ export class SectionsService {
     return plainToInstance(SectionDto, sections);
   }
 
-  async findDefaultSection(
-    sectionType: string,
-    userId: string,
-  ): Promise<SectionDto> {
-    const section = await this.sectionsRepository.findDefaultSection(
+  async findDefaultSection(sectionType: string, userId: string) {
+    return await this.sectionsRepository.findDefaultSection(
       sectionType,
       userId,
     );
-
-    return plainToInstance(SectionDto, section);
   }
 
   async findDefaultSections(userId: string): Promise<SectionDto[]> {

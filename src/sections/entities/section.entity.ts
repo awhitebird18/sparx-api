@@ -31,5 +31,5 @@ export class Section extends BaseEntity {
   channels: ChannelSubscription[];
 
   @ManyToOne(() => User, (user) => user.sections)
-  user?: User;
+  user: User;
 }

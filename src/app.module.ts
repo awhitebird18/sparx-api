@@ -14,7 +14,7 @@ import { WebsocketsModule } from './websockets/websockets.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { ChannelSubscriptionsModule } from './channel-subscriptions/channel-subscriptions.module';
 import { config } from './typeorm';
-import { UserpreferencesModule } from './user-preferences/user-preferences.module';
+import { UserPreferencesModule } from './user-preferences/user-preferences.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { FilesModule } from './files/files.module';
@@ -48,7 +48,7 @@ import * as Mailgun from 'nodemailer-mailgun-transport';
     CompaniesModule,
     SectionsModule,
     UsersModule,
-    UserpreferencesModule,
+    UserPreferencesModule,
     AuthModule,
     WebsocketsModule,
     ChannelSubscriptionsModule,

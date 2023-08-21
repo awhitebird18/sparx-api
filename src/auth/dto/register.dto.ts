@@ -10,6 +10,7 @@ import { IsPasswordMatching } from '../validators/is-password-matching';
 
 export class RegisterDto {
   @IsEmail({}, { message: 'Invalid email address.' })
+  @IsNotEmpty()
   email: string;
 
   @IsString()
@@ -23,6 +24,7 @@ export class RegisterDto {
   lastName: string;
 
   @IsString()
+  @IsNotEmpty()
   @MinLength(8, { message: 'Password must be at least 8 characters long.' })
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/, {
     message:
@@ -30,6 +32,8 @@ export class RegisterDto {
   })
   password: string;
 
+  @IsString()
+  @IsNotEmpty()
   @IsPasswordMatching({ message: 'Passwords must match.' })
   confirmPassword: string;
 }

@@ -13,6 +13,7 @@ import { User } from 'src/users/entities/user.entity';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ChannelSubscription } from './entity/channel-subscription.entity';
 import { ChannelSubscriptionDto } from './dto/channel-subscription.dto';
+import { ChannelType } from 'src/channels/enums/channel-type.enum';
 
 @ApiBearerAuth('access-token')
 @Controller('channel-subscriptions')
@@ -29,6 +30,7 @@ export class ChannelSubscriptionsController {
     const channelSubscription = this.channelSubscriptionsService.joinChannel(
       user.uuid,
       channelId,
+      ChannelType.CHANNEL,
     );
 
     return channelSubscription;
