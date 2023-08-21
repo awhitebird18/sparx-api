@@ -13,42 +13,44 @@ import { saveBase64Image } from 'src/utils';
 import * as path from 'path';
 import { UsersGateway } from 'src/websockets/user.gateway';
 import { SectionsService } from 'src/sections/sections.service';
-import { UserpreferencesService } from 'src/user-preferences/user-preferences.service';
 import * as fs from 'fs';
+import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private userRepository: UsersRepository,
-    private usersGatway: UsersGateway,
     private sectionsService: SectionsService,
-    private userPreferencesService: UserpreferencesService,
+    private userPreferencesService: UserPreferencesService,
+    private usersGatway: UsersGateway,
   ) {}
 
   async createUser(createUserDto: CreateUserDto) {
     const existingUser = await this.userRepository.findOneByProperties({
       email: createUserDto.email,
     });
-
     if (existingUser) {
       throw new ConflictException('Email is already registered');
     }
 
-    const newUser = await this.userRepository.createUser(createUserDto);
+    // Creating new user
+    const user = await this.userRepository.createUser(createUserDto);
 
-    await this.sectionsService.seedUserDefaultSections(newUser);
+    // Creating user section and userPreferences
+    await Promise.all([
+      this.sectionsService.seedUserDefaultSections(user),
+      this.userPreferencesService.createUserPreferences(user),
+    ]);
 
-    await this.userPreferencesService.createUserPreferences(newUser);
-
-    const filteredUser = plainToInstance(UserDto, newUser);
+    const filteredUser = plainToInstance(UserDto, user);
 
     this.usersGatway.handleNewUserSocket(filteredUser);
 
-    return newUser;
+    return filteredUser;
   }
 
   async seedBot() {
-    const botExists = await this.findOneByProperties({ isBot: true });
+    const botExists = await this.findOne({ isBot: true });
 
     if (botExists) {
       throw new ConflictException('Bot already exists!');
@@ -81,53 +83,40 @@ export class UsersService {
   }
 
   async findOne(searchProperties: any) {
-    const user = await this.userRepository.findOneByProperties(
-      searchProperties,
-    );
-
-    return plainToInstance(UserDto, user);
+    return await this.userRepository.findOneBy(searchProperties);
   }
 
-  async markAsVerified(email: any) {
-    const user = await this.userRepository.findOneByProperties({ email });
+  async markAsVerified(email: string) {
+    const user = await this.userRepository.findOneBy({ email });
 
     return await this.userRepository.updateUser(user.uuid, {
       isVerified: true,
     });
   }
 
-  async findOneByProperties(searchProperties: any, relations?: string[]) {
-    const user = await this.userRepository.findOneByProperties(
-      searchProperties,
-      relations,
-    );
-
-    return plainToInstance(UserDto, user);
-  }
-
   async initialUserFetch(userUuid: string) {
-    const user = await this.findOneByProperties({ uuid: userUuid });
+    const user = await this.userRepository.findOneBy({ uuid: userUuid });
 
     return user;
   }
 
   async findOneByEmail(email: string) {
-    return await this.userRepository.findOneByProperties({ email });
+    return await this.userRepository.findOneBy({ email });
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
-    const user = await this.userRepository.findUserByUuid(id);
-
+  async update(userUuid: string, updateUserDto: UpdateUserDto) {
+    // Check for existing user
+    const user = await this.userRepository.findOneBy({ uuid: userUuid });
     if (!user) {
-      throw new NotFoundException(`User with UUID ${id} not found`);
+      throw new NotFoundException(`User with UUID ${userUuid} not found`);
     }
 
+    // Update user
     Object.assign(user, updateUserDto);
-
     const updatedUser = await this.userRepository.save(user);
-
     const filteredUser = plainToInstance(UserDto, updatedUser);
 
+    // Send updated user over socket
     this.usersGatway.handleUserUpdateSocket(filteredUser);
 
     return updatedUser;

@@ -10,16 +10,14 @@ export class Message extends BaseEntity {
   @Column()
   content: string;
 
-  @ManyToOne(() => Channel, (channel) => channel.messages)
-  @JoinColumn({ name: 'channelId' })
-  channel: Channel;
+  @Column({ nullable: true })
+  parentId?: number;
 
-  @ManyToOne(() => Message, (message) => message.childMessages, {
-    nullable: true,
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'parentId' })
-  parentMessage: Message;
+  @Column()
+  userId: string;
+
+  @Column()
+  channelId: string;
 
   @OneToMany(() => Message, (message) => message.parentMessage, {
     nullable: true,
@@ -33,12 +31,14 @@ export class Message extends BaseEntity {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @Column({ nullable: true })
-  parentId?: number;
+  @ManyToOne(() => Channel, (channel) => channel.messages)
+  @JoinColumn({ name: 'channelId' })
+  channel: Channel;
 
-  @Column()
-  userId: string;
-
-  @Column()
-  channelId: string;
+  @ManyToOne(() => Message, (message) => message.childMessages, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'parentId' })
+  parentMessage: Message;
 }

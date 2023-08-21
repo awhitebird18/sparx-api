@@ -14,11 +14,11 @@ import { WebsocketsModule } from 'src/websockets/websockets.module';
   imports: [
     TypeOrmModule.forFeature([Message, Reaction]),
     forwardRef(() => ChannelsModule),
-    forwardRef(() => UsersModule),
+    UsersModule,
     WebsocketsModule,
   ],
   controllers: [MessagesController],
   providers: [MessagesService, MessagesRepository, ReactionRepository],
-  exports: [MessagesService, MessagesRepository, ReactionRepository],
+  exports: [MessagesService],
 })
 export class MessagesModule {}

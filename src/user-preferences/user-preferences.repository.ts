@@ -9,13 +9,8 @@ export class UserPreferencessRepository extends Repository<UserPreferences> {
   constructor(private dataSource: DataSource) {
     super(UserPreferences, dataSource.createEntityManager());
   }
-  async createUserPreferences(user?: User): Promise<UserPreferences> {
-    const userPreferences = this.create({});
-
-    if (user) {
-      userPreferences.user = user;
-    }
-    return this.save(userPreferences);
+  async createUserPreferences(user: User): Promise<UserPreferences> {
+    return this.save({ user: { id: user.id } });
   }
 
   async findOneByProperties(

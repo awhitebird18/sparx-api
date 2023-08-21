@@ -9,7 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ChannelsService } from './channels.service';
-import { CreateChannelDto, UpdateChannelDto } from './dto';
+import { ChannelDto, CreateChannelDto, UpdateChannelDto } from './dto';
 import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { NotFoundException } from '@nestjs/common/exceptions';
@@ -17,6 +17,7 @@ import { HttpStatus } from '@nestjs/common/enums';
 
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { User } from 'src/users/entities/user.entity';
+import { Channel } from './entities/channel.entity';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Channels')
@@ -42,8 +43,13 @@ export class ChannelsController {
   findWorkspaceChannels(
     @Query('page') page: number,
     @Query('pageSize') pageSize: number,
-  ) {
+  ): Promise<{ channel: ChannelDto; userCount: number }[]> {
     return this.channelsService.findWorkspaceChannels(page, pageSize);
+  }
+
+  @Get('user-channels')
+  findUserChannels(@GetUser() currentUser: User): Promise<Channel[]> {
+    return this.channelsService.findUserChannels(currentUser.uuid);
   }
 
   @Get('direct')

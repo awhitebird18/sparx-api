@@ -9,7 +9,6 @@ export class ReactionRepository extends Repository<Reaction> {
   }
   async addReaction(createReactionDto: Partial<Reaction>): Promise<Reaction> {
     const reaction = this.create(createReactionDto);
-
     return this.save(reaction);
   }
 

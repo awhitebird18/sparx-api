@@ -17,7 +17,7 @@ import { RegisterDto } from './dto/register.dto';
 import { UsersService } from 'src/users/users.service';
 import { SectionsService } from 'src/sections/sections.service';
 import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
-import { UserpreferencesService } from 'src/user-preferences/user-preferences.service';
+import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 import { RefreshJwtAuthGuard } from './guards/jwt-refresh.guard';
 import { Response } from 'express';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -30,7 +30,7 @@ export class AuthController {
     private usersService: UsersService,
     private sectionsService: SectionsService,
     private channelSubscriptionsService: ChannelSubscriptionsService,
-    private userPreferencesService: UserpreferencesService,
+    private userPreferencesService: UserPreferencesService,
   ) {}
 
   @Public()
@@ -39,7 +39,6 @@ export class AuthController {
   @Post('login')
   async login(@Request() req, @Res() res: any) {
     const response = await this.authService.login(req.user, res);
-
     return res.send(response);
   }
 
@@ -61,31 +60,39 @@ export class AuthController {
   @Post('refresh')
   async refreshToken(@Request() req, @Res() res: any) {
     const response = await this.authService.refresh(req.user, res);
-
-    res.send(response);
+    return res.send(response);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('verify')
   async verifyToken(@Request() req) {
     const user = await this.usersService.initialUserFetch(req.user.uuid);
-
-    const sections = await this.sectionsService.findUserSections(user.uuid);
-
-    const channels =
-      await this.channelSubscriptionsService.getUserSubscribedChannels(
-        user.uuid,
+    const sectionsPromise = this.sectionsService.findUserSections(
+      req.user.uuid,
+    );
+    const channelsPromise =
+      this.channelSubscriptionsService.getUserSubscribedChannels(req.user.uuid);
+    const userPreferencesPromise =
+      this.userPreferencesService.findUserPreferences(user.id);
+    const channelUnreadsPromise =
+      this.channelSubscriptionsService.getUserUnreadMessagesCount(
+        req.user.uuid,
       );
+    const workspaceUsersPromise = this.usersService.findAll();
 
-    const userPreferences =
-      await this.userPreferencesService.findUserPreferences(user.uuid);
-
-    const channelUnreads =
-      await this.channelSubscriptionsService.getUserUnreadMessagesCount(
-        user.uuid,
-      );
-
-    const workspaceUsers = await this.usersService.findAll();
+    const [
+      sections,
+      channels,
+      userPreferences,
+      channelUnreads,
+      workspaceUsers,
+    ] = await Promise.all([
+      sectionsPromise,
+      channelsPromise,
+      userPreferencesPromise,
+      channelUnreadsPromise,
+      workspaceUsersPromise,
+    ]);
 
     return {
       user,

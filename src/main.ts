@@ -5,7 +5,12 @@ import { join } from 'path';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
-import { ValidationPipe } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  // ValidationPipe,
+} from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+
 import { SpelunkerModule } from 'nestjs-spelunker';
 
 async function bootstrap() {
@@ -18,7 +23,7 @@ async function bootstrap() {
   const mermaidEdges = edges.map(
     ({ from, to }) => `  ${from.module.name}-->${to.module.name}`,
   );
-  console.log(mermaidEdges.join('\n'));
+  // console.info(mermaidEdges.join('\n'));
 
   // app.useGlobalPipes(
   //   new ValidationPipe({
@@ -28,6 +33,7 @@ async function bootstrap() {
   //     // validationError: { target: false },
   //   }),
   // );
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
@@ -41,21 +47,19 @@ async function bootstrap() {
     .setVersion('1.0')
     .addBearerAuth(
       {
-        // I was also testing it without prefix 'Bearer ' before the JWT
         description: `[just text field] Please enter token in following format: Bearer <JWT>`,
         name: 'Authorization',
-        bearerFormat: 'Bearer', // I`ve tested not to use this field, but the result was the same
+        bearerFormat: 'Bearer',
         scheme: 'Bearer',
-        type: 'http', // I`ve attempted type: 'apiKey' too
+        type: 'http',
         in: 'Header',
       },
-      'access-token', // This name here is important for matching up with @ApiBearerAuth() in your controller!
+      'access-token',
     )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
 
-  // Set up Swagger UI at a specific route
   SwaggerModule.setup('api', app, document);
 
   app.enableCors({

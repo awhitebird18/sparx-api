@@ -5,22 +5,19 @@ import {
 } from '@nestjs/common';
 import { ChannelDto, CreateChannelDto, UpdateChannelDto } from './dto';
 import { ChannelsRepository } from './channels.repository';
-import { plainToInstance } from 'class-transformer';
-import { SectionsRepository } from 'src/sections/sections.repository';
 import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
 import { ChannelGateway } from 'src/websockets/channel.gateway';
-import { SectionType } from 'src/sections/enums';
 import { ChannelType } from './enums/channel-type.enum';
 import { FilesService } from 'src/files/files.service';
+import { Channel } from './entities/channel.entity';
 
 @Injectable()
 export class ChannelsService {
   constructor(
     private channelsRepository: ChannelsRepository,
-    private sectionsRepository: SectionsRepository,
-    private ChannelSubscriptionservice: ChannelSubscriptionsService,
-    private channelGateway: ChannelGateway,
+    private channelSubscriptionService: ChannelSubscriptionsService,
     private filesService: FilesService,
+    private channelGateway: ChannelGateway,
   ) {}
 
   async createChannel(createChannelDto: CreateChannelDto, userId: string) {
@@ -40,15 +37,21 @@ export class ChannelsService {
 
     // Add current user to channel
     const channelSubscription =
-      await this.ChannelSubscriptionservice.joinChannel(
+      await this.channelSubscriptionService.joinChannel(
         userId,
         newChannel.uuid,
+        ChannelType.CHANNEL,
       );
 
     return channelSubscription;
   }
 
+  async findUserChannels(userUuid: string) {
+    return await this.channelsRepository.findUserChannels(userUuid);
+  }
+
   async createDirectChannel(memberIds: string[]) {
+    // Check if direct channel with both members already exists
     const channel = await this.channelsRepository.findDirectChannelByUserUuids(
       memberIds,
     );
@@ -60,24 +63,23 @@ export class ChannelsService {
       );
     }
 
-    const createdChannel = this.channelsRepository.create({
+    // Create new direct message channel
+    const newChannel = await this.channelsRepository.save({
       type: ChannelType.DIRECT,
     });
-    // Create channel
-    const newChannel = await this.channelsRepository.save(createdChannel);
+
     // Add members to the channel
     const memberPromises = memberIds.map(async (memberId) => {
-      const section = await this.sectionsRepository.findDefaultSection(
-        SectionType.DIRECT,
-        memberId,
-      );
-      return this.ChannelSubscriptionservice.createAndSave(
+      return this.channelSubscriptionService.joinChannel(
         memberId,
         newChannel.uuid,
-        section.uuid,
+        ChannelType.DIRECT,
       );
     });
     await Promise.all(memberPromises);
+
+    // Todo: may need to send over socket to all members who are part of the channel
+
     return newChannel;
   }
 
@@ -87,21 +89,20 @@ export class ChannelsService {
     );
   }
 
-  async findWorkspaceChannels(page: number, pageSize: number) {
-    const channels = await this.channelsRepository.findWorkspaceChannels(
-      page,
-      pageSize,
-    );
+  async findWorkspaceChannels(
+    page: number,
+    pageSize = 15,
+  ): Promise<{ channel: ChannelDto; userCount: number }[]> {
+    const result =
+      await this.channelsRepository.findWorkspaceChannelsWithUserCounts(
+        page,
+        pageSize,
+      );
 
-    const channelsWithUserCount = await Promise.all(
-      channels.map(async (channel) => {
-        const userCount =
-          await this.ChannelSubscriptionservice.getUserChannelCount(channel.id);
-
-        return {
-          ...channel,
-          userCount,
-        };
+    const channelsWithUserCount = result.entities.map(
+      (channel: Channel, index: number) => ({
+        channel,
+        userCount: result.raw[index].usercount,
       }),
     );
 
@@ -109,11 +110,7 @@ export class ChannelsService {
   }
 
   async findOne(searchProperties: any) {
-    const channel = await this.channelsRepository.findOneByProperties(
-      searchProperties,
-    );
-
-    return plainToInstance(ChannelDto, channel);
+    return await this.channelsRepository.findOneBy(searchProperties);
   }
 
   async updateChannel(id: string, updateChannelDto: UpdateChannelDto) {

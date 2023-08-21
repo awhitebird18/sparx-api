@@ -4,16 +4,16 @@ import { UserPreferencessRepository } from './user-preferences.repository';
 import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
-export class UserpreferencesService {
+export class UserPreferencesService {
   constructor(private userPreferencesRepository: UserPreferencessRepository) {}
 
   async createUserPreferences(user: User) {
     return await this.userPreferencesRepository.createUserPreferences(user);
   }
 
-  findUserPreferences(userId: string) {
+  async findUserPreferences(userId: number) {
     return this.userPreferencesRepository.findOneByProperties({
-      user: { uuid: userId },
+      user: { id: userId },
     });
   }
 
@@ -26,6 +26,7 @@ export class UserpreferencesService {
       updateUserpreferenceDto,
     );
 
-    return await this.findUserPreferences(userId);
+    // Todo: need to pass in user id
+    return await this.findUserPreferences(1);
   }
 }

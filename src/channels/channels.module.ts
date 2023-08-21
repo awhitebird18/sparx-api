@@ -6,7 +6,6 @@ import { ChannelsController } from './channels.controller';
 import { ChannelsRepository } from './channels.repository';
 import { Channel } from './entities/channel.entity';
 
-import { SectionsModule } from 'src/sections/sections.module';
 import { WebsocketsModule } from 'src/websockets/websockets.module';
 import { ChannelSubscriptionsModule } from 'src/channel-subscriptions/channel-subscriptions.module';
 import { FilesModule } from 'src/files/files.module';
@@ -14,13 +13,12 @@ import { FilesModule } from 'src/files/files.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Channel]),
-    forwardRef(() => SectionsModule),
     forwardRef(() => ChannelSubscriptionsModule),
-    forwardRef(() => WebsocketsModule),
+    WebsocketsModule,
     FilesModule,
   ],
   controllers: [ChannelsController],
   providers: [ChannelsService, ChannelsRepository],
-  exports: [ChannelsService, ChannelsRepository],
+  exports: [ChannelsService],
 })
 export class ChannelsModule {}
