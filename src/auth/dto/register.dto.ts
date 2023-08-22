@@ -41,4 +41,8 @@ export class RegisterDto {
   @IsBoolean()
   @IsOptional()
   isBot?: boolean;
+
+  @IsString()
+  @IsOptional()
+  profileImage?: string;
 }

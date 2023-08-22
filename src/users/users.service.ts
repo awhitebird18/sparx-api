@@ -1,14 +1,8 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-
+import { ConflictException, Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { v4 as uuid } from 'uuid';
 import { saveBase64Image } from 'src/utils';
 import * as path from 'path';
-import * as fs from 'fs';
 
 import { UsersRepository } from './users.repository';
 import { UsersGateway } from 'src/websockets/user.gateway';
@@ -22,14 +16,14 @@ import { UserDto } from './dto/user.dto';
 @Injectable()
 export class UsersService {
   constructor(
-    private userRepository: UsersRepository,
+    private usersRepository: UsersRepository,
     private sectionsService: SectionsService,
     private userPreferencesService: UserPreferencesService,
     private usersGatway: UsersGateway,
   ) {}
 
-  async createUser(registerDto: RegisterDto) {
-    const existingUser = await this.userRepository.findOne({
+  async create(registerDto: RegisterDto) {
+    const existingUser = await this.usersRepository.findOne({
       where: {
         email: registerDto.email,
       },
@@ -38,7 +32,7 @@ export class UsersService {
       throw new ConflictException('Email is already registered');
 
     // Creating new user
-    const user = await this.userRepository.createUser(registerDto);
+    const user = await this.usersRepository.createUser(registerDto);
 
     // Creating user section and userPreferences
     await Promise.all([
@@ -55,110 +49,100 @@ export class UsersService {
     return filteredUser;
   }
 
-  async seedBot() {
-    const botExists = await this.findOne({ isBot: true });
+  async createBot() {
+    // Check if bot exists
+    const existingBot = await this.usersRepository.findOne({
+      where: { isBot: true },
+    });
 
-    if (botExists) {
-      throw new ConflictException('Bot already exists!');
-    }
+    if (existingBot) throw new ConflictException('Bot already exists!');
 
-    const newUser = await this.userRepository.createUser({
+    // Find default bot image
+    const botImagePath = path.join(__dirname, 'static', 'bot.png');
+
+    // Create bot user
+    const newBotUser = await this.usersRepository.createUser({
       firstName: 'Sparx',
       lastName: 'Bot',
       email: 'bot@sparx.com',
       password: 'password1',
       confirmPassword: 'password1',
       isBot: true,
+      profileImage: `/static/${botImagePath}`,
     });
 
-    // Get the absolute path to the bot.png file in the static folder.
-    const botImagePath = path.join(__dirname, 'static', 'bot.png');
+    const serializeBotUser = plainToInstance(UserDto, newBotUser);
 
-    // Read the bot.png file from the filesystem and convert it to base64 format.
-    const botImageBase64 = fs.readFileSync(botImagePath).toString('base64');
-
-    // Upload the bot profile image.
-    await this.updateProfileImage(newUser.uuid, botImageBase64);
-
-    const filteredUser = plainToInstance(UserDto, newUser);
-
-    return filteredUser;
-  }
-
-  async findWorkspaceUsers() {
-    return this.userRepository.find({ where: { isBot: false } });
+    return serializeBotUser;
   }
 
   async findOne(searchProperties: any) {
-    return await this.userRepository.findOneBy(searchProperties);
-  }
-
-  async markAsVerified(email: string) {
-    const user = await this.userRepository.findOneOrFail({ where: { email } });
-
-    return await this.userRepository.updateUser(user.uuid, {
-      isVerified: true,
-    });
-  }
-
-  async initialUserFetch(userUuid: string) {
-    const user = await this.userRepository.findOneBy({ uuid: userUuid });
-
-    return user;
+    return await this.usersRepository.findOneBy(searchProperties);
   }
 
   async findOneByEmail(email: string) {
-    return await this.userRepository.findOneBy({ email });
+    return await this.usersRepository.findOneBy({ email });
   }
 
-  async update(userUuid: string, updateUserDto: UpdateUserDto) {
-    // Check for existing user
-    const user = await this.userRepository.findOneBy({ uuid: userUuid });
-    if (!user) {
-      throw new NotFoundException(`User with UUID ${userUuid} not found`);
-    }
+  async findWorkspaceUsers() {
+    return this.usersRepository.find({ where: { isBot: false } });
+  }
 
-    // Update user
-    Object.assign(user, updateUserDto);
-    const updatedUser = await this.userRepository.save(user);
-    const filteredUser = plainToInstance(UserDto, updatedUser);
+  async markAsVerified(email: string) {
+    // Find User
+    const user = await this.usersRepository.findOneOrFail({ where: { email } });
 
-    // Send updated user over socket
-    this.usersGatway.handleUserUpdateSocket(filteredUser);
+    // Update User
+    Object.assign(user, { isVerified: true });
+    const updatedUser = await this.usersRepository.save(user);
 
     return updatedUser;
   }
 
-  async updateProfileImage(userId: string, profileImage: string) {
-    const user = await this.userRepository.findUserByUuid(userId);
+  async update(userId: number, updateUserDto: UpdateUserDto) {
+    // Check for existing user
+    const user = await this.usersRepository.findOneOrFail({
+      where: { id: userId },
+    });
 
-    if (!user) {
-      throw new NotFoundException(`User with UUID ${userId} not found`);
-    }
+    // Update user
+    Object.assign(user, updateUserDto);
+    const updatedUser = await this.usersRepository.save(user);
+    const serializedUser = plainToInstance(UserDto, updatedUser);
+
+    // Send updated user over socket
+    this.usersGatway.handleUserUpdateSocket(serializedUser);
+
+    return serializedUser;
+  }
+
+  async updateProfileImage(userId: number, profileImage: string) {
+    // Find User
+    const user = await this.usersRepository.findOneOrFail({
+      where: { id: userId },
+    });
 
     const imageId = uuid();
-
     // const clientId = 'clientA';
-
     const folderPath = `/static/`;
-
     const imagePath = path.join(folderPath, imageId);
-
     saveBase64Image(profileImage, imagePath);
 
     // Update user with image path
     user.profileImage = imagePath;
 
-    const updatedUser = await this.userRepository.save(user);
+    // Update User
+    const updatedUser = await this.usersRepository.save(user);
 
-    const filteredUser = plainToInstance(UserDto, updatedUser);
+    const serializedUser = plainToInstance(UserDto, updatedUser);
 
-    this.usersGatway.handleUserUpdateSocket(filteredUser);
+    // Send updated user over socket
+    this.usersGatway.handleUserUpdateSocket(serializedUser);
 
-    return filteredUser;
+    return serializedUser;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: number) {
+    return await this.usersRepository.softRemove({ id });
   }
 }

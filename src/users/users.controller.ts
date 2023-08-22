@@ -13,6 +13,8 @@ import { UsersService } from './users.service';
 
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RegisterDto } from 'src/auth/dto/register.dto';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
+import { User } from './entities/user.entity';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Users')
@@ -21,18 +23,13 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  createUser(@Body() createUserDto: RegisterDto) {
-    return this.usersService.createUser(createUserDto);
+  create(@Body() createUserDto: RegisterDto) {
+    return this.usersService.create(createUserDto);
   }
 
   @Post('seed-bot')
-  seedBot() {
-    return this.usersService.seedBot();
-  }
-
-  @Get()
-  findAll() {
-    return this.usersService.findWorkspaceUsers();
+  createBot() {
+    return this.usersService.createBot();
   }
 
   @Get(':id')
@@ -40,21 +37,29 @@ export class UsersController {
     return this.usersService.findOneByEmail(id);
   }
 
-  @Patch(':id/image-upload')
+  @Get()
+  finalWorkspaceUsers() {
+    return this.usersService.findWorkspaceUsers();
+  }
+
+  @Patch('self/image-upload')
   updateProfileImage(
-    @Param('id') id: string,
+    @GetUser() currentUser: User,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.usersService.updateProfileImage(id, updateUserDto.profileImage);
+    return this.usersService.updateProfileImage(
+      currentUser.id,
+      updateUserDto.profileImage,
+    );
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  @Patch('self')
+  update(@GetUser() currentUser: User, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(currentUser.id, updateUserDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  @Delete('self')
+  remove(@GetUser() currentUser: User) {
+    return this.usersService.remove(currentUser.id);
   }
 }
