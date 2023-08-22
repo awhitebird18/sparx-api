@@ -114,6 +114,8 @@ export class AuthController {
         userPreferencesPromise,
       ]);
 
+    console.log(channels);
+
     return {
       user,
       sections,

@@ -62,10 +62,10 @@ import { WebsocketsModule } from './websockets/websockets.module';
   providers: [
     AppService,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: ClassSerializerInterceptor,
-    },
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: ClassSerializerInterceptor,
+    // },
   ],
 })
 export class AppModule {}

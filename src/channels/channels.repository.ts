@@ -49,7 +49,7 @@ export class ChannelsRepository extends Repository<Channel> {
   async findUserChannels(userId: number): Promise<Channel[]> {
     return await this.createQueryBuilder('channel')
       .leftJoin('channel.channelSubscriptions', 'channelSubscription')
-      .innerJoin('channelSubscription.user', 'user') // Join the user relationship in ChannelSubscription
+      .innerJoin('channelSubscription.user', 'user')
       .select('channel')
       .where('user.id = :userId', { userId })
       .getMany();
