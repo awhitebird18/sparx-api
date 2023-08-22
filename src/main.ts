@@ -19,7 +19,7 @@ async function bootstrap() {
   const mermaidEdges = edges.map(
     ({ from, to }) => `  ${from.module.name}-->${to.module.name}`,
   );
-  console.info(mermaidEdges.join('\n'));
+  // console.info(mermaidEdges.join('\n'));
 
   app.useGlobalPipes(
     new ValidationPipe({

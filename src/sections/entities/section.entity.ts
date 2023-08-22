@@ -26,6 +26,9 @@ export class Section extends BaseEntity {
   @Column({ nullable: true })
   orderIndex: number;
 
+  @Column()
+  userId: number;
+
   @Column({ type: 'enum', enum: SortBy, default: SortBy.ALPHA })
   sortBy: SortBy;
 

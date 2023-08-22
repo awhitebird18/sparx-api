@@ -21,7 +21,9 @@ export class SectionsRepository extends Repository<Section> {
   async createSection(createSectionDto: CreateSectionDto): Promise<Section> {
     const section = this.create(createSectionDto);
 
-    return this.save(section);
+    console.log(section);
+
+    return await this.save(section);
   }
 
   async findUserSections(userId: number): Promise<Section[]> {

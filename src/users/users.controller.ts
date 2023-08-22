@@ -39,7 +39,10 @@ export class UsersController {
 
   @Get()
   finalWorkspaceUsers() {
-    return this.usersService.findWorkspaceUsers();
+    const usersPromise = this.usersService.findWorkspaceUsers();
+    console.log('users', usersPromise);
+
+    return usersPromise;
   }
 
   @Patch('self/image-upload')

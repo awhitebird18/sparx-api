@@ -87,12 +87,17 @@ export class AuthController {
   @Get('client-boot')
   async clientBoot(@GetUser() user: User): Promise<{
     user: UserDto;
+    users: UserDto[];
+    userPreferences: UserPreferencesDto;
     sections: SectionDto[];
     channels: ChannelDto[];
     channelUnreads: ChannelUnreads[];
-    users: UserDto[];
-    userPreferences: UserPreferencesDto;
   }> {
+    const usersPromise = this.usersService.findWorkspaceUsers();
+
+    const userPreferencesPromise =
+      this.userPreferencesService.findUserPreferences(user.id);
+
     const sectionsPromise = this.sectionsService.findUserSections(user.id);
 
     const channelsPromise = this.channelsService.findUserChannels(user.id);
@@ -100,29 +105,31 @@ export class AuthController {
     const channelUnreadsPromise =
       this.channelSubscriptionsService.getUserUnreadMessagesCount(user.id);
 
-    const usersPromise = this.usersService.findWorkspaceUsers();
-
-    const userPreferencesPromise =
-      this.userPreferencesService.findUserPreferences(user.id);
-
-    const [sections, channels, channelUnreads, users, userPreferences] =
+    const [users, userPreferences, sections, channels, channelUnreads] =
       await Promise.all([
+        usersPromise,
+        userPreferencesPromise,
         sectionsPromise,
         channelsPromise,
         channelUnreadsPromise,
-        usersPromise,
-        userPreferencesPromise,
       ]);
 
-    console.log(channels);
-
-    return {
+    console.log({
       user,
+      users,
+      userPreferences,
       sections,
       channels,
       channelUnreads,
+    });
+
+    return {
+      user,
       users,
       userPreferences,
+      sections,
+      channels,
+      channelUnreads,
     };
   }
 
