@@ -5,11 +5,13 @@ import {
   MaxLength,
   Matches,
   IsNotEmpty,
+  IsOptional,
+  IsBoolean,
 } from 'class-validator';
-import { IsPasswordMatching } from '../validators/is-password-matching';
+// import { IsPasswordMatching } from '../validators/is-password-matching';
 
 export class RegisterDto {
-  @IsEmail({}, { message: 'Invalid email address.' })
+  @IsEmail()
   @IsNotEmpty()
   email: string;
 
@@ -34,6 +36,9 @@ export class RegisterDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsPasswordMatching({ message: 'Passwords must match.' })
   confirmPassword: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isBot?: boolean;
 }

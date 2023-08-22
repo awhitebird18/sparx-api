@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ChannelsService } from './channels.service';
@@ -7,18 +7,12 @@ import { ChannelsRepository } from './channels.repository';
 import { Channel } from './entities/channel.entity';
 
 import { WebsocketsModule } from 'src/websockets/websockets.module';
-import { ChannelSubscriptionsModule } from 'src/channel-subscriptions/channel-subscriptions.module';
 import { FilesModule } from 'src/files/files.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Channel]),
-    forwardRef(() => ChannelSubscriptionsModule),
-    WebsocketsModule,
-    FilesModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Channel]), WebsocketsModule, FilesModule],
   controllers: [ChannelsController],
   providers: [ChannelsService, ChannelsRepository],
-  exports: [ChannelsService],
+  exports: [ChannelsService, ChannelsRepository],
 })
 export class ChannelsModule {}

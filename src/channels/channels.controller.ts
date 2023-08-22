@@ -8,16 +8,19 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
-import { ChannelsService } from './channels.service';
-import { ChannelDto, CreateChannelDto, UpdateChannelDto } from './dto';
 import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { NotFoundException } from '@nestjs/common/exceptions';
 import { HttpStatus } from '@nestjs/common/enums';
-
 import { GetUser } from 'src/common/decorators/get-user.decorator';
+
+import { ChannelsService } from './channels.service';
 import { User } from 'src/users/entities/user.entity';
 import { Channel } from './entities/channel.entity';
+
+import { ChannelDto } from './dto/channel.dto';
+import { CreateChannelDto } from './dto/create-channel.dto';
+import { UpdateChannelDto } from './dto/update-channel.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Channels')
@@ -27,16 +30,8 @@ export class ChannelsController {
 
   @ApiBody({ type: CreateChannelDto })
   @Post()
-  async createChannel(
-    @Body() createChannelDto: CreateChannelDto,
-    @GetUser() user: User,
-  ) {
-    return this.channelsService.createChannel(createChannelDto, user.uuid);
-  }
-
-  @Post('direct-channel')
-  async createDirectChannel(@Body() data: { memberIds: string[] }) {
-    return this.channelsService.createDirectChannel(data.memberIds);
+  async createChannel(@Body() createChannelDto: CreateChannelDto) {
+    return this.channelsService.createChannel(createChannelDto);
   }
 
   @Get()
@@ -49,7 +44,7 @@ export class ChannelsController {
 
   @Get('user-channels')
   findUserChannels(@GetUser() currentUser: User): Promise<Channel[]> {
-    return this.channelsService.findUserChannels(currentUser.uuid);
+    return this.channelsService.findUserChannels(currentUser.id);
   }
 
   @Get('direct')
@@ -61,17 +56,6 @@ export class ChannelsController {
       currentUser.uuid,
       userUuid,
     ]);
-  }
-
-  @Get(':uuid')
-  @ApiParam({
-    name: 'uuid',
-    required: true,
-    description: 'UUID of the channel',
-    example: '49e50109-1a78-4c66-a8d8-2c42219a82b1',
-  })
-  findOne(@Param('uuid') uuid: string) {
-    return this.channelsService.findOne(uuid);
   }
 
   @Patch(':uuid')

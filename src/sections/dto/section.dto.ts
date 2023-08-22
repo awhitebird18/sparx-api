@@ -1,39 +1,38 @@
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  IsString,
+} from 'class-validator';
+
+import { SectionType } from '../enums/section-type.enum';
+import { SortBy } from '../enums/sort-by.enum';
 import { BaseDto } from 'src/common/dto';
-import { IsArray, IsBoolean, IsEnum, IsNotEmpty } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-import { IntersectionType } from '@nestjs/mapped-types';
-import { CreateSectionDto } from './create-section.dto';
 
-import { SectionType } from '../enums';
-import { ChannelSubscriptionDto } from 'src/channel-subscriptions/dto/channel-subscription.dto';
+export class SectionDto extends BaseDto {
+  @IsString()
+  name: string;
 
-export class SectionDto extends IntersectionType(CreateSectionDto, BaseDto) {
-  @ApiProperty({
-    example: [ChannelSubscriptionDto],
-    description: 'Channels that exist under this section',
-  })
-  @IsArray()
-  channels: ChannelSubscriptionDto[];
+  @IsEnum(SectionType)
+  type: SectionType;
 
-  @ApiProperty({
-    example: true,
-    description: 'Defines if section is system generated',
-  })
   @IsBoolean()
   isSystem: boolean;
 
-  @ApiProperty({
-    example: true,
-    description: 'Defines if section is open',
-  })
   @IsBoolean()
   isOpen: boolean;
 
-  @ApiProperty({
-    example: 'channel',
-    description: 'Type of the section',
-  })
-  @IsNotEmpty()
-  @IsEnum(SectionType)
-  type: SectionType;
+  @IsString()
+  emoji: string;
+
+  // Todo: this should not be optional
+  @IsNumber()
+  orderIndex?: number;
+
+  @IsEnum(SortBy)
+  sortBy: SortBy;
+
+  @IsArray()
+  channels: string[];
 }

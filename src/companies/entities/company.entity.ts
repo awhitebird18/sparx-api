@@ -1,7 +1,8 @@
+import { Entity, Column, OneToMany } from 'typeorm';
+
 import { Channel } from 'src/channels/entities/channel.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { User } from 'src/users/entities/user.entity';
-import { Entity, Column, OneToMany } from 'typeorm';
 
 @Entity()
 export class Company extends BaseEntity {

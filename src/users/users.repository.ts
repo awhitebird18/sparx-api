@@ -1,18 +1,21 @@
 import { DataSource, Repository, FindOptionsWhere } from 'typeorm';
-import { User } from './entities/user.entity';
-import { CreateUserDto, UpdateUserDto } from './dto';
 import { Injectable } from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common/exceptions';
+
+import { User } from './entities/user.entity';
+
+import { RegisterDto } from 'src/auth/dto/register.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersRepository extends Repository<User> {
   constructor(private dataSource: DataSource) {
     super(User, dataSource.createEntityManager());
   }
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
-    const User = await this.create(createUserDto);
+  async createUser(createUserDto: RegisterDto): Promise<User> {
+    const user = this.create(createUserDto);
 
-    return await this.save(User);
+    return await this.save(user);
   }
 
   async findSubscribedUsers(): Promise<User[]> {

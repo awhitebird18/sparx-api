@@ -7,12 +7,13 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+
 import { CompaniesService } from './companies.service';
+
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-@ApiBearerAuth('access-token')
 @ApiTags('Companies')
 @Controller('companies')
 export class CompaniesController {

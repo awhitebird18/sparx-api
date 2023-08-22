@@ -1,9 +1,11 @@
-import { DataSource, Repository, FindOptionsWhere } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common/exceptions';
-import { Message } from './entities/message.entity';
+import { DataSource, Repository, FindOptionsWhere } from 'typeorm';
 import { groupBy } from 'lodash';
-import { UpdateMessageDto } from './dto';
+
+import { Message } from './entities/message.entity';
+
+import { UpdateMessageDto } from './dto/update-message.dto';
 
 @Injectable()
 export class MessagesRepository extends Repository<Message> {

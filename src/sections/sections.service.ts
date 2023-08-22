@@ -1,13 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateSectionDto, SectionDto, UpdateSectionDto } from './dto';
-import { SectionsRepository } from 'src/sections/sections.repository';
 import { plainToInstance } from 'class-transformer';
-import { SectionType } from './enums';
-import { User } from 'src/users/entities/user.entity';
+
+import { SectionsRepository } from 'src/sections/sections.repository';
 import { SectionsGateway } from 'src/websockets/section.gateway';
+import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
 
 import { Section } from './entities/section.entity';
-import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
+
+import { SectionType } from './enums/section-type.enum';
+import { CreateSectionDto } from './dto/create-section.dto';
+import { SectionDto } from './dto/section.dto';
+import { UpdateSectionDto } from './dto/update-section.dto';
 
 @Injectable()
 export class SectionsService {
@@ -32,30 +35,33 @@ export class SectionsService {
     return await this.sectionsRepository.findOneBy(searchProperties);
   }
 
-  async seedUserDefaultSections(user: User) {
-    const maxOrderIndex = await this.sectionsRepository.getMaxOrderIndex(user);
+  async seedUserDefaultSections(userId: number) {
+    const maxOrderIndex = await this.sectionsRepository.getMaxOrderIndex(
+      userId,
+    );
     for (let i = 0; i < this.defaultSections.length; i++) {
-      await this.sectionsRepository.createSection(
-        {
-          ...this.defaultSections[i],
-          orderIndex: maxOrderIndex,
-          isSystem: true,
-        },
-        user,
-      );
+      await this.sectionsRepository.createSection({
+        ...this.defaultSections[i],
+        orderIndex: maxOrderIndex,
+        isSystem: true,
+        userId,
+      });
     }
   }
 
   async createSection(
     createSectionDto: CreateSectionDto,
-    user: User,
+    userId: number,
   ): Promise<SectionDto> {
-    const maxOrderIndex = await this.sectionsRepository.getMaxOrderIndex(user);
-
-    const newSection = await this.sectionsRepository.createSection(
-      { ...createSectionDto, orderIndex: maxOrderIndex + 1 },
-      user,
+    const maxOrderIndex = await this.sectionsRepository.getMaxOrderIndex(
+      userId,
     );
+
+    const newSection = await this.sectionsRepository.createSection({
+      ...createSectionDto,
+      orderIndex: maxOrderIndex + 1,
+      userId,
+    });
 
     const section = plainToInstance(SectionDto, newSection);
 
@@ -64,20 +70,20 @@ export class SectionsService {
     return section;
   }
 
-  async findUserSections(userId: string) {
+  async findUserSections(userId: number): Promise<SectionDto[]> {
     const sections = await this.sectionsRepository.findUserSections(userId);
 
     return plainToInstance(SectionDto, sections);
   }
 
-  async findDefaultSection(sectionType: string, userId: string) {
+  async findDefaultSection(sectionType: string, userId: number) {
     return await this.sectionsRepository.findDefaultSection(
       sectionType,
       userId,
     );
   }
 
-  async findDefaultSections(userId: string): Promise<SectionDto[]> {
+  async findDefaultSections(userId: number): Promise<SectionDto[]> {
     const section = await this.sectionsRepository.findDefaultSections(userId);
 
     return plainToInstance(SectionDto, section);
@@ -104,7 +110,7 @@ export class SectionsService {
     return filteredSection;
   }
 
-  async removeSection(uuid: string, userId: string): Promise<boolean> {
+  async removeSection(uuid: string, userId: number): Promise<boolean> {
     const sectionToRemove = await this.sectionsRepository.findUserSection(uuid);
 
     const channelSubscriptions = sectionToRemove.channels;

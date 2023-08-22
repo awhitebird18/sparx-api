@@ -1,24 +1,25 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { MessagesService } from './messages.service';
 import { MessagesController } from './messages.controller';
-import { Message } from './entities/message.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { MessagesRepository } from './messages.repository';
-import { ChannelsModule } from 'src/channels/channels.module';
-import { UsersModule } from 'src/users/users.module';
-import { Reaction } from './entities/reaction.entity';
 import { ReactionRepository } from './reactions.repository';
+
+import { Message } from './entities/message.entity';
+import { Reaction } from './entities/reaction.entity';
+
+import { ChannelsModule } from 'src/channels/channels.module';
 import { WebsocketsModule } from 'src/websockets/websockets.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Message, Reaction]),
-    forwardRef(() => ChannelsModule),
-    UsersModule,
+    ChannelsModule,
     WebsocketsModule,
   ],
   controllers: [MessagesController],
   providers: [MessagesService, MessagesRepository, ReactionRepository],
-  exports: [MessagesService],
+  exports: [MessagesService, MessagesRepository],
 })
 export class MessagesModule {}

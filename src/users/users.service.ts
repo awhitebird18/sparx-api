@@ -3,18 +3,21 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { UsersRepository } from './users.repository';
+
 import { plainToInstance } from 'class-transformer';
-import { UserDto } from './dto';
 import { v4 as uuid } from 'uuid';
 import { saveBase64Image } from 'src/utils';
 import * as path from 'path';
+import * as fs from 'fs';
+
+import { UsersRepository } from './users.repository';
 import { UsersGateway } from 'src/websockets/user.gateway';
 import { SectionsService } from 'src/sections/sections.service';
-import * as fs from 'fs';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+
+import { UpdateUserDto } from './dto/update-user.dto';
+import { RegisterDto } from 'src/auth/dto/register.dto';
+import { UserDto } from './dto/user.dto';
 
 @Injectable()
 export class UsersService {
@@ -25,21 +28,24 @@ export class UsersService {
     private usersGatway: UsersGateway,
   ) {}
 
-  async createUser(createUserDto: CreateUserDto) {
-    const existingUser = await this.userRepository.findOneByProperties({
-      email: createUserDto.email,
+  async createUser(registerDto: RegisterDto) {
+    const existingUser = await this.userRepository.findOne({
+      where: {
+        email: registerDto.email,
+      },
     });
-    if (existingUser) {
+    if (existingUser)
       throw new ConflictException('Email is already registered');
-    }
 
     // Creating new user
-    const user = await this.userRepository.createUser(createUserDto);
+    const user = await this.userRepository.createUser(registerDto);
 
     // Creating user section and userPreferences
     await Promise.all([
-      this.sectionsService.seedUserDefaultSections(user),
-      this.userPreferencesService.createUserPreferences(user),
+      this.sectionsService.seedUserDefaultSections(user.id),
+      this.userPreferencesService.createUserPreferences({
+        userId: user.id,
+      }),
     ]);
 
     const filteredUser = plainToInstance(UserDto, user);
@@ -61,6 +67,7 @@ export class UsersService {
       lastName: 'Bot',
       email: 'bot@sparx.com',
       password: 'password1',
+      confirmPassword: 'password1',
       isBot: true,
     });
 
@@ -78,8 +85,8 @@ export class UsersService {
     return filteredUser;
   }
 
-  async findAll() {
-    return this.userRepository.find();
+  async findWorkspaceUsers() {
+    return this.userRepository.find({ where: { isBot: false } });
   }
 
   async findOne(searchProperties: any) {
@@ -87,7 +94,7 @@ export class UsersService {
   }
 
   async markAsVerified(email: string) {
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.userRepository.findOneOrFail({ where: { email } });
 
     return await this.userRepository.updateUser(user.uuid, {
       isVerified: true,

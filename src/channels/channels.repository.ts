@@ -1,8 +1,10 @@
 import { DataSource, Repository, FindOptionsWhere, In } from 'typeorm';
-import { Channel } from './entities/channel.entity';
-import { CreateChannelDto } from './dto';
 import { Injectable } from '@nestjs/common';
+
+import { Channel } from './entities/channel.entity';
+
 import { ChannelType } from './enums/channel-type.enum';
+import { CreateChannelDto } from './dto/create-channel.dto';
 
 @Injectable()
 export class ChannelsRepository extends Repository<Channel> {
@@ -44,12 +46,12 @@ export class ChannelsRepository extends Repository<Channel> {
     return undefined;
   }
 
-  async findUserChannels(userUuid: string): Promise<Channel[]> {
+  async findUserChannels(userId: number): Promise<Channel[]> {
     return await this.createQueryBuilder('channel')
       .leftJoin('channel.channelSubscriptions', 'channelSubscription')
       .innerJoin('channelSubscription.user', 'user') // Join the user relationship in ChannelSubscription
       .select('channel')
-      .where('user.uuid = :userUuid', { userUuid })
+      .where('user.id = :userId', { userId })
       .getMany();
   }
 

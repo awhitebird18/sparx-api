@@ -1,6 +1,7 @@
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { SectionDto } from 'src/sections/dto';
+
+import { SectionDto } from 'src/sections/dto/section.dto';
 
 @WebSocketGateway()
 export class SectionsGateway {

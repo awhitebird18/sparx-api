@@ -1,16 +1,21 @@
-import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
-import { UserPreferences } from './entities/user-preference.entity';
-import { UpdateUserpreferenceDto } from './dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { User } from 'src/users/entities/user.entity';
+import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
+
+import { UserPreferences } from './entities/user-preference.entity';
+
+import { UpdateUserPreferencesDto } from './dto/update-user-preferences';
+import { CreateUserPreferences } from './dto/create-user-preferences.dto';
 
 @Injectable()
 export class UserPreferencessRepository extends Repository<UserPreferences> {
   constructor(private dataSource: DataSource) {
     super(UserPreferences, dataSource.createEntityManager());
   }
-  async createUserPreferences(user: User): Promise<UserPreferences> {
-    return this.save({ user: { id: user.id } });
+  async createUserPreferences(
+    createUserPreferences: CreateUserPreferences,
+  ): Promise<UserPreferences> {
+    const userPreferences = this.create(createUserPreferences);
+    return this.save(userPreferences);
   }
 
   async findOneByProperties(
@@ -24,16 +29,16 @@ export class UserPreferencessRepository extends Repository<UserPreferences> {
   }
 
   async updateUserPreferences(
-    userId: string,
-    updateUserPreferencesDto: UpdateUserpreferenceDto,
+    userId: number,
+    updateUserPreferencesDto: UpdateUserPreferencesDto,
   ): Promise<UserPreferences> {
     const userPreference = await this.createQueryBuilder('userpreferences')
       .innerJoinAndSelect('userpreferences.user', 'user')
-      .where('user.uuid = :userId', { userId })
+      .where('user.id = :userId', { userId })
       .getOne();
 
     if (!userPreference) {
-      throw new NotFoundException(`Preferences for user ${userId} not found`);
+      throw new NotFoundException('User not found');
     }
 
     return this.save({ ...userPreference, ...updateUserPreferencesDto });

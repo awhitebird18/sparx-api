@@ -1,15 +1,15 @@
-import { IsNotEmpty, IsUUID } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class CreateUserChannelDto {
+export class CreateChannelSubscription {
   @IsNotEmpty()
-  @IsUUID()
-  userId: string;
+  @IsNumber()
+  userId: number;
 
-  @ApiProperty({
-    example: 'Number of channel',
-    description: 'UUID of channel',
-  })
   @IsNotEmpty()
-  channelId: string;
+  @IsNumber()
+  channelId: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  sectionId: number;
 }

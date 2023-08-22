@@ -1,143 +1,58 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { plainToClass } from 'class-transformer';
-import { ChannelGateway } from 'src/websockets/channel.gateway';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 
 import { ChannelSubscription } from './entity/channel-subscription.entity';
-import { User } from 'src/users/entities/user.entity';
 
-import { ChannelType } from 'src/channels/enums/channel-type.enum';
-import { ChannelDto } from 'src/channels/dto';
-import { ChannelSubscriptionDto } from './dto/channel-subscription.dto';
-
+import { ChannelGateway } from 'src/websockets/channel.gateway';
 import { ChannelSubscriptionsRepository } from './channel-subscriptions.repository';
+import { SectionsRepository } from 'src/sections/sections.repository';
+import { MessagesRepository } from 'src/messages/messages.repository';
 
-import { ChannelsService } from 'src/channels/channels.service';
-import { UsersService } from 'src/users/users.service';
-import { MessagesService } from 'src/messages/messages.service';
-import { SectionsService } from 'src/sections/sections.service';
+import { CreateChannelSubscription } from './dto/create-channel-subscription.dto';
+import { ChannelDto } from 'src/channels/dto/channel.dto';
 
 @Injectable()
 export class ChannelSubscriptionsService {
   constructor(
     private channelSubscriptionsRepository: ChannelSubscriptionsRepository,
-    private channelsService: ChannelsService,
-    private sectionsService: SectionsService,
-    private messagesService: MessagesService,
-    private usersService: UsersService,
+    private sectionsRepository: SectionsRepository,
+    private messagesRepository: MessagesRepository,
     private channelGateway: ChannelGateway,
   ) {}
 
-  async joinChannel(
-    userUuid: string,
-    channelUuid: string,
-    channelType: ChannelType,
-  ) {
-    // Check if user exists
-    const user = await this.usersService.findOne({ uuid: userUuid });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    // Check if channel exists or is deleted
-    const channel = await this.channelsService.findOne({
-      uuid: channelUuid,
+  async create(createChannelSubscription: CreateChannelSubscription) {
+    return await this.channelSubscriptionsRepository.save({
+      user: { id: createChannelSubscription.userId },
+      channel: { id: createChannelSubscription.channelId },
+      section: { id: createChannelSubscription.sectionId },
     });
-    if (!channel) {
-      throw new NotFoundException('Channel not found');
-    }
-
-    // Check if section exists
-    const section = await this.sectionsService.findOne({
-      type: channelType,
-      user: { id: user.id },
-    });
-    if (!section) throw new NotFoundException('Section not found');
-
-    // Check if channel subscription already exists
-    const existingChannelSubscription =
-      await this.channelSubscriptionsRepository.findOneBy({
-        user: { id: user.id },
-        channel: { id: channel.id },
-        isSubscribed: true,
-      });
-
-    if (existingChannelSubscription?.isSubscribed)
-      throw new HttpException(
-        'User is already subscribed to the channel',
-        HttpStatus.BAD_REQUEST,
-      );
-
-    // Create channelSubscription
-    // May want to create a service method that creates a channelSubscription and returns
-    // In the correct format so we do not need to
-    await this.channelSubscriptionsRepository.insert({
-      user: { id: user.id },
-      channel: { id: channel.id },
-      section: { id: section.id },
-    });
-
-    const channelSubscription = await this.findUserChannel(
-      userUuid,
-      channelUuid,
-    );
-
-    this.channelGateway.handleJoinChannelSocket(channelSubscription);
-
-    return channelSubscription;
   }
 
-  async inviteUsers(
-    channelUuid: string,
-    userIds: string[],
-    currentUserUuid: string,
-  ) {
-    for (let i = 0; i < userIds.length; i++) {
-      try {
-        await this.joinChannel(userIds[i], channelUuid, ChannelType.CHANNEL);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    const channelUsers =
-      await this.channelSubscriptionsRepository.findUsersByChannelId(
-        channelUuid,
-      );
-
-    const userChannelToReturn = await this.findUserChannel(
-      currentUserUuid,
-      channelUuid,
-    );
-
-    userChannelToReturn.users = channelUsers;
-
-    return userChannelToReturn;
+  async findOne(findProperties: any) {
+    return await this.channelSubscriptionsRepository.findOne(findProperties);
   }
 
   async leaveChannel(userUuid: string, channelUuid: string) {
+    // Find channel subscription
     const channelSubscription =
-      await this.channelSubscriptionsRepository.findOneByProperties(
-        {
+      await this.channelSubscriptionsRepository.findOneOrFail({
+        where: {
           user: { uuid: userUuid },
           channel: { uuid: channelUuid },
           isSubscribed: true,
         },
-        ['channel'],
-      );
+        relations: ['channel'],
+      });
 
-    if (!channelSubscription) {
-      throw new NotFoundException('User-Channel link not found');
-    }
+    // Find default section. If channel is in custom section, return it to default
+    const section = await this.sectionsRepository.findOneOrFail({
+      where: {
+        type: channelSubscription.channel.type,
+        user: { uuid: userUuid },
+      },
+    });
 
-    const section = await this.sectionsService.findDefaultSection(
-      channelSubscription.channel.type,
-      userUuid,
-    );
-
+    // Update channel subscription
     await this.channelSubscriptionsRepository.updateUserChannel(
       channelSubscription.uuid,
       {
@@ -146,21 +61,21 @@ export class ChannelSubscriptionsService {
       },
     );
 
-    const channelUsers =
-      await this.channelSubscriptionsRepository.findUsersByChannelId(
-        channelUuid,
-      );
+    // Todo: review this
+    // const channelUsers =
+    //   await this.channelSubscriptionsRepository.findUsersByChannelId(
+    //     channelUuid,
+    //   );
 
-    const userChannelToReturn = await this.findUserChannel(
-      userUuid,
-      channelUuid,
-    );
+    // const userChannelToReturn = await this.findUserChannel(
+    //   userUuid,
+    //   channelUuid,
+    // );
 
-    userChannelToReturn.users = channelUsers;
-
+    // Send over socket
     this.channelGateway.handleLeaveChannelSocket(channelUuid);
 
-    return userChannelToReturn;
+    return 'success';
   }
 
   async removeUserFromChannel(
@@ -170,17 +85,18 @@ export class ChannelSubscriptionsService {
   ) {
     await this.leaveChannel(userUuid, channelUuid);
 
-    const channelUsers =
-      await this.channelSubscriptionsRepository.findUsersByChannelId(
-        channelUuid,
-      );
+    // const channelUsers =
+    //   await this.channelSubscriptionsRepository.findUsersByChannelId(
+    //     channelUuid,
+    //   );
 
     const userChannelToReturn = await this.findUserChannel(
       currentUserUuid,
       channelUuid,
     );
 
-    userChannelToReturn.users = channelUsers;
+    // Todo: may need to attach users to channel to return
+    // userChannelToReturn.users = channelUsers;
 
     return userChannelToReturn;
   }
@@ -189,36 +105,17 @@ export class ChannelSubscriptionsService {
     return this.channelSubscriptionsRepository.getChannelUsersCount(channelId);
   }
 
-  async findUserChannel(
-    userUuid: string,
-    channelUuid: string,
-  ): Promise<ChannelSubscriptionDto> {
+  async findUserChannel(userUuid: string, channelUuid: string) {
     const channelSubscription =
-      await this.channelSubscriptionsRepository.findOneByProperties(
-        {
+      await this.channelSubscriptionsRepository.findOneOrFail({
+        where: {
           user: { uuid: userUuid },
           channel: { uuid: channelUuid },
         },
-        ['channel', 'section'],
-      );
+        relations: ['channel', 'section'],
+      });
 
-    if (!channelSubscription) {
-      throw new HttpException(
-        'ChannelSubscription not found',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    const res = {
-      ...plainToClass(ChannelSubscriptionDto, channelSubscription),
-      ...plainToClass(ChannelDto, channelSubscription.channel),
-      sectionId: channelSubscription.section.uuid,
-    };
-
-    delete res.section;
-    delete res.channel;
-
-    return res;
+    return plainToInstance(ChannelDto, channelSubscription.channel);
   }
 
   async updateUserChannel(
@@ -257,24 +154,22 @@ export class ChannelSubscriptionsService {
     sectionUuid: string,
   ) {
     const channelSubscription =
-      await this.channelSubscriptionsRepository.findOneByProperties(
-        {
+      await this.channelSubscriptionsRepository.findOneOrFail({
+        where: {
           user: { uuid: userUuid },
           channel: { uuid: channelUuid },
         },
-        ['channel'],
-      );
+        relations: ['channel'],
+      });
 
-    const section = await this.sectionsService.findOne({
-      uuid: sectionUuid,
+    // Find section
+    const section = await this.sectionsRepository.findOneOrFail({
+      where: {
+        uuid: sectionUuid,
+      },
     });
 
-    if (!channelSubscription || !section)
-      throw new HttpException(
-        'No userchannel or section found',
-        HttpStatus.BAD_REQUEST,
-      );
-
+    // Update channel subscriptions
     await this.channelSubscriptionsRepository.updateUserChannel(
       channelSubscription.uuid,
       {
@@ -292,75 +187,72 @@ export class ChannelSubscriptionsService {
     return updatedUserChannel;
   }
 
-  async getUserSubscribedChannels(
-    userUuid: string,
-  ): Promise<{ channels: any; channelSubscriptionDetails: any }> {
-    const channelSubscriptions = await this.channelSubscriptionsRepository.find(
-      {
-        where: { user: { uuid: userUuid } },
-        relations: ['channel'],
-      },
-    );
+  // async getUserSubscribedChannels(
+  //   userUuid: string,
+  // ): Promise<{ channels: any; channelSubscriptionDetails: any }> {
+  //   const channelSubscriptions = await this.channelSubscriptionsRepository.find(
+  //     {
+  //       where: { user: { uuid: userUuid } },
+  //       relations: ['channel'],
+  //     },
+  //   );
 
-    if (!channelSubscriptions) {
-      throw new NotFoundException('No user channels found');
-    }
+  //   if (!channelSubscriptions) {
+  //     throw new NotFoundException('No user channels found');
+  //   }
 
-    const channelSubscriptionDetails = [];
+  //   const channelSubscriptionDetails = [];
 
-    const channels = await Promise.all(
-      channelSubscriptions.map(async (channelSubscription) => {
-        const channel = channelSubscription.channel;
-        let directChannelName;
+  //   const channels = await Promise.all(
+  //     channelSubscriptions.map(async (channelSubscription) => {
+  //       const channel = channelSubscription.channel;
+  //       let directChannelName;
 
-        if (channel.type === ChannelType.DIRECT) {
-          const users =
-            await this.channelSubscriptionsRepository.findUsersByChannelId(
-              channelSubscription.channel.uuid,
-            );
+  //       if (channel.type === ChannelType.DIRECT) {
+  //         const users =
+  //           await this.channelSubscriptionsRepository.findUsersByChannelId(
+  //             channelSubscription.channel.uuid,
+  //           );
 
-          if (channelSubscription.channel.type === ChannelType.DIRECT) {
-            const otherUser = users.find(
-              (user: User) => user.uuid !== userUuid,
-            );
+  //         if (channelSubscription.channel.type === ChannelType.DIRECT) {
+  //           const otherUser = users.find(
+  //             (user: User) => user.uuid !== userUuid,
+  //           );
 
-            directChannelName = `${otherUser.firstName} ${otherUser.lastName}`;
-          }
-        }
+  //           directChannelName = `${otherUser.firstName} ${otherUser.lastName}`;
+  //         }
+  //       }
 
-        const channels = {
-          ...plainToClass(ChannelDto, channel),
-          ...(channel.type === ChannelType.DIRECT && {
-            name: directChannelName,
-          }),
-        };
+  //       const channels = {
+  //         ...plainToClass(ChannelDto, channel),
+  //         ...(channel.type === ChannelType.DIRECT && {
+  //           name: directChannelName,
+  //         }),
+  //       };
 
-        delete channelSubscription.channel;
-        channelSubscriptionDetails.push(channelSubscription);
+  //       delete channelSubscription.channel;
+  //       channelSubscriptionDetails.push(channelSubscription);
 
-        return channels;
-      }),
-    );
+  //       return channels;
+  //     }),
+  //   );
 
-    console.log('subscriptionDetails', channelSubscriptions);
-    console.log('channels', channels);
-
-    return { channels, channelSubscriptionDetails };
-  }
+  //   return { channels, channelSubscriptionDetails };
+  // }
 
   async getUserUnreadMessagesCount(
-    userUuid: string,
+    userId: number,
   ): Promise<{ channelId: string; unreadCount: number }[]> {
     // Fetch user's channels with their lastRead timestamp
     const channelSubscriptions =
       await this.channelSubscriptionsRepository.findSubscribedChannelsByUserId(
-        userUuid,
+        userId,
       );
 
     // For each channel, get the count of unread messages
     const unreadCountsPromises = channelSubscriptions.map(
       (channelSubscription) =>
-        this.messagesService
+        this.messagesRepository
           .getUnreadMessageCount(
             channelSubscription.channel.uuid,
             channelSubscription.lastRead,
@@ -371,6 +263,6 @@ export class ChannelSubscriptionsService {
           })),
     );
 
-    return Promise.all(unreadCountsPromises);
+    return await Promise.all(unreadCountsPromises);
   }
 }

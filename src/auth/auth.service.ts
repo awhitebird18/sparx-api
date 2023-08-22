@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from 'src/users/users.service';
-import { UserDto } from 'src/users/dto';
+import { MailerService } from '@nestjs-modules/mailer';
 import * as bcrypt from 'bcrypt';
 import { Response } from 'express';
-import { MailerService } from '@nestjs-modules/mailer';
+
+import { UsersService } from 'src/users/users.service';
+
+import { UserDto } from 'src/users/dto/user.dto';
 import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
@@ -92,8 +94,10 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
+    // Convert password to hash
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
+    // Create user
     const user = await this.usersService.createUser({
       ...registerDto,
       password: hashedPassword,

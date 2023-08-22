@@ -7,10 +7,12 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+
+import { UsersService } from './users.service';
+
+import { UpdateUserDto } from './dto/update-user.dto';
+import { RegisterDto } from 'src/auth/dto/register.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Users')
@@ -19,7 +21,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
+  createUser(@Body() createUserDto: RegisterDto) {
     return this.usersService.createUser(createUserDto);
   }
 
@@ -30,7 +32,7 @@ export class UsersController {
 
   @Get()
   findAll() {
-    return this.usersService.findAll();
+    return this.usersService.findWorkspaceUsers();
   }
 
   @Get(':id')

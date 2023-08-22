@@ -9,18 +9,31 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
-import { LoginDto } from './dto/login.dto';
-import { LocalAuthGuard } from './guards/local-auth.guard';
-import { AuthService } from './auth.service';
+import { Response } from 'express';
+
 import { Public } from 'src/common/decorators/is-public';
-import { RegisterDto } from './dto/register.dto';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
+
+import { User } from 'src/users/entities/user.entity';
+
+import { LocalAuthGuard } from './guards/local-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RefreshJwtAuthGuard } from './guards/jwt-refresh.guard';
+
+import { AuthService } from './auth.service';
+import { ChannelsService } from 'src/channels/channels.service';
 import { UsersService } from 'src/users/users.service';
 import { SectionsService } from 'src/sections/sections.service';
 import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
-import { RefreshJwtAuthGuard } from './guards/jwt-refresh.guard';
-import { Response } from 'express';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { ChannelUnreads } from 'src/channel-subscriptions/dto/channel-unreads.dto';
+import { UserDto } from 'src/users/dto/user.dto';
+import { SectionDto } from 'src/sections/dto/section.dto';
+import { ChannelDto } from 'src/channels/dto/channel.dto';
+import { UserPreferencesDto } from 'src/user-preferences/dto/user-preferences.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -29,6 +42,7 @@ export class AuthController {
     private authService: AuthService,
     private usersService: UsersService,
     private sectionsService: SectionsService,
+    private channelsService: ChannelsService,
     private channelSubscriptionsService: ChannelSubscriptionsService,
     private userPreferencesService: UserPreferencesService,
   ) {}
@@ -63,43 +77,49 @@ export class AuthController {
     return res.send(response);
   }
 
+  // @UseGuards(JwtAuthGuard)
+  // @Post('verify')
+  // async verifyToken() {
+  //   return;
+  // }
+
   @UseGuards(JwtAuthGuard)
-  @Post('verify')
-  async verifyToken(@Request() req) {
-    const user = await this.usersService.initialUserFetch(req.user.uuid);
-    const sectionsPromise = this.sectionsService.findUserSections(
-      req.user.uuid,
-    );
-    const channelsPromise =
-      this.channelSubscriptionsService.getUserSubscribedChannels(req.user.uuid);
+  @Get('client-boot')
+  async clientBoot(@GetUser() user: User): Promise<{
+    user: UserDto;
+    sections: SectionDto[];
+    channels: ChannelDto[];
+    channelUnreads: ChannelUnreads[];
+    users: UserDto[];
+    userPreferences: UserPreferencesDto;
+  }> {
+    const sectionsPromise = this.sectionsService.findUserSections(user.id);
+
+    const channelsPromise = this.channelsService.findUserChannels(user.id);
+
+    const channelUnreadsPromise =
+      this.channelSubscriptionsService.getUserUnreadMessagesCount(user.id);
+
+    const usersPromise = this.usersService.findWorkspaceUsers();
+
     const userPreferencesPromise =
       this.userPreferencesService.findUserPreferences(user.id);
-    const channelUnreadsPromise =
-      this.channelSubscriptionsService.getUserUnreadMessagesCount(
-        req.user.uuid,
-      );
-    const workspaceUsersPromise = this.usersService.findAll();
 
-    const [
-      sections,
-      channels,
-      userPreferences,
-      channelUnreads,
-      workspaceUsers,
-    ] = await Promise.all([
-      sectionsPromise,
-      channelsPromise,
-      userPreferencesPromise,
-      channelUnreadsPromise,
-      workspaceUsersPromise,
-    ]);
+    const [sections, channels, channelUnreads, users, userPreferences] =
+      await Promise.all([
+        sectionsPromise,
+        channelsPromise,
+        channelUnreadsPromise,
+        usersPromise,
+        userPreferencesPromise,
+      ]);
 
     return {
       user,
       sections,
       channels,
-      workspaceUsers,
       channelUnreads,
+      users,
       userPreferences,
     };
   }

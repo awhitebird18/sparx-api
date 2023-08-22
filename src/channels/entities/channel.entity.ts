@@ -1,14 +1,16 @@
+import { Entity, Column, OneToMany, ManyToOne } from 'typeorm';
+
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Company } from 'src/companies/entities/company.entity';
 import { Message } from 'src/messages/entities/message.entity';
-import { Entity, Column, OneToMany, ManyToOne } from 'typeorm';
-import { ChannelType } from '../enums/channel-type.enum';
 import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
+
+import { ChannelType } from '../enums/channel-type.enum';
 
 @Entity()
 export class Channel extends BaseEntity {
   @Column({ nullable: true })
-  name?: string;
+  name: string;
 
   @Column({ nullable: true })
   topic?: string;
@@ -17,7 +19,7 @@ export class Channel extends BaseEntity {
   description?: string;
 
   @Column({ default: false })
-  isPrivate?: boolean;
+  isPrivate: boolean;
 
   @Column({ nullable: true })
   icon?: string;

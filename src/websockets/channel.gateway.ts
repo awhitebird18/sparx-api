@@ -8,8 +8,8 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { ChannelDto, UpdateChannelDto } from 'src/channels/dto';
-import { ChannelSubscriptionDto } from 'src/channel-subscriptions/dto/channel-subscription.dto';
+
+import { ChannelDto } from 'src/channels/dto/channel.dto';
 
 @WebSocketGateway({
   cors: { origin: 'http://localhost:5173' },
@@ -36,7 +36,7 @@ export class ChannelGateway
     this.server.emit('channels', channel);
   }
 
-  handleUpdateChannelSocket(channel: UpdateChannelDto) {
+  handleUpdateChannelSocket(channel: ChannelDto) {
     this.server.emit('channels/update', channel);
   }
 
@@ -48,7 +48,7 @@ export class ChannelGateway
     this.server.emit('ChannelSubscriptions/leave', channelId);
   }
 
-  handleJoinChannelSocket(channelSubscription: ChannelSubscriptionDto) {
+  handleJoinChannelSocket(channelSubscription: ChannelDto) {
     this.server.emit('ChannelSubscriptions/join', channelSubscription);
   }
 

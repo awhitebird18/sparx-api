@@ -3,84 +3,44 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { ChannelDto, CreateChannelDto, UpdateChannelDto } from './dto';
+
 import { ChannelsRepository } from './channels.repository';
-import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
 import { ChannelGateway } from 'src/websockets/channel.gateway';
-import { ChannelType } from './enums/channel-type.enum';
 import { FilesService } from 'src/files/files.service';
 import { Channel } from './entities/channel.entity';
+
+import { ChannelDto } from './dto/channel.dto';
+import { CreateChannelDto } from './dto/create-channel.dto';
+import { UpdateChannelDto } from './dto/update-channel.dto';
 
 @Injectable()
 export class ChannelsService {
   constructor(
     private channelsRepository: ChannelsRepository,
-    private channelSubscriptionService: ChannelSubscriptionsService,
     private filesService: FilesService,
     private channelGateway: ChannelGateway,
   ) {}
 
-  async createChannel(createChannelDto: CreateChannelDto, userId: string) {
+  async createChannel(createChannelDto: CreateChannelDto) {
     // Check if channel name already exists. If so, throw error.
-    const existingChannel = await this.channelsRepository.findOneByProperties({
-      name: createChannelDto.name,
+    const existingChannel = await this.channelsRepository.findOne({
+      where: {
+        name: createChannelDto.name,
+      },
     });
-
-    if (existingChannel) {
+    if (existingChannel)
       throw new ConflictException('A channel with this name already exists.');
-    }
 
     // Create database entry
     const newChannel = await this.channelsRepository.createChannel(
       createChannelDto,
     );
 
-    // Add current user to channel
-    const channelSubscription =
-      await this.channelSubscriptionService.joinChannel(
-        userId,
-        newChannel.uuid,
-        ChannelType.CHANNEL,
-      );
-
-    return channelSubscription;
-  }
-
-  async findUserChannels(userUuid: string) {
-    return await this.channelsRepository.findUserChannels(userUuid);
-  }
-
-  async createDirectChannel(memberIds: string[]) {
-    // Check if direct channel with both members already exists
-    const channel = await this.channelsRepository.findDirectChannelByUserUuids(
-      memberIds,
-    );
-    if (channel) {
-      throw new ConflictException(
-        `A direct channel with members [${memberIds.join(
-          ', ',
-        )}] already exists.`,
-      );
-    }
-
-    // Create new direct message channel
-    const newChannel = await this.channelsRepository.save({
-      type: ChannelType.DIRECT,
-    });
-
-    // Add members to the channel
-    const memberPromises = memberIds.map(async (memberId) => {
-      return this.channelSubscriptionService.joinChannel(
-        memberId,
-        newChannel.uuid,
-        ChannelType.DIRECT,
-      );
-    });
-    await Promise.all(memberPromises);
-
-    // Todo: may need to send over socket to all members who are part of the channel
-
     return newChannel;
+  }
+
+  async findUserChannels(userId: number) {
+    return await this.channelsRepository.findUserChannels(userId);
   }
 
   async findDirectChannelByUserUuids(memberIds: string[]) {
@@ -107,10 +67,6 @@ export class ChannelsService {
     );
 
     return channelsWithUserCount;
-  }
-
-  async findOne(searchProperties: any) {
-    return await this.channelsRepository.findOneBy(searchProperties);
   }
 
   async updateChannel(id: string, updateChannelDto: UpdateChannelDto) {

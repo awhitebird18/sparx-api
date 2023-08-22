@@ -23,12 +23,12 @@ export class SectionsController {
   @ApiBody({ type: CreateSectionDto })
   @Post()
   create(@Body() createSectionDto: CreateSectionDto, @GetUser() user: User) {
-    return this.sectionsService.createSection(createSectionDto, user);
+    return this.sectionsService.createSection(createSectionDto, user.id);
   }
 
   @Get()
   findUserSections(@GetUser() user: User) {
-    return this.sectionsService.findUserSections(user.uuid);
+    return this.sectionsService.findUserSections(user.id);
   }
 
   @ApiParam({
@@ -62,6 +62,6 @@ export class SectionsController {
   })
   @Delete(':sectionId')
   removeSection(@GetUser() user: User, @Param('sectionId') sectionId: string) {
-    return this.sectionsService.removeSection(sectionId, user.uuid);
+    return this.sectionsService.removeSection(sectionId, user.id);
   }
 }

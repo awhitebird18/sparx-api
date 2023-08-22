@@ -1,9 +1,21 @@
-import { Module } from '@nestjs/common';
+import { ClassSerializerInterceptor, Module } from '@nestjs/common';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { config } from './typeorm';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import * as path from 'path';
+import * as Mailgun from 'nodemailer-mailgun-transport';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { FilesModule } from './files/files.module';
+import { ChannelSubscriptionsModule } from './channel-subscriptions/channel-subscriptions.module';
+import { UserPreferencesModule } from './user-preferences/user-preferences.module';
+import { ChannelManagementModule } from './channel-management/channel-management.module';
 import { ChannelsModule } from './channels/channels.module';
 import { MessagesModule } from './messages/messages.module';
 import { CompaniesModule } from './companies/companies.module';
@@ -11,15 +23,6 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { SectionsModule } from './sections/sections.module';
 import { WebsocketsModule } from './websockets/websockets.module';
-import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
-import { ChannelSubscriptionsModule } from './channel-subscriptions/channel-subscriptions.module';
-import { config } from './typeorm';
-import { UserPreferencesModule } from './user-preferences/user-preferences.module';
-import { MailerModule } from '@nestjs-modules/mailer';
-import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
-import { FilesModule } from './files/files.module';
-import * as path from 'path';
-import * as Mailgun from 'nodemailer-mailgun-transport';
 
 @Module({
   imports: [
@@ -53,8 +56,16 @@ import * as Mailgun from 'nodemailer-mailgun-transport';
     WebsocketsModule,
     ChannelSubscriptionsModule,
     FilesModule,
+    ChannelManagementModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ClassSerializerInterceptor,
+    },
+  ],
 })
 export class AppModule {}

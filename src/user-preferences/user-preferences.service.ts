@@ -1,25 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { UpdateUserpreferenceDto } from './dto/update-user-preferences';
+
 import { UserPreferencessRepository } from './user-preferences.repository';
-import { User } from 'src/users/entities/user.entity';
+
+import { UpdateUserPreferencesDto } from './dto/update-user-preferences';
+import { CreateUserPreferences } from './dto/create-user-preferences.dto';
 
 @Injectable()
 export class UserPreferencesService {
   constructor(private userPreferencesRepository: UserPreferencessRepository) {}
 
-  async createUserPreferences(user: User) {
-    return await this.userPreferencesRepository.createUserPreferences(user);
+  async createUserPreferences(createUserPreferences: CreateUserPreferences) {
+    return await this.userPreferencesRepository.createUserPreferences(
+      createUserPreferences,
+    );
   }
 
   async findUserPreferences(userId: number) {
-    return this.userPreferencesRepository.findOneByProperties({
-      user: { id: userId },
+    return await this.userPreferencesRepository.findOne({
+      where: { userId },
     });
   }
 
   async update(
-    userId: string,
-    updateUserpreferenceDto: UpdateUserpreferenceDto,
+    userId: number,
+    updateUserpreferenceDto: UpdateUserPreferencesDto,
   ) {
     await this.userPreferencesRepository.updateUserPreferences(
       userId,

@@ -1,8 +1,10 @@
+import { Entity, Column, OneToMany, ManyToOne } from 'typeorm';
+
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 import { User } from 'src/users/entities/user.entity';
-import { Entity, Column, OneToMany, ManyToOne } from 'typeorm';
-import { SortBy } from '../enums';
+
+import { SortBy } from '../enums/sort-by.enum';
 
 @Entity()
 export class Section extends BaseEntity {
@@ -10,7 +12,7 @@ export class Section extends BaseEntity {
   name: string;
 
   @Column({ nullable: true })
-  type?: string;
+  type: string;
 
   @Column({ default: false, nullable: true })
   isSystem: boolean;
@@ -19,7 +21,7 @@ export class Section extends BaseEntity {
   isOpen: boolean;
 
   @Column({ nullable: true })
-  emoji?: string;
+  emoji: string;
 
   @Column({ nullable: true })
   orderIndex: number;

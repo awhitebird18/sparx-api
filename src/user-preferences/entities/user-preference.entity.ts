@@ -1,8 +1,11 @@
 import { Column, Entity, OneToOne } from 'typeorm';
-import { Theme, PrimaryColor } from 'src/users/enums';
-import { NotificationType } from '../enums';
+
 import { User } from 'src/users/entities/user.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
+
+import { Theme } from 'src/users/enums/theme.enum';
+import { PrimaryColor } from 'src/users/enums/primary-color.enum';
+import { NotificationType } from '../enums/notification-type.enum';
 
 @Entity()
 export class UserPreferences extends BaseEntity {
@@ -17,4 +20,7 @@ export class UserPreferences extends BaseEntity {
 
   @OneToOne(() => User, (user) => user.preferences)
   user: User;
+
+  @Column()
+  userId: number;
 }

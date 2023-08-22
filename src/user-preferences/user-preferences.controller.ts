@@ -1,8 +1,10 @@
-import { Controller, Post, Body, Patch } from '@nestjs/common';
-import { UserPreferencesService } from './user-preferences.service';
-import { UpdateUserpreferenceDto } from './dto/update-user-preferences';
+import { Controller, Body, Patch } from '@nestjs/common';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
+
+import { UserPreferencesService } from './user-preferences.service';
 import { User } from 'src/users/entities/user.entity';
+
+import { UpdateUserPreferencesDto } from './dto/update-user-preferences';
 
 @Controller('user-preferences')
 export class UserPreferencesController {
@@ -10,19 +12,11 @@ export class UserPreferencesController {
     private readonly userpreferencesService: UserPreferencesService,
   ) {}
 
-  @Post()
-  create(@GetUser() user: User) {
-    return this.userpreferencesService.createUserPreferences(user);
-  }
-
   @Patch()
   update(
     @GetUser() user: User,
-    @Body() updateUserpreferenceDto: UpdateUserpreferenceDto,
+    @Body() updateUserpreferenceDto: UpdateUserPreferencesDto,
   ) {
-    return this.userpreferencesService.update(
-      user.uuid,
-      updateUserpreferenceDto,
-    );
+    return this.userpreferencesService.update(user.id, updateUserpreferenceDto);
   }
 }

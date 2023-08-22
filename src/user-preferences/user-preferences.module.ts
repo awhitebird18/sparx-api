@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { UserPreferences } from './entities/user-preference.entity';
+
 import { UserPreferencesService } from './user-preferences.service';
 import { UserPreferencesController } from './user-preferences.controller';
-import { UserPreferences } from './entities/user-preference.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserPreferencessRepository } from './user-preferences.repository';
 
 @Module({

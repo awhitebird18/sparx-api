@@ -5,6 +5,7 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { Injectable } from '@nestjs/common';
+
 import { ChannelSubscription } from './entity/channel-subscription.entity';
 import { User } from 'src/users/entities/user.entity';
 
@@ -36,10 +37,10 @@ export class ChannelSubscriptionsRepository extends Repository<ChannelSubscripti
   }
 
   async findSubscribedChannelsByUserId(
-    userUuid: string,
+    userId: number,
   ): Promise<ChannelSubscription[]> {
     return await this.find({
-      where: { user: { uuid: userUuid }, isSubscribed: true },
+      where: { user: { id: userId }, isSubscribed: true },
       relations: ['channel', 'section'],
     });
   }

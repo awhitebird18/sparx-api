@@ -1,8 +1,8 @@
+import { Entity, Column, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Company } from 'src/companies/entities/company.entity';
 import { Section } from 'src/sections/entities/section.entity';
-import { Entity, Column, ManyToOne, OneToMany, OneToOne } from 'typeorm';
-import { PrimaryColor, Theme } from '../enums';
 import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 import { UserPreferences } from 'src/user-preferences/entities/user-preference.entity';
 
@@ -21,16 +21,10 @@ export class User extends BaseEntity {
   address?: string;
 
   @Column({ default: false })
-  isBot?: boolean;
+  isBot: boolean;
 
   @Column({ nullable: true })
   profileImage: string;
-
-  @Column({ default: Theme.LIGHT })
-  theme: Theme;
-
-  @Column({ default: PrimaryColor.BLUE })
-  primaryColor: PrimaryColor;
 
   @Column({ default: false })
   isAdmin: boolean;
