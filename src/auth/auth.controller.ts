@@ -7,6 +7,8 @@ import {
   Body,
   Query,
   Res,
+  UseInterceptors,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -17,7 +19,6 @@ import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { User } from 'src/users/entities/user.entity';
 
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RefreshJwtAuthGuard } from './guards/jwt-refresh.guard';
 
 import { AuthService } from './auth.service';
@@ -77,16 +78,10 @@ export class AuthController {
     return res.send(response);
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Post('verify')
-  // async verifyToken() {
-  //   return;
-  // }
-
-  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get('client-boot')
-  async clientBoot(@GetUser() user: User): Promise<{
-    user: UserDto;
+  async clientBoot(@GetUser() currentUser: User): Promise<{
+    currentUser: UserDto;
     users: UserDto[];
     userPreferences: UserPreferencesDto;
     sections: SectionDto[];
@@ -96,14 +91,20 @@ export class AuthController {
     const usersPromise = this.usersService.findWorkspaceUsers();
 
     const userPreferencesPromise =
-      this.userPreferencesService.findUserPreferences(user.id);
+      this.userPreferencesService.findUserPreferences(currentUser.id);
 
-    const sectionsPromise = this.sectionsService.findUserSections(user.id);
+    const sectionsPromise = this.sectionsService.findUserSections(
+      currentUser.id,
+    );
 
-    const channelsPromise = this.channelsService.findUserChannels(user.id);
+    const channelsPromise = this.channelsService.findUserChannels(
+      currentUser.id,
+    );
 
     const channelUnreadsPromise =
-      this.channelSubscriptionsService.getUserUnreadMessagesCount(user.id);
+      this.channelSubscriptionsService.getUserUnreadMessagesCount(
+        currentUser.id,
+      );
 
     const [users, userPreferences, sections, channels, channelUnreads] =
       await Promise.all([
@@ -114,17 +115,8 @@ export class AuthController {
         channelUnreadsPromise,
       ]);
 
-    console.log({
-      user,
-      users,
-      userPreferences,
-      sections,
-      channels,
-      channelUnreads,
-    });
-
     return {
-      user,
+      currentUser,
       users,
       userPreferences,
       sections,

@@ -1,5 +1,4 @@
 import { Body, Controller, Param, Post } from '@nestjs/common';
-import { ApiBody } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 
 import { User } from 'src/users/entities/user.entity';
@@ -8,6 +7,8 @@ import { ChannelManagementService } from './channel-management.service';
 
 import { ChannelType } from 'src/channels/enums/channel-type.enum';
 import { CreateChannelDto } from 'src/channels/dto/create-channel.dto';
+import { ChannelDto } from 'src/channels/dto/channel.dto';
+import { ChannelSubscriptionDto } from 'src/channel-subscriptions/dto/channel-subscription.dto';
 
 @Controller('channel-management')
 export class ChannelManagementController {
@@ -15,12 +16,11 @@ export class ChannelManagementController {
     private readonly channelManagementService: ChannelManagementService,
   ) {}
 
-  @ApiBody({ type: CreateChannelDto })
   @Post()
-  async createChannel(
+  createChannel(
     @GetUser() currentUser: User,
     @Body() createChannelDto: CreateChannelDto,
-  ) {
+  ): Promise<ChannelDto> {
     return this.channelManagementService.createChannelAndJoin(
       createChannelDto,
       currentUser.uuid,
@@ -28,38 +28,36 @@ export class ChannelManagementController {
   }
 
   @Post('direct-channel')
-  async createDirectChannel(@Body() data: { memberIds: string[] }) {
+  createDirectChannel(
+    @Body() data: { memberIds: string[] },
+  ): Promise<ChannelDto> {
     return this.channelManagementService.createDirectChannelAndJoin(
       data.memberIds,
     );
   }
 
   @Post('join/:channelId')
-  async joinChannel(
+  joinChannel(
     @GetUser() user: User,
     @Param('channelId') channelId: string,
-  ) {
-    const channelSubscription = this.channelManagementService.joinChannel(
+  ): Promise<ChannelSubscriptionDto> {
+    return this.channelManagementService.joinChannel(
       user.uuid,
       channelId,
       ChannelType.CHANNEL,
     );
-
-    return channelSubscription;
   }
 
   @Post('invite/:channelId')
-  async inviteUsers(
+  inviteUsers(
     @Param('channelId') channelId: string,
     @Body() userIds: string[],
     // @GetUser() currentUser: User,
-  ) {
-    const channelSubscription = await this.channelManagementService.inviteUsers(
+  ): Promise<ChannelDto> {
+    return this.channelManagementService.inviteUsers(
       channelId,
       userIds,
       // currentUser.id,
     );
-
-    return channelSubscription;
   }
 }

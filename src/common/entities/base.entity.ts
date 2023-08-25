@@ -23,6 +23,7 @@ export class BaseEntity {
   @Column({ type: 'timestamptz', nullable: true })
   updatedAt: Date;
 
+  @Exclude()
   @DeleteDateColumn({ type: 'timestamptz', nullable: true })
   deletedAt: Date;
 

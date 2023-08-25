@@ -21,7 +21,7 @@ export class ChannelsService {
     private channelGateway: ChannelGateway,
   ) {}
 
-  async createChannel(createChannelDto: CreateChannelDto) {
+  async createChannel(createChannelDto: CreateChannelDto): Promise<Channel> {
     // Check if channel name already exists. If so, throw error.
     const existingChannel = await this.channelsRepository.findOne({
       where: {
@@ -39,14 +39,12 @@ export class ChannelsService {
     return newChannel;
   }
 
-  async findUserChannels(userId: number) {
-    return await this.channelsRepository.findUserChannels(userId);
+  findUserChannels(userId: number): Promise<Channel[]> {
+    return this.channelsRepository.findUserChannels(userId);
   }
 
-  async findDirectChannelByUserUuids(memberIds: string[]) {
-    return await this.channelsRepository.findDirectChannelByUserUuids(
-      memberIds,
-    );
+  findDirectChannelByUserUuids(memberIds: string[]): Promise<Channel> {
+    return this.channelsRepository.findDirectChannelByUserUuids(memberIds);
   }
 
   async findWorkspaceChannels(
@@ -69,7 +67,10 @@ export class ChannelsService {
     return channelsWithUserCount;
   }
 
-  async updateChannel(id: string, updateChannelDto: UpdateChannelDto) {
+  async updateChannel(
+    id: string,
+    updateChannelDto: UpdateChannelDto,
+  ): Promise<Channel> {
     // Check if channel exists
     const channel = await this.channelsRepository.findByUuid(id);
 
@@ -96,14 +97,16 @@ export class ChannelsService {
     return updatedChannel;
   }
 
-  async removeChannel(uuid: string): Promise<boolean> {
-    const channel = await this.channelsRepository.findByUuid(uuid);
+  async removeChannel(uuid: string): Promise<void> {
+    // Remove channel
+    const removedChannel = await this.channelsRepository.removeChannelByUuid(
+      uuid,
+    );
 
-    if (!channel) {
-      return false;
-    }
+    if (!removedChannel)
+      throw new NotFoundException(`Unable to find user with id ${uuid}`);
 
-    await this.channelsRepository.softRemove(channel);
-    return true;
+    // Send websocket
+    this.channelGateway.handleRemoveChannelSocket(removedChannel.uuid);
   }
 }

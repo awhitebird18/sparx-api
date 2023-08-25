@@ -1,13 +1,7 @@
-import {
-  DataSource,
-  FindOptionsWhere,
-  Repository,
-  UpdateResult,
-} from 'typeorm';
+import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 
 import { ChannelSubscription } from './entity/channel-subscription.entity';
-import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class ChannelSubscriptionsRepository extends Repository<ChannelSubscription> {
@@ -15,62 +9,38 @@ export class ChannelSubscriptionsRepository extends Repository<ChannelSubscripti
     super(ChannelSubscription, dataSource.createEntityManager());
   }
 
-  async findOneByProperties(
+  findOneByProperties(
     searchFields: FindOptionsWhere<ChannelSubscription>,
     relations?: string[],
-  ) {
-    return await this.findOne({
+  ): Promise<ChannelSubscription> {
+    return this.findOne({
       where: searchFields,
       relations,
     });
   }
 
-  async findByProperties(userId: string) {
-    return await this.createQueryBuilder('channelSubscription')
+  findByUserUuid(userUuid: string): Promise<ChannelSubscription[]> {
+    return this.createQueryBuilder('channelSubscription')
       .leftJoinAndSelect('channelSubscription.section', 'section')
       .leftJoinAndSelect('channelSubscription.channel', 'channel')
       .leftJoinAndSelect('channelSubscription.user', 'user')
       .select(['channelSubscription', 'section.uuid', 'channel'])
-      .where('user.uuid = :uuid', { uuid: userId })
+      .where('user.uuid = :uuid', { uuid: userUuid })
       .andWhere('channelSubscription.isSubscribed = true')
       .getMany();
   }
 
-  async findSubscribedChannelsByUserId(
+  findSubscribedChannelsByUserId(
     userId: number,
   ): Promise<ChannelSubscription[]> {
-    return await this.find({
+    return this.find({
       where: { user: { id: userId }, isSubscribed: true },
       relations: ['channel', 'section'],
     });
   }
 
-  async findUsersByChannelId(channelUuid: string): Promise<User[]> {
-    const channelSubscriptions = await this.createQueryBuilder(
-      'channelSubscription',
-    )
-      .innerJoinAndSelect('channelSubscription.user', 'user')
-      .innerJoin('channelSubscription.channel', 'channel')
-      .where('channel.uuid = :channelUuid', { channelUuid })
-      .andWhere('channelSubscription.isSubscribed = :isSubscribed', {
-        isSubscribed: true,
-      })
-      .getMany();
-
-    return channelSubscriptions.map(
-      (channelSubscription) => channelSubscription.user,
-    );
-  }
-
-  async updateUserChannel(
-    uuid: string,
-    channelSubscription: Partial<ChannelSubscription>,
-  ): Promise<UpdateResult> {
-    return await this.update({ uuid }, channelSubscription);
-  }
-
-  async getChannelUsersCount(channelId: number) {
-    return await this.createQueryBuilder('channelSubscription')
+  getChannelUsersCount(channelId: number): Promise<number> {
+    return this.createQueryBuilder('channelSubscription')
       .where('channelSubscription.channelId = :channelId', { channelId })
       .andWhere('channelSubscription.isSubscribed = :isSubscribed', {
         isSubscribed: true,
@@ -78,10 +48,10 @@ export class ChannelSubscriptionsRepository extends Repository<ChannelSubscripti
       .getCount();
   }
 
-  async findChannelSubscriptionsWithLastRead(
+  findChannelSubscriptionsWithLastRead(
     userUuid: string,
   ): Promise<ChannelSubscription[]> {
-    return await this.createQueryBuilder('channelSubscription')
+    return this.createQueryBuilder('channelSubscription')
       .leftJoinAndSelect('channelSubscription.channel', 'channel')
       .innerJoin('channelSubscription.user', 'user')
       .where('user.uuid = :userUuid', { userUuid })

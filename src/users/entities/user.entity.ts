@@ -1,10 +1,11 @@
 import { Entity, Column, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Company } from 'src/companies/entities/company.entity';
 import { Section } from 'src/sections/entities/section.entity';
 import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 import { UserPreferences } from 'src/user-preferences/entities/user-preference.entity';
+import { Workspace } from 'src/workspaces/entities/workspace.entity';
+import { UserRoles } from '../enums/roles.enum';
 
 @Entity()
 export class User extends BaseEntity {
@@ -35,11 +36,17 @@ export class User extends BaseEntity {
   @Column()
   password: string;
 
+  @Column({ nullable: true })
+  workspaceId: string;
+
+  @Column({ default: UserRoles.USER })
+  role: UserRoles;
+
   @OneToOne(() => UserPreferences, (userPreferences) => userPreferences.user)
   preferences: UserPreferences;
 
-  @ManyToOne(() => Company, (company) => company.users)
-  company: Company;
+  @ManyToOne(() => Workspace, (company) => company.users)
+  workspace: Workspace;
 
   @OneToMany(() => Section, (section) => section.user)
   sections: Section[];

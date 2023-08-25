@@ -1,5 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import { plainToInstance } from 'class-transformer';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
 import { saveBase64Image } from 'src/utils';
 import * as path from 'path';
@@ -11,7 +14,7 @@ import { UserPreferencesService } from 'src/user-preferences/user-preferences.se
 
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RegisterDto } from 'src/auth/dto/register.dto';
-import { UserDto } from './dto/user.dto';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -22,7 +25,7 @@ export class UsersService {
     private usersGatway: UsersGateway,
   ) {}
 
-  async create(registerDto: RegisterDto) {
+  async create(registerDto: RegisterDto): Promise<User> {
     const existingUser = await this.usersRepository.findOne({
       where: {
         email: registerDto.email,
@@ -42,14 +45,10 @@ export class UsersService {
       }),
     ]);
 
-    const filteredUser = plainToInstance(UserDto, user);
-
-    this.usersGatway.handleNewUserSocket(filteredUser);
-
-    return filteredUser;
+    return user;
   }
 
-  async createBot() {
+  async createBot(): Promise<User> {
     // Check if bot exists
     const existingBot = await this.usersRepository.findOne({
       where: { isBot: true },
@@ -71,24 +70,22 @@ export class UsersService {
       profileImage: `/static/${botImagePath}`,
     });
 
-    const serializeBotUser = plainToInstance(UserDto, newBotUser);
-
-    return serializeBotUser;
+    return newBotUser;
   }
 
-  async findOne(searchProperties: any) {
-    return await this.usersRepository.findOneBy(searchProperties);
+  findOne(searchProperties: any): Promise<User> {
+    return this.usersRepository.findOneBy(searchProperties);
   }
 
-  async findOneByEmail(email: string) {
-    return await this.usersRepository.findOneBy({ email });
+  async findOneByEmail(email: string): Promise<User> {
+    return this.usersRepository.findOne({ where: { email } });
   }
 
-  async findWorkspaceUsers() {
+  findWorkspaceUsers(): Promise<User[]> {
     return this.usersRepository.find({ where: { isBot: false } });
   }
 
-  async markAsVerified(email: string) {
+  async markAsVerified(email: string): Promise<User> {
     // Find User
     const user = await this.usersRepository.findOneOrFail({ where: { email } });
 
@@ -99,7 +96,7 @@ export class UsersService {
     return updatedUser;
   }
 
-  async update(userId: number, updateUserDto: UpdateUserDto) {
+  async update(userId: number, updateUserDto: UpdateUserDto): Promise<User> {
     // Check for existing user
     const user = await this.usersRepository.findOneOrFail({
       where: { id: userId },
@@ -108,15 +105,17 @@ export class UsersService {
     // Update user
     Object.assign(user, updateUserDto);
     const updatedUser = await this.usersRepository.save(user);
-    const serializedUser = plainToInstance(UserDto, updatedUser);
 
     // Send updated user over socket
-    this.usersGatway.handleUserUpdateSocket(serializedUser);
+    this.usersGatway.handleUpdateUserSocket(updatedUser);
 
-    return serializedUser;
+    return updatedUser;
   }
 
-  async updateProfileImage(userId: number, profileImage: string) {
+  async updateProfileImage(
+    userId: number,
+    profileImage: string,
+  ): Promise<User> {
     // Find User
     const user = await this.usersRepository.findOneOrFail({
       where: { id: userId },
@@ -134,15 +133,18 @@ export class UsersService {
     // Update User
     const updatedUser = await this.usersRepository.save(user);
 
-    const serializedUser = plainToInstance(UserDto, updatedUser);
-
     // Send updated user over socket
-    this.usersGatway.handleUserUpdateSocket(serializedUser);
+    this.usersGatway.handleUpdateUserSocket(updatedUser);
 
-    return serializedUser;
+    return updatedUser;
   }
 
-  async remove(id: number) {
-    return await this.usersRepository.softRemove({ id });
+  async remove(uuid: string): Promise<void> {
+    const removedUser = await this.usersRepository.removeUserByUuid(uuid);
+
+    if (!removedUser)
+      throw new NotFoundException(`Unable to find user with id ${uuid}`);
+
+    this.usersGatway.handleRemoveUserSocket(removedUser.uuid);
   }
 }

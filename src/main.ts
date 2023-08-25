@@ -20,16 +20,17 @@ async function bootstrap() {
     ({ from, to }) => `  ${from.module.name}-->${to.module.name}`,
   );
   // console.info(mermaidEdges.join('\n'));
+  console.log('derp');
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      // validationError: { target: false },
-    }),
-  );
-
+  // app.useGlobalPipes(
+  //   new ValidationPipe({
+  //     whitelist: true,
+  //     forbidNonWhitelisted: true,
+  //     transform: true,
+  //     validationError: { target: false },
+  //   }),
+  // );
+  console.log('derp');
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
   app.use('/static', express.static(join(__dirname, '..', 'static')));

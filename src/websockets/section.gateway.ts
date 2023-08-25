@@ -1,21 +1,38 @@
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { plainToInstance } from 'class-transformer';
 import { Server } from 'socket.io';
 
 import { SectionDto } from 'src/sections/dto/section.dto';
+import { Section } from 'src/sections/entities/section.entity';
+import { WebSocketMessage } from './web-socket-message';
+import { MessageType } from './ws-messagetype.enum';
 
 @WebSocketGateway()
 export class SectionsGateway {
   @WebSocketServer() server: Server;
 
-  handleNewSectionSocket(section: SectionDto): void {
-    this.server.emit('sections', section);
+  handleNewSectionSocket(section: Section): void {
+    const serializedSection = plainToInstance(SectionDto, section);
+    const webSocketMessage = new WebSocketMessage(MessageType.UpdateSection, {
+      section: serializedSection,
+    });
+
+    this.server.emit('sections', webSocketMessage);
   }
 
-  handleUpdateSectionSocket(section: SectionDto): void {
-    this.server.emit('sections/update', section);
+  handleUpdateSectionSocket(section: Section): void {
+    const serializedSection = plainToInstance(SectionDto, section);
+    const webSocketMessage = new WebSocketMessage(MessageType.UpdateSection, {
+      section: serializedSection,
+    });
+
+    this.server.emit('sections/update', webSocketMessage);
   }
 
   handleRemoveSectionSocket(sectionId: string): void {
-    this.server.emit('sections/remove', sectionId);
+    const webSocketMessage = new WebSocketMessage(MessageType.RemoveSection, {
+      sectionId,
+    });
+    this.server.emit('sections/remove', webSocketMessage);
   }
 }

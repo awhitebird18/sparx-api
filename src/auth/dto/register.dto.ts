@@ -7,7 +7,9 @@ import {
   IsNotEmpty,
   IsOptional,
   IsBoolean,
+  IsEnum,
 } from 'class-validator';
+import { UserRoles } from 'src/users/enums/roles.enum';
 // import { IsPasswordMatching } from '../validators/is-password-matching';
 
 export class RegisterDto {
@@ -45,4 +47,8 @@ export class RegisterDto {
   @IsString()
   @IsOptional()
   profileImage?: string;
+
+  @IsEnum(UserRoles)
+  @IsOptional()
+  role?: UserRoles;
 }

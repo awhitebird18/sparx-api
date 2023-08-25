@@ -5,7 +5,7 @@ export class ChannelUnreads {
   @IsUUID(4)
   channelId: string;
 
-  @IsNotEmpty()
+  // @IsNotEmpty()
   @IsNumber()
   unreadCount: number;
 }

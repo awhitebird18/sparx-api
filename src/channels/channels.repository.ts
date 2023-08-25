@@ -11,9 +11,8 @@ export class ChannelsRepository extends Repository<Channel> {
   constructor(private dataSource: DataSource) {
     super(Channel, dataSource.createEntityManager());
   }
-  async createChannel(createChannelDto: CreateChannelDto): Promise<Channel> {
+  createChannel(createChannelDto: CreateChannelDto): Promise<Channel> {
     const channel = this.create(createChannelDto);
-
     return this.save(channel);
   }
 
@@ -46,8 +45,8 @@ export class ChannelsRepository extends Repository<Channel> {
     return undefined;
   }
 
-  async findUserChannels(userId: number): Promise<Channel[]> {
-    return await this.createQueryBuilder('channel')
+  findUserChannels(userId: number): Promise<Channel[]> {
+    return this.createQueryBuilder('channel')
       .leftJoin('channel.channelSubscriptions', 'channelSubscription')
       .innerJoin('channelSubscription.user', 'user')
       .select('channel')
@@ -55,11 +54,11 @@ export class ChannelsRepository extends Repository<Channel> {
       .getMany();
   }
 
-  async findWorkspaceChannelsWithUserCounts(
+  findWorkspaceChannelsWithUserCounts(
     page: number,
     pageSize = 15,
   ): Promise<any> {
-    return await this.createQueryBuilder('channel')
+    return this.createQueryBuilder('channel')
       .leftJoin('channel.channelSubscriptions', 'channelSubscription')
       .select('channel') // This selects all fields of the `channel` entity
       .addSelect('COUNT(channelSubscription.uuid)', 'usercount')
@@ -72,7 +71,7 @@ export class ChannelsRepository extends Repository<Channel> {
       .getRawAndEntities();
   }
 
-  async findChannelsByIds(channelIds: string[]): Promise<Channel[]> {
+  findChannelsByIds(channelIds: string[]): Promise<Channel[]> {
     return this.find({
       where: {
         id: In(channelIds),
@@ -80,7 +79,7 @@ export class ChannelsRepository extends Repository<Channel> {
     });
   }
 
-  async findOneByProperties(
+  findOneByProperties(
     searchCriteria: FindOptionsWhere<Channel>,
   ): Promise<Channel> {
     return this.findOne({ where: searchCriteria });
@@ -90,7 +89,7 @@ export class ChannelsRepository extends Repository<Channel> {
     return this.findOne({ where: { uuid } });
   }
 
-  async removeChannel(uuid: string) {
+  removeChannelByUuid(uuid: string): Promise<Channel> {
     return this.softRemove({ uuid });
   }
 }

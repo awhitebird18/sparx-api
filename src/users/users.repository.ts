@@ -10,16 +10,16 @@ export class UsersRepository extends Repository<User> {
   constructor(private dataSource: DataSource) {
     super(User, dataSource.createEntityManager());
   }
-  async createUser(createUserDto: RegisterDto): Promise<User> {
+  createUser(createUserDto: RegisterDto): Promise<User> {
     const user = this.create(createUserDto);
-    return await this.save(user);
+    return this.save(user);
   }
 
-  async findUserByUuid(uuid: string): Promise<User> {
-    return await this.findOne({ where: { uuid } });
+  findUserByUuid(uuid: string): Promise<User> {
+    return this.findOne({ where: { uuid } });
   }
 
-  async removeUser(uuid: string) {
+  removeUserByUuid(uuid: string): Promise<User> {
     return this.softRemove({ uuid });
   }
 }

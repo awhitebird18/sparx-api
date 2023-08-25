@@ -10,6 +10,10 @@ import {
 import { Server, Socket } from 'socket.io';
 
 import { ChannelDto } from 'src/channels/dto/channel.dto';
+import { WebSocketMessage } from './web-socket-message';
+import { MessageType } from './ws-messagetype.enum';
+import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
+import { Channel } from 'src/channels/entities/channel.entity';
 
 @WebSocketGateway({
   cors: { origin: 'http://localhost:5173' },
@@ -36,19 +40,29 @@ export class ChannelGateway
     this.server.emit('channels', channel);
   }
 
-  handleUpdateChannelSocket(channel: ChannelDto) {
+  handleUpdateChannelSocket(channel: Channel) {
     this.server.emit('channels/update', channel);
   }
 
-  handleRemoveChannelSocket() {
-    this.server.emit('channels/remove');
+  handleUpdateChannelSubscriptionSocket(
+    channelSubscription: ChannelSubscription,
+  ) {
+    this.server.emit('channel-subscription/update', channelSubscription);
+  }
+
+  handleRemoveChannelSocket(channelId: string) {
+    const websocketMessage = new WebSocketMessage(MessageType.RemoveChannel, {
+      channelId,
+    });
+
+    this.server.emit('channels/remove', websocketMessage);
   }
 
   handleLeaveChannelSocket(channelId: string) {
     this.server.emit('ChannelSubscriptions/leave', channelId);
   }
 
-  handleJoinChannelSocket(channelSubscription: ChannelDto) {
+  handleJoinChannelSocket(channelSubscription: unknown) {
     this.server.emit('ChannelSubscriptions/join', channelSubscription);
   }
 

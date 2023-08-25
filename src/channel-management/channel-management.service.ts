@@ -15,6 +15,8 @@ import { ChannelGateway } from 'src/websockets/channel.gateway';
 
 import { ChannelType } from 'src/channels/enums/channel-type.enum';
 import { CreateChannelDto } from 'src/channels/dto/create-channel.dto';
+import { Channel } from 'src/channels/entities/channel.entity';
+import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 
 @Injectable()
 export class ChannelManagementService {
@@ -31,7 +33,7 @@ export class ChannelManagementService {
   async createChannelAndJoin(
     createChannelDto: CreateChannelDto,
     userId: string,
-  ) {
+  ): Promise<Channel> {
     // Create channel
     const channel = await this.channelsService.createChannel(createChannelDto);
 
@@ -41,7 +43,7 @@ export class ChannelManagementService {
     return channel;
   }
 
-  async createDirectChannelAndJoin(userUuids: string[]) {
+  async createDirectChannelAndJoin(userUuids: string[]): Promise<Channel> {
     // Check if direct channel with both members already exists
     const channel = await this.channelsService.findDirectChannelByUserUuids(
       userUuids,
@@ -74,7 +76,7 @@ export class ChannelManagementService {
     userUuid: string,
     channelUuid: string,
     channelType: ChannelType,
-  ) {
+  ): Promise<ChannelSubscription> {
     const user = await this.usersRepository.findOneOrFail({
       where: { uuid: userUuid },
     });
@@ -110,19 +112,19 @@ export class ChannelManagementService {
       );
 
     // Create channelSubscription
-    // May want to create a service method that creates a channelSubscription and returns
+    // Todo: May want to create a service method that creates a channelSubscription and returns
     // In the correct format so we do not need to
-    await this.channelSubscriptionRepository.save({
+    const newChannelSubscription = this.channelSubscriptionRepository.create({
       user,
       channel: { id: channel.id },
       section: { id: section.id },
     });
+    await this.channelSubscriptionRepository.save(newChannelSubscription);
 
-    const channelSubscription =
-      await this.channelSubscriptionsService.findUserChannel(
-        user.uuid,
-        channelUuid,
-      );
+    const channelSubscription = await this.channelSubscriptionsService.findOne({
+      userId: user.uuid,
+      channelId: channelUuid,
+    });
 
     this.channelsGateway.handleJoinChannelSocket(channelSubscription);
 
@@ -133,7 +135,7 @@ export class ChannelManagementService {
     channelUuid: string,
     userIds: string[],
     // currentUserUuid: string,
-  ) {
+  ): Promise<Channel> {
     for (let i = 0; i < userIds.length; i++) {
       try {
         await this.joinChannel(userIds[i], channelUuid, ChannelType.CHANNEL);
@@ -148,7 +150,7 @@ export class ChannelManagementService {
     //   );
 
     // Todo: need to return channel with users?
-    const userChannelToReturn = await this.channelsRepository.findOneOrFail({
+    const updatedChannel = await this.channelsRepository.findOneOrFail({
       where: {
         uuid: channelUuid,
       },
@@ -156,6 +158,6 @@ export class ChannelManagementService {
 
     // userChannelToReturn.users = channelUsers;
 
-    return userChannelToReturn;
+    return updatedChannel;
   }
 }

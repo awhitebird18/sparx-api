@@ -20,9 +20,6 @@ export class UserDto extends BaseDto {
   profileImage: string;
 
   @IsBoolean()
-  isVerified: boolean;
-
-  @IsBoolean()
   isBot: boolean;
 
   @IsBoolean()

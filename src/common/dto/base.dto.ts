@@ -7,7 +7,7 @@ export class BaseDto {
   @IsNumber()
   id: number;
 
-  @IsUUID()
+  @IsUUID(4)
   uuid: string;
 
   @IsDate()
@@ -15,4 +15,7 @@ export class BaseDto {
 
   @IsDate()
   updatedAt: Date;
+
+  @Exclude()
+  deletedAt: Date;
 }

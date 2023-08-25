@@ -7,16 +7,15 @@ import {
   Param,
   Delete,
   Query,
+  HttpCode,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
-import { NotFoundException } from '@nestjs/common/exceptions';
 import { HttpStatus } from '@nestjs/common/enums';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 
 import { ChannelsService } from './channels.service';
 import { User } from 'src/users/entities/user.entity';
-import { Channel } from './entities/channel.entity';
 
 import { ChannelDto } from './dto/channel.dto';
 import { CreateChannelDto } from './dto/create-channel.dto';
@@ -30,7 +29,9 @@ export class ChannelsController {
 
   @ApiBody({ type: CreateChannelDto })
   @Post()
-  async createChannel(@Body() createChannelDto: CreateChannelDto) {
+  async createChannel(
+    @Body() createChannelDto: CreateChannelDto,
+  ): Promise<ChannelDto> {
     return this.channelsService.createChannel(createChannelDto);
   }
 
@@ -43,61 +44,36 @@ export class ChannelsController {
   }
 
   @Get('user-channels')
-  findUserChannels(@GetUser() currentUser: User): Promise<Channel[]> {
+  findUserChannels(@GetUser() currentUser: User): Promise<ChannelDto[]> {
     return this.channelsService.findUserChannels(currentUser.id);
   }
 
   @Get('direct')
-  async findDirectChannel(
+  findDirectChannel(
     @GetUser() currentUser: User,
-    @Query('userUuid') userUuid: string,
-  ) {
-    return await this.channelsService.findDirectChannelByUserUuids([
+    @Query('userUuid', new ParseUUIDPipe({ version: '4' })) userUuid: string,
+  ): Promise<ChannelDto> {
+    return this.channelsService.findDirectChannelByUserUuids([
       currentUser.uuid,
       userUuid,
     ]);
   }
 
-  @Patch(':uuid')
-  @ApiParam({
-    name: 'uuid',
-    required: true,
-    description: 'UUID of the channel',
-    example: '49e50109-1a78-4c66-a8d8-2c42219a82b1',
-  })
-  @ApiBody({
-    description: 'Fields for updating a channel',
-    schema: {
-      type: 'object',
-      properties: {
-        topic: { type: 'string', example: 'New discussion topic' },
-      },
-    },
-  })
+  @Patch(':channelUuid')
   updateChannel(
-    @Param('uuid') uuid: string,
+    @Param('channelUuid', new ParseUUIDPipe({ version: '4' }))
+    channelUuid: string,
     @Body() updateChannelDto: UpdateChannelDto,
-  ) {
-    return this.channelsService.updateChannel(uuid, updateChannelDto);
+  ): Promise<ChannelDto> {
+    return this.channelsService.updateChannel(channelUuid, updateChannelDto);
   }
 
-  @ApiParam({
-    name: 'uuid',
-    required: true,
-    description: 'UUID of the channel',
-    example: '49e50109-1a78-4c66-a8d8-2c42219a82b1',
-  })
-  @Delete(':uuid')
-  async remove(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    const isChannelRemoved = await this.channelsService.removeChannel(uuid);
-
-    if (!isChannelRemoved) {
-      throw new NotFoundException(`Channel with UUID ${uuid} not found`);
-    }
-
-    return {
-      status: HttpStatus.OK,
-      message: 'Channel removed successfully',
-    };
+  @Delete(':channelUuid')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(
+    @Param('channelUuid', new ParseUUIDPipe({ version: '4' }))
+    channelUuid: string,
+  ) {
+    return await this.channelsService.removeChannel(channelUuid);
   }
 }

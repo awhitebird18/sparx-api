@@ -1,5 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { plainToInstance } from 'class-transformer';
+import { Injectable } from '@nestjs/common';
 
 import { ChannelSubscription } from './entity/channel-subscription.entity';
 
@@ -9,7 +8,7 @@ import { SectionsRepository } from 'src/sections/sections.repository';
 import { MessagesRepository } from 'src/messages/messages.repository';
 
 import { CreateChannelSubscription } from './dto/create-channel-subscription.dto';
-import { ChannelDto } from 'src/channels/dto/channel.dto';
+import { ChannelSubscriptionDto } from './dto/channel-subscription.dto';
 
 @Injectable()
 export class ChannelSubscriptionsService {
@@ -20,19 +19,21 @@ export class ChannelSubscriptionsService {
     private channelGateway: ChannelGateway,
   ) {}
 
-  async create(createChannelSubscription: CreateChannelSubscription) {
-    return await this.channelSubscriptionsRepository.save({
+  create(
+    createChannelSubscription: CreateChannelSubscription,
+  ): Promise<ChannelSubscription> {
+    return this.channelSubscriptionsRepository.save({
       user: { id: createChannelSubscription.userId },
       channel: { id: createChannelSubscription.channelId },
       section: { id: createChannelSubscription.sectionId },
     });
   }
 
-  async findOne(findProperties: any) {
-    return await this.channelSubscriptionsRepository.findOne(findProperties);
+  findOne(findProperties: any): Promise<ChannelSubscription> {
+    return this.channelSubscriptionsRepository.findOne(findProperties);
   }
 
-  async leaveChannel(userUuid: string, channelUuid: string) {
+  async leaveChannel(userUuid: string, channelUuid: string): Promise<void> {
     // Find channel subscription
     const channelSubscription =
       await this.channelSubscriptionsRepository.findOneOrFail({
@@ -53,13 +54,13 @@ export class ChannelSubscriptionsService {
     });
 
     // Update channel subscription
-    await this.channelSubscriptionsRepository.updateUserChannel(
-      channelSubscription.uuid,
-      {
-        isSubscribed: false,
-        section,
-      },
-    );
+    const updateFields = {
+      isSubscribed: false,
+      section,
+    };
+    Object.assign(channelSubscription, updateFields);
+
+    await this.channelSubscriptionsRepository.save(channelSubscription);
 
     // Todo: review this
     // const channelUsers =
@@ -74,15 +75,13 @@ export class ChannelSubscriptionsService {
 
     // Send over socket
     this.channelGateway.handleLeaveChannelSocket(channelUuid);
-
-    return 'success';
   }
 
   async removeUserFromChannel(
     userUuid: string,
     channelUuid: string,
     currentUserUuid: string,
-  ) {
+  ): Promise<ChannelSubscription> {
     await this.leaveChannel(userUuid, channelUuid);
 
     // const channelUsers =
@@ -90,7 +89,7 @@ export class ChannelSubscriptionsService {
     //     channelUuid,
     //   );
 
-    const userChannelToReturn = await this.findUserChannel(
+    const userChannelToReturn = await this.findChannelSubscription(
       currentUserUuid,
       channelUuid,
     );
@@ -101,58 +100,54 @@ export class ChannelSubscriptionsService {
     return userChannelToReturn;
   }
 
-  async getUserChannelCount(channelId: number) {
+  getUserChannelCount(channelId: number): Promise<number> {
     return this.channelSubscriptionsRepository.getChannelUsersCount(channelId);
   }
 
-  async findUserChannel(userUuid: string, channelUuid: string) {
+  findChannelSubscription(
+    userUuid: string,
+    channelUuid: string,
+  ): Promise<ChannelSubscription> {
+    return this.channelSubscriptionsRepository.findOneOrFail({
+      where: {
+        user: { uuid: userUuid },
+        channel: { uuid: channelUuid },
+      },
+      relations: ['channel', 'section'],
+    });
+  }
+
+  async udpateChannelSubscription(
+    userUuid: string,
+    channelUuid: string,
+    updatedFields: ChannelSubscriptionDto,
+  ): Promise<ChannelSubscription> {
     const channelSubscription =
       await this.channelSubscriptionsRepository.findOneOrFail({
         where: {
           user: { uuid: userUuid },
           channel: { uuid: channelUuid },
         },
-        relations: ['channel', 'section'],
       });
 
-    return plainToInstance(ChannelDto, channelSubscription.channel);
-  }
+    // Update channel subscription
+    Object.assign(channelSubscription, updatedFields);
+    const updatedChannelSubscription =
+      await this.channelSubscriptionsRepository.save(channelSubscription);
 
-  async updateUserChannel(
-    userUuid: string,
-    channelUuid: string,
-    updatedFields: Partial<ChannelSubscription>,
-  ) {
-    const channelSubscription =
-      await this.channelSubscriptionsRepository.findOneByProperties({
-        user: { uuid: userUuid },
-        channel: { uuid: channelUuid },
-      });
-
-    if (!channelSubscription) {
-      throw new NotFoundException('No user channels found');
-    }
-
-    await this.channelSubscriptionsRepository.updateUserChannel(
-      channelSubscription.uuid,
-      updatedFields,
+    // Send socket
+    this.channelGateway.handleUpdateChannelSubscriptionSocket(
+      updatedChannelSubscription,
     );
 
-    const updatedUserChannel = await this.findUserChannel(
-      userUuid,
-      channelUuid,
-    );
-
-    this.channelGateway.handleUpdateChannelSocket(updatedUserChannel);
-
-    return updatedUserChannel;
+    return updatedChannelSubscription;
   }
 
   async updateChannelSection(
     userUuid: string,
     channelUuid: string,
     sectionUuid: string,
-  ) {
+  ): Promise<ChannelSubscription> {
     const channelSubscription =
       await this.channelSubscriptionsRepository.findOneOrFail({
         where: {
@@ -169,22 +164,17 @@ export class ChannelSubscriptionsService {
       },
     });
 
-    // Update channel subscriptions
-    await this.channelSubscriptionsRepository.updateUserChannel(
-      channelSubscription.uuid,
-      {
-        section,
-      },
+    // Update channel subscription
+    const updateFields = { section };
+    Object.assign(channelSubscription, updateFields);
+    const updatedChannelSubscription =
+      await this.channelSubscriptionsRepository.save(channelSubscription);
+
+    this.channelGateway.handleUpdateChannelSubscriptionSocket(
+      updatedChannelSubscription,
     );
 
-    const updatedUserChannel = await this.findUserChannel(
-      userUuid,
-      channelUuid,
-    );
-
-    this.channelGateway.handleUpdateChannelSocket(updatedUserChannel);
-
-    return updatedUserChannel;
+    return updatedChannelSubscription;
   }
 
   // async getUserSubscribedChannels(

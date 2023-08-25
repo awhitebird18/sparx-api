@@ -15,6 +15,15 @@ export class ChannelSubscription extends BaseEntity {
   @Column({ type: 'timestamp', nullable: true })
   lastRead: Date;
 
+  @Column()
+  userId: string;
+
+  @Column()
+  sectionId: string;
+
+  @Column()
+  channelId: string;
+
   @ManyToOne(() => User, (user) => user.channelSubscriptions)
   user: User;
 
