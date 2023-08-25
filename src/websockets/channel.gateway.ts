@@ -8,8 +8,13 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { ChannelDto, UpdateChannelDto } from 'src/channels/dto';
-import { ChannelSubscriptionDto } from 'src/channel-subscriptions/dto/channel-subscription.dto';
+
+import { ChannelDto } from 'src/channels/dto/channel.dto';
+import { WebSocketMessage } from './web-socket-message';
+import { MessageType } from './ws-messagetype.enum';
+import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
+import { Channel } from 'src/channels/entities/channel.entity';
+import { plainToInstance } from 'class-transformer';
 
 @WebSocketGateway({
   cors: { origin: 'http://localhost:5173' },
@@ -32,24 +37,32 @@ export class ChannelGateway
     this.clients.delete(client.clientId);
   }
 
-  handleNewChannelSocket(channel: ChannelDto) {
-    this.server.emit('channels', channel);
+  // Channel Sockets
+  joinChannel(channel: ChannelDto) {
+    const serializedChannel = plainToInstance(ChannelDto, channel);
+    const websocketMessage = new WebSocketMessage(MessageType.JoinChannel, {
+      channel: serializedChannel,
+    });
+    this.server.emit('join-channel', websocketMessage);
   }
 
-  handleUpdateChannelSocket(channel: UpdateChannelDto) {
+  handleUpdateChannelSocket(channel: Channel) {
     this.server.emit('channels/update', channel);
   }
 
-  handleRemoveChannelSocket() {
-    this.server.emit('channels/remove');
+  handleRemoveChannelSocket(channelId: string) {
+    const websocketMessage = new WebSocketMessage(MessageType.RemoveChannel, {
+      channelId,
+    });
+
+    this.server.emit('channels/remove', websocketMessage);
   }
 
-  handleLeaveChannelSocket(channelId: string) {
-    this.server.emit('ChannelSubscriptions/leave', channelId);
-  }
-
-  handleJoinChannelSocket(channelSubscription: ChannelSubscriptionDto) {
-    this.server.emit('ChannelSubscriptions/join', channelSubscription);
+  // Channel Subscriptions
+  handleUpdateChannelSubscriptionSocket(
+    channelSubscription: ChannelSubscription,
+  ) {
+    this.server.emit('channel-subscription/update', channelSubscription);
   }
 
   @SubscribeMessage('joinRoom')

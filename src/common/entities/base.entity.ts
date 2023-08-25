@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
@@ -6,10 +7,10 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-
 import { v4 as uuidv4 } from 'uuid';
 
-export abstract class BaseEntity {
+export class BaseEntity {
+  @Exclude()
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -22,12 +23,13 @@ export abstract class BaseEntity {
   @Column({ type: 'timestamptz', nullable: true })
   updatedAt: Date;
 
+  @Exclude()
   @DeleteDateColumn({ type: 'timestamptz', nullable: true })
   deletedAt: Date;
 
   @BeforeInsert()
   generateUuid() {
-    this.uuid = uuidv4();
+    this.uuid = this.uuid || uuidv4();
   }
 
   @BeforeUpdate()

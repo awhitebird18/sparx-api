@@ -1,4 +1,3 @@
-// online-status.gateway.ts
 import {
   SubscribeMessage,
   WebSocketGateway,

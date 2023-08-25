@@ -1,13 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateSectionDto, SectionDto, UpdateSectionDto } from './dto';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+
 import { SectionsRepository } from 'src/sections/sections.repository';
-import { plainToInstance } from 'class-transformer';
-import { SectionType } from './enums';
-import { User } from 'src/users/entities/user.entity';
 import { SectionsGateway } from 'src/websockets/section.gateway';
+import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
 
 import { Section } from './entities/section.entity';
-import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
+
+import { CreateSectionDto } from './dto/create-section.dto';
+import { UpdateSectionDto } from './dto/update-section.dto';
+import { ChannelType } from 'src/channels/enums/channel-type.enum';
+
+import { SectionDto } from './dto/section.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class SectionsService {
@@ -19,94 +27,110 @@ export class SectionsService {
 
   private readonly defaultSections = [
     {
-      name: 'Channels',
-      type: SectionType.CHANNEL,
+      name: 'Direct Messages',
+      type: ChannelType.DIRECT,
     },
     {
-      name: 'Direct Messages',
-      type: SectionType.DIRECT,
+      name: 'Channels',
+      type: ChannelType.CHANNEL,
     },
   ];
 
-  async findOne(searchProperties: any) {
-    return await this.sectionsRepository.findOneBy(searchProperties);
+  async mapSectionToDto(section: Section): Promise<SectionDto> {
+    return plainToInstance(SectionDto, {
+      ...section,
+      channelIds: await this.findSectionChannelIds(section.uuid),
+    });
   }
 
-  async seedUserDefaultSections(user: User) {
-    const maxOrderIndex = await this.sectionsRepository.getMaxOrderIndex(user);
+  findOne(searchProperties: any): Promise<Section> {
+    return this.sectionsRepository.findOneBy(searchProperties);
+  }
+
+  findSectionChannelIds(sectionUuid: string): Promise<string[]> {
+    return this.sectionsRepository.findSectionChannelIds(sectionUuid);
+  }
+
+  async seedUserDefaultSections(userId: number): Promise<void> {
     for (let i = 0; i < this.defaultSections.length; i++) {
-      await this.sectionsRepository.createSection(
-        {
-          ...this.defaultSections[i],
-          orderIndex: maxOrderIndex,
-          isSystem: true,
-        },
-        user,
-      );
+      await this.sectionsRepository.createSection({
+        ...this.defaultSections[i],
+        orderIndex: i,
+        isSystem: true,
+        userId,
+      });
     }
   }
 
   async createSection(
     createSectionDto: CreateSectionDto,
-    user: User,
-  ): Promise<SectionDto> {
-    const maxOrderIndex = await this.sectionsRepository.getMaxOrderIndex(user);
-
-    const newSection = await this.sectionsRepository.createSection(
-      { ...createSectionDto, orderIndex: maxOrderIndex + 1 },
-      user,
-    );
-
-    const section = plainToInstance(SectionDto, newSection);
-
-    this.sectionsGateway.handleNewSectionSocket(section);
-
-    return section;
-  }
-
-  async findUserSections(userId: string) {
-    const sections = await this.sectionsRepository.findUserSections(userId);
-
-    return plainToInstance(SectionDto, sections);
-  }
-
-  async findDefaultSection(sectionType: string, userId: string) {
-    return await this.sectionsRepository.findDefaultSection(
-      sectionType,
+    userId: number,
+  ): Promise<Section> {
+    // Get the new sections index
+    const maxOrderIndex = await this.sectionsRepository.getMaxOrderIndex(
       userId,
     );
-  }
 
-  async findDefaultSections(userId: string): Promise<SectionDto[]> {
-    const section = await this.sectionsRepository.findDefaultSections(userId);
-
-    return plainToInstance(SectionDto, section);
-  }
-
-  async updateSection(sectionId: string, updateSectionDto: UpdateSectionDto) {
-    const updateResult = await this.sectionsRepository.updateSection(
-      sectionId,
-      updateSectionDto,
-    );
-
-    if (!updateResult.affected) {
-      throw new NotFoundException(`Section with UUID ${sectionId} not found`);
-    }
-
-    const updatedSection = await this.sectionsRepository.findOneByProperties({
-      uuid: sectionId,
+    // Create section
+    const newSection = await this.sectionsRepository.createSection({
+      ...createSectionDto,
+      orderIndex: maxOrderIndex + 1,
+      userId,
     });
 
-    const filteredSection = plainToInstance(SectionDto, updatedSection);
+    // Send new section over socket
+    this.sectionsGateway.handleNewSectionSocket(newSection);
 
-    this.sectionsGateway.handleUpdateSectionSocket(filteredSection);
-
-    return filteredSection;
+    return newSection;
   }
 
-  async removeSection(uuid: string, userId: string): Promise<boolean> {
-    const sectionToRemove = await this.sectionsRepository.findUserSection(uuid);
+  async findUserSections(userId: number): Promise<SectionDto[]> {
+    return this.sectionsRepository.findUserSections(userId);
+  }
 
+  findDefaultSection(
+    sectionType: ChannelType,
+    userId: number,
+  ): Promise<Section> {
+    return this.sectionsRepository.findDefaultSection(sectionType, userId);
+  }
+
+  findDefaultSections(userId: number): Promise<Section[]> {
+    return this.sectionsRepository.findDefaultSections(userId);
+  }
+
+  async updateSection(
+    sectionUuid: string,
+    updateSectionDto: UpdateSectionDto,
+  ): Promise<Section> {
+    // Update section
+    const updateResult = await this.sectionsRepository.updateSection(
+      sectionUuid,
+      updateSectionDto,
+    );
+    if (updateResult.affected === 0)
+      throw new NotFoundException(`Section with UUID ${sectionUuid} not found`);
+
+    // Find updated section
+    const updatedSection = await this.sectionsRepository.findOneByUuid(
+      sectionUuid,
+    );
+
+    // Send updated section over socket
+    this.sectionsGateway.handleUpdateSectionSocket(updatedSection);
+
+    return updatedSection;
+  }
+
+  async removeSection(uuid: string, userId: number): Promise<void> {
+    // Find section
+    const sectionToRemove = await this.sectionsRepository.findSectionByUuid(
+      uuid,
+    );
+    if (!sectionToRemove)
+      throw new NotFoundException(`Section with UUID ${uuid} not found`);
+
+    // Move nests channels back to default sections
     const channelSubscriptions = sectionToRemove.channels;
 
     const userDefaultSections =
@@ -114,7 +138,8 @@ export class SectionsService {
 
     for (let i = 0; i < channelSubscriptions.length; i++) {
       const defaultSection = userDefaultSections.find(
-        (section: Section) => section.type === 'channel',
+        (section: Section) =>
+          section.type === channelSubscriptions[i].channel.type,
       );
 
       await this.channelSubscriptionsService.updateChannelSection(
@@ -124,23 +149,25 @@ export class SectionsService {
       );
     }
 
-    if (!sectionToRemove) {
-      throw new NotFoundException(`Section with UUID ${uuid} not found`);
-    }
+    // Remove section
+    const removedSection = await this.sectionsRepository.removeSection(
+      sectionToRemove,
+    );
+    if (!removedSection)
+      new NotFoundException('Unable to find section to remove');
 
-    const removeResult = await this.sectionsRepository.removeSection(uuid);
-    const sectionRemoved = removeResult.affected > 0;
+    // Shift down orderIndex for remaining sections
+    const updateResult = await this.sectionsRepository.decrementOrderIndexes(
+      userId,
+      sectionToRemove.orderIndex,
+    );
 
-    if (sectionRemoved) {
-      // Shift down orderIndex for remaining sections
-      await this.sectionsRepository.decrementOrderIndexes(
-        sectionToRemove.user,
-        sectionToRemove.orderIndex,
+    if (updateResult.affected === 0)
+      throw new InternalServerErrorException(
+        'An error occurred while updating sections.',
       );
-    }
 
+    // Send socket
     this.sectionsGateway.handleRemoveSectionSocket(uuid);
-
-    return sectionRemoved;
   }
 }

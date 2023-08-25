@@ -1,28 +1,16 @@
-import { IsBoolean } from 'class-validator';
-import { ChannelDto } from 'src/channels/dto';
+import { IsBoolean, IsDate, IsUUID } from 'class-validator';
 import { BaseDto } from 'src/common/dto';
-import { SectionDto } from 'src/sections/dto';
-import { UserDto } from 'src/users/dto';
-import { User } from 'src/users/entities/user.entity';
 
 export class ChannelSubscriptionDto extends BaseDto {
-  user: UserDto;
+  @IsUUID(4)
+  sectionId: string;
 
-  channel: ChannelDto;
+  @IsUUID(4)
+  channelId: string;
 
-  section: SectionDto;
+  @IsDate()
+  lastRead?: Date;
 
   @IsBoolean()
   isMuted: boolean;
-
-  @IsBoolean()
-  isSubscribed: boolean;
-
-  sectionId: string;
-
-  channelId?: string;
-
-  users: User[];
-
-  lastRead?: string | Date;
 }

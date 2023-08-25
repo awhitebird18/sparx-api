@@ -6,8 +6,9 @@ import {
   SubscribeMessage,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { MessageDto } from 'src/messages/dto';
-import { SectionDto } from 'src/sections/dto';
+
+import { MessageDto } from 'src/messages/dto/message.dto';
+import { SectionDto } from 'src/sections/dto/section.dto';
 
 @WebSocketGateway()
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {

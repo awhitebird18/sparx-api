@@ -1,40 +1,37 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
+import { groupBy } from 'lodash';
+
+import { ChatGateway } from 'src/websockets/chat.gateway';
+import { MessagesRepository } from './messages.repository';
+import { ChannelsRepository } from 'src/channels/channels.repository';
+import { ReactionRepository } from './reactions.repository';
+
+import { Message } from './entities/message.entity';
+import { User } from 'src/users/entities/user.entity';
+import { Reaction } from './entities/reaction.entity';
+
+import { MessageDto } from './dto/message.dto';
+import { UpdateReactionDto } from './dto/update-reaction.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
-import { MessagesRepository } from './messages.repository';
-import { plainToInstance } from 'class-transformer';
-import { MessageDto } from './dto';
-import { Message } from './entities/message.entity';
-import { ReactionDto } from './dto/reaction.dto';
-import { ReactionRepository } from './reactions.repository';
-import { UpdateReactionDto } from './dto/update-reaction.dto';
-import { groupBy } from 'lodash';
-import { ChatGateway } from 'src/websockets/chat.gateway';
-import { ChannelsService } from 'src/channels/channels.service';
-import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class MessagesService {
   constructor(
     private messageRepository: MessagesRepository,
     private reactionRepository: ReactionRepository,
-    private usersService: UsersService,
-    private channelsService: ChannelsService,
+    private channelsRepository: ChannelsRepository,
     private chatGateway: ChatGateway,
   ) {}
 
-  async create(createMessageDto: CreateMessageDto) {
-    // Find user
-    const user = await this.usersService.findOne({
-      uuid: createMessageDto.userId,
-    });
-    if (!user) throw new NotFoundException(`Message user not found`);
-
+  async create(createMessageDto: CreateMessageDto, user: User) {
     // Find channel
-    const channel = await this.channelsService.findOne({
-      uuid: createMessageDto.channelId,
+    const channel = await this.channelsRepository.findOneOrFail({
+      where: {
+        uuid: createMessageDto.channelId,
+      },
     });
-    if (!channel) throw new NotFoundException(`Message channel not found`);
 
     // Check if message is part of a thread. If so, set parentId
     let parentId = null;
@@ -62,15 +59,8 @@ export class MessagesService {
     return message;
   }
 
-  findAll() {
-    return this.messageRepository.find();
-  }
-
-  async getUnreadMessageCount(channelId: string, lastRead: Date) {
-    return await this.messageRepository.getUnreadMessageCount(
-      channelId,
-      lastRead,
-    );
+  findOne(uuid: string) {
+    return this.messageRepository.findOneBy({ uuid });
   }
 
   async findChannelMessages(
@@ -134,41 +124,48 @@ export class MessagesService {
     return plainToInstance(MessageDto, populatedMessage);
   }
 
-  findOne(uuid: string) {
-    return this.messageRepository.findOneBy({ uuid });
+  async getUnreadMessageCount(channelId: string, lastRead: Date) {
+    return await this.messageRepository.getUnreadMessageCount(
+      channelId,
+      lastRead,
+    );
   }
 
   async update(
     uuid: string,
     updateMessageDto: UpdateMessageDto,
   ): Promise<MessageDto> {
-    const updatedMessage = await this.messageRepository.updateMessage(
-      uuid,
-      updateMessageDto,
-    );
+    // Find the original message
+    const message = await this.messageRepository.findOneOrFail({
+      where: { uuid },
+    });
 
-    const message = await this.findPopulatedMessage(updatedMessage.uuid);
+    // Update the original message with the new data
+    Object.assign(message, updateMessageDto);
 
-    this.chatGateway.handleUpdateMessageSocket(message);
+    // Save the updated message and get the returned value
+    const updatedMessage = await this.messageRepository.save(message);
 
-    return await this.findPopulatedMessage(message.uuid);
+    const serializedMessage = plainToInstance(MessageDto, updatedMessage);
+
+    // Send the updated message to the socket
+    this.chatGateway.handleUpdateMessageSocket(serializedMessage);
+
+    // Return the updated message
+    return serializedMessage;
   }
 
   async updateMessageReactions(
     uuid: string,
     updateReactionDto: UpdateReactionDto,
   ): Promise<MessageDto> {
-    const message = await this.messageRepository.findOne({
+    const message = await this.messageRepository.findOneOrFail({
       where: { uuid },
       relations: ['reactions'],
     });
 
-    if (!message) {
-      throw new NotFoundException(`User with UUID ${uuid} not found`);
-    }
-
     const reaction = message.reactions.find(
-      (reaction: ReactionDto) =>
+      (reaction: Reaction) =>
         reaction.userId === updateReactionDto.userId &&
         reaction.emojiId === updateReactionDto.emojiId,
     );
@@ -182,7 +179,7 @@ export class MessagesService {
       }
 
       message.reactions = message.reactions.filter(
-        (reaction: ReactionDto) =>
+        (reaction: Reaction) =>
           reaction.userId !== updateReactionDto.userId ||
           reaction.emojiId !== updateReactionDto.emojiId,
       );
@@ -209,14 +206,15 @@ export class MessagesService {
   }
 
   async remove(uuid: string) {
-    const message = await this.findPopulatedMessage(uuid);
+    // Soft remove message
+    const message = await this.messageRepository.softRemove({ uuid });
 
-    if (!message) {
-      throw new NotFoundException('Unable to find reaction to remove');
-    }
+    if (!message)
+      throw new NotFoundException('Unable to find message to remove');
 
-    await this.messageRepository.removeMessage(message.uuid);
-
+    // Send signal over socket to remove message
     this.chatGateway.handleRemoveMessageSocket(message.channelId, message.uuid);
+
+    return 'Message Removed';
   }
 }

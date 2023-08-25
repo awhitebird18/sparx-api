@@ -15,6 +15,6 @@ import { ChannelSubscriptionsModule } from 'src/channel-subscriptions/channel-su
   ],
   controllers: [SectionsController],
   providers: [SectionsService, SectionsRepository],
-  exports: [SectionsService],
+  exports: [SectionsService, SectionsRepository],
 })
 export class SectionsModule {}

@@ -6,12 +6,25 @@ import {
   Patch,
   Param,
   Delete,
+  UseInterceptors,
+  ClassSerializerInterceptor,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+import { UsersService } from './users.service';
+
+import { UpdateUserDto } from './dto/update-user.dto';
+import { RegisterDto } from 'src/auth/dto/register.dto';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
+import { User } from './entities/user.entity';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { UserDto } from './dto/user.dto';
+
+@UseInterceptors(ClassSerializerInterceptor)
 @ApiBearerAuth('access-token')
 @ApiTags('Users')
 @Controller('users')
@@ -19,40 +32,50 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.createUser(createUserDto);
+  create(@Body() createUserDto: RegisterDto): Promise<UserDto> {
+    return this.usersService.create(createUserDto);
   }
 
   @Post('seed-bot')
-  seedBot() {
-    return this.usersService.seedBot();
-  }
-
-  @Get()
-  findAll() {
-    return this.usersService.findAll();
+  createBot(): Promise<UserDto> {
+    return this.usersService.createBot();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string): Promise<UserDto> {
     return this.usersService.findOneByEmail(id);
   }
 
-  @Patch(':id/image-upload')
+  @Get()
+  finalWorkspaceUsers(): Promise<UserDto[]> {
+    return this.usersService.findWorkspaceUsers();
+  }
+
+  @Patch('self/image-upload')
   updateProfileImage(
-    @Param('id') id: string,
+    @GetUser() currentUser: User,
     @Body() updateUserDto: UpdateUserDto,
-  ) {
-    return this.usersService.updateProfileImage(id, updateUserDto.profileImage);
+  ): Promise<UserDto> {
+    return this.usersService.updateProfileImage(
+      currentUser.id,
+      updateUserDto.profileImage,
+    );
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  @Patch('self')
+  update(
+    @GetUser() currentUser: User,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<UserDto> {
+    return this.usersService.update(currentUser.id, updateUserDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  @UseGuards(RolesGuard)
+  @Delete(':userUuid')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(
+    @Param('userUuid', new ParseUUIDPipe({ version: '4' })) userId: string,
+  ): Promise<void> {
+    return this.usersService.remove(userId);
   }
 }

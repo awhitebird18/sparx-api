@@ -8,11 +8,16 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
+
 import { MessagesService } from './messages.service';
+
+import { User } from 'src/users/entities/user.entity';
+
+import { MessageDto } from './dto/message.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { MessageDto } from './dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Messages')
@@ -21,13 +26,11 @@ export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
   @Post()
-  create(@Body() createMessageDto: CreateMessageDto): Promise<MessageDto> {
-    return this.messagesService.create(createMessageDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.messagesService.findAll();
+  create(
+    @GetUser() currentUser: User,
+    @Body() createMessageDto: CreateMessageDto,
+  ): Promise<MessageDto> {
+    return this.messagesService.create(createMessageDto, currentUser);
   }
 
   @Get('channel/:channelId')

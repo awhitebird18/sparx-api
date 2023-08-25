@@ -1,114 +1,113 @@
 import {
   DataSource,
-  DeleteResult,
   FindOptionsWhere,
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { Section } from './entities/section.entity';
-import { CreateSectionDto, UpdateSectionDto } from './dto';
 import { Injectable } from '@nestjs/common';
-import { User } from 'src/users/entities/user.entity';
-import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
+
+import { Section } from './entities/section.entity';
+
+import { CreateSectionDto } from './dto/create-section.dto';
+import { UpdateSectionDto } from './dto/update-section.dto';
+import { ChannelType } from 'src/channels/enums/channel-type.enum';
+import { SectionDto } from './dto/section.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class SectionsRepository extends Repository<Section> {
   constructor(private dataSource: DataSource) {
     super(Section, dataSource.createEntityManager());
   }
-  async createSection(
-    createSectionDto: CreateSectionDto,
-    user?: User,
-  ): Promise<Section> {
+
+  createSection(createSectionDto: CreateSectionDto): Promise<Section> {
     const section = this.create(createSectionDto);
-    if (user) {
-      section.user = user;
-    }
     return this.save(section);
   }
 
-  async findUserSections(userId: string): Promise<Section[]> {
-    const sections = await this.createQueryBuilder('section')
-      .leftJoin('section.channels', 'channel')
-      .leftJoin('section.user', 'user')
-      .addSelect('channel.uuid', 'channelId')
-      .where('user.uuid = :userId', { userId })
-      .orderBy('section.orderIndex', 'ASC')
+  async findUserSections(userId: number): Promise<SectionDto[]> {
+    const userSections = await this.createQueryBuilder('section')
+      .leftJoinAndSelect('section.channels', 'channelSubscription')
+      .leftJoinAndSelect('channelSubscription.channel', 'channel')
+      .where('section.userId = :userId', { userId })
       .getMany();
 
-    return sections;
-  }
-
-  async findUserSection(uuid: string): Promise<Section[] | any> {
-    const section = await this.createQueryBuilder('section')
-      .leftJoinAndSelect('section.channels', 'channels')
-      .leftJoinAndSelect('section.user', 'user')
-      .where('section.uuid = :uuid', { uuid })
-      .orderBy('section.orderIndex', 'ASC')
-      .getOne();
-
-    for (const channel of section.channels) {
-      channel.channel = await this.createQueryBuilder()
-        .relation(ChannelSubscription, 'channel')
-        .of(channel)
-        .loadOne();
+    // Now, we have the sections and their associated channel subscriptions.
+    // Next, let's loop through and populate the channel IDs.
+    for (const section of userSections as any) {
+      section.channelIds = section.channels.map((sub) => sub.channel.uuid);
+      delete section.channels; // Optionally, remove the full channel subscriptions if you only want the IDs
     }
 
-    return section;
+    return plainToInstance(SectionDto, userSections);
   }
 
-  async getMaxOrderIndex(user: User): Promise<number> {
-    const result = await this.createQueryBuilder('section')
+  findSectionChannelIds(sectionUuid: string): Promise<string[]> {
+    return this.createQueryBuilder('section')
+      .leftJoin('section.channels', 'channel')
+      .select('channel.channelId')
+      .where('section.uuid = :sectionUuid', { sectionUuid })
+      .getRawMany();
+  }
+
+  findSectionByUuid(uuid: string): Promise<Section> {
+    return this.findOneBy({ uuid });
+  }
+
+  getMaxOrderIndex(userId: number): Promise<number> {
+    return this.createQueryBuilder('section')
       .select('MAX(section.orderIndex)', 'max')
-      .where('section.user = :user', { user: user.id })
+      .where('section.user.id = :userId', { userId })
       .getRawOne();
-
-    return result.max ?? 0;
   }
 
-  async decrementOrderIndexes(user: User, orderIndex: number): Promise<void> {
-    await this.createQueryBuilder('section')
+  decrementOrderIndexes(
+    userId: number,
+    orderIndex: number,
+  ): Promise<UpdateResult> {
+    return this.createQueryBuilder('section')
       .update()
       .set({ orderIndex: () => '"orderIndex" - 1' }) // decrement orderIndex
       .where('"orderIndex" > :orderIndex', { orderIndex }) // for sections with higher orderIndex
-      .andWhere('user = :user', { user: user.id }) // for the same user
+      .andWhere('user.id = :userId', { userId }) // for the same user
       .execute();
   }
 
-  async findDefaultSection(
-    sectionType: string,
-    userId: string,
+  findDefaultSection(
+    sectionType: ChannelType,
+    userId: number,
   ): Promise<Section> {
-    return this.createQueryBuilder('section')
-      .leftJoinAndSelect('section.user', 'user')
-      .where('section.isSystem = :isSystem', { isSystem: true })
-      .andWhere('section.type = :type', { type: sectionType })
-      .andWhere('user.uuid = :userId', { userId })
-      .getOne();
+    return this.findOne({
+      where: { isSystem: true, user: { id: userId }, type: sectionType },
+    });
   }
 
-  async findDefaultSections(userId: string): Promise<Section[]> {
-    return this.find({ where: { isSystem: true, user: { uuid: userId } } });
+  findDefaultSections(userId: number): Promise<Section[]> {
+    return this.find({ where: { isSystem: true, user: { id: userId } } });
   }
 
-  async findOneByProperties(
+  findOneByUuid(uuid: string): Promise<Section> {
+    return this.findOneBy({ uuid });
+  }
+
+  findOneSection(
     searchFields: FindOptionsWhere<Section>,
     relations?: string[],
-  ) {
-    return await this.findOne({
+  ): Promise<Section> {
+    return this.findOne({
       where: searchFields,
       relations,
     });
   }
 
-  async updateSection(
+  updateSection(
     uuid: string,
     updateSectionDto: UpdateSectionDto,
   ): Promise<UpdateResult> {
     return this.update({ uuid }, updateSectionDto);
   }
 
-  async removeSection(uuid: string): Promise<DeleteResult> {
-    return this.softDelete({ uuid });
+  removeSection(section: Section): Promise<Section> {
+    return this.softRemove(section);
   }
 }

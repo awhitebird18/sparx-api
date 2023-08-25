@@ -1,17 +1,13 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { AppModule } from './app.module';
 import { join } from 'path';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
-import {
-  ClassSerializerInterceptor,
-  // ValidationPipe,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-
 import { SpelunkerModule } from 'nestjs-spelunker';
+
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -30,10 +26,9 @@ async function bootstrap() {
   //     whitelist: true,
   //     forbidNonWhitelisted: true,
   //     transform: true,
-  //     // validationError: { target: false },
+  //     validationError: { target: false },
   //   }),
   // );
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));

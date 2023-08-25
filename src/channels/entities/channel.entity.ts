@@ -1,14 +1,16 @@
-import { BaseEntity } from 'src/common/entities/base.entity';
-import { Company } from 'src/companies/entities/company.entity';
-import { Message } from 'src/messages/entities/message.entity';
 import { Entity, Column, OneToMany, ManyToOne } from 'typeorm';
-import { ChannelType } from '../enums/channel-type.enum';
+
+import { BaseEntity } from 'src/common/entities/base.entity';
+import { Message } from 'src/messages/entities/message.entity';
 import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
+
+import { ChannelType } from '../enums/channel-type.enum';
+import { Workspace } from 'src/workspaces/entities/workspace.entity';
 
 @Entity()
 export class Channel extends BaseEntity {
   @Column({ nullable: true })
-  name?: string;
+  name: string;
 
   @Column({ nullable: true })
   topic?: string;
@@ -17,7 +19,7 @@ export class Channel extends BaseEntity {
   description?: string;
 
   @Column({ default: false })
-  isPrivate?: boolean;
+  isPrivate: boolean;
 
   @Column({ nullable: true })
   icon?: string;
@@ -29,8 +31,8 @@ export class Channel extends BaseEntity {
   })
   type: ChannelType;
 
-  @ManyToOne(() => Company, (company) => company.channels)
-  company: Company;
+  @ManyToOne(() => Workspace, (workspace) => workspace.channels)
+  workspace: Workspace;
 
   @OneToMany(() => Message, (message) => message.channel)
   messages: Message[];

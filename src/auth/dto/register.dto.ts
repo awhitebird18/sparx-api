@@ -5,11 +5,15 @@ import {
   MaxLength,
   Matches,
   IsNotEmpty,
+  IsOptional,
+  IsBoolean,
+  IsEnum,
 } from 'class-validator';
-import { IsPasswordMatching } from '../validators/is-password-matching';
+import { UserRoles } from 'src/users/enums/roles.enum';
+// import { IsPasswordMatching } from '../validators/is-password-matching';
 
 export class RegisterDto {
-  @IsEmail({}, { message: 'Invalid email address.' })
+  @IsEmail()
   @IsNotEmpty()
   email: string;
 
@@ -34,6 +38,17 @@ export class RegisterDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsPasswordMatching({ message: 'Passwords must match.' })
   confirmPassword: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isBot?: boolean;
+
+  @IsString()
+  @IsOptional()
+  profileImage?: string;
+
+  @IsEnum(UserRoles)
+  @IsOptional()
+  role?: UserRoles;
 }

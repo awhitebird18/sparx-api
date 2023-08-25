@@ -3,155 +3,148 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { UsersRepository } from './users.repository';
-import { plainToInstance } from 'class-transformer';
-import { UserDto } from './dto';
 import { v4 as uuid } from 'uuid';
 import { saveBase64Image } from 'src/utils';
 import * as path from 'path';
+
+import { UsersRepository } from './users.repository';
 import { UsersGateway } from 'src/websockets/user.gateway';
 import { SectionsService } from 'src/sections/sections.service';
-import * as fs from 'fs';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
+
+import { UpdateUserDto } from './dto/update-user.dto';
+import { RegisterDto } from 'src/auth/dto/register.dto';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private userRepository: UsersRepository,
+    private usersRepository: UsersRepository,
     private sectionsService: SectionsService,
     private userPreferencesService: UserPreferencesService,
     private usersGatway: UsersGateway,
   ) {}
 
-  async createUser(createUserDto: CreateUserDto) {
-    const existingUser = await this.userRepository.findOneByProperties({
-      email: createUserDto.email,
+  async create(registerDto: RegisterDto): Promise<User> {
+    const existingUser = await this.usersRepository.findOne({
+      where: {
+        email: registerDto.email,
+      },
     });
-    if (existingUser) {
+    if (existingUser)
       throw new ConflictException('Email is already registered');
-    }
 
     // Creating new user
-    const user = await this.userRepository.createUser(createUserDto);
+    const user = await this.usersRepository.createUser(registerDto);
 
     // Creating user section and userPreferences
     await Promise.all([
-      this.sectionsService.seedUserDefaultSections(user),
-      this.userPreferencesService.createUserPreferences(user),
+      this.sectionsService.seedUserDefaultSections(user.id),
+      this.userPreferencesService.createUserPreferences({
+        userId: user.id,
+      }),
     ]);
-
-    const filteredUser = plainToInstance(UserDto, user);
-
-    this.usersGatway.handleNewUserSocket(filteredUser);
-
-    return filteredUser;
-  }
-
-  async seedBot() {
-    const botExists = await this.findOne({ isBot: true });
-
-    if (botExists) {
-      throw new ConflictException('Bot already exists!');
-    }
-
-    const newUser = await this.userRepository.createUser({
-      firstName: 'Sparx',
-      lastName: 'Bot',
-      email: 'bot@sparx.com',
-      password: 'password1',
-      isBot: true,
-    });
-
-    // Get the absolute path to the bot.png file in the static folder.
-    const botImagePath = path.join(__dirname, 'static', 'bot.png');
-
-    // Read the bot.png file from the filesystem and convert it to base64 format.
-    const botImageBase64 = fs.readFileSync(botImagePath).toString('base64');
-
-    // Upload the bot profile image.
-    await this.updateProfileImage(newUser.uuid, botImageBase64);
-
-    const filteredUser = plainToInstance(UserDto, newUser);
-
-    return filteredUser;
-  }
-
-  async findAll() {
-    return this.userRepository.find();
-  }
-
-  async findOne(searchProperties: any) {
-    return await this.userRepository.findOneBy(searchProperties);
-  }
-
-  async markAsVerified(email: string) {
-    const user = await this.userRepository.findOneBy({ email });
-
-    return await this.userRepository.updateUser(user.uuid, {
-      isVerified: true,
-    });
-  }
-
-  async initialUserFetch(userUuid: string) {
-    const user = await this.userRepository.findOneBy({ uuid: userUuid });
 
     return user;
   }
 
-  async findOneByEmail(email: string) {
-    return await this.userRepository.findOneBy({ email });
+  async createBot(): Promise<User> {
+    // Check if bot exists
+    const existingBot = await this.usersRepository.findOne({
+      where: { isBot: true },
+    });
+
+    if (existingBot) throw new ConflictException('Bot already exists!');
+
+    // Find default bot image
+    const botImagePath = path.join(__dirname, 'static', 'bot.png');
+
+    // Create bot user
+    const newBotUser = await this.usersRepository.createUser({
+      firstName: 'Sparx',
+      lastName: 'Bot',
+      email: 'bot@sparx.com',
+      password: 'password1',
+      confirmPassword: 'password1',
+      isBot: true,
+      profileImage: `/static/${botImagePath}`,
+    });
+
+    return newBotUser;
   }
 
-  async update(userUuid: string, updateUserDto: UpdateUserDto) {
-    // Check for existing user
-    const user = await this.userRepository.findOneBy({ uuid: userUuid });
-    if (!user) {
-      throw new NotFoundException(`User with UUID ${userUuid} not found`);
-    }
+  findOne(searchProperties: any): Promise<User> {
+    return this.usersRepository.findOneBy(searchProperties);
+  }
 
-    // Update user
-    Object.assign(user, updateUserDto);
-    const updatedUser = await this.userRepository.save(user);
-    const filteredUser = plainToInstance(UserDto, updatedUser);
+  async findOneByEmail(email: string): Promise<User> {
+    return this.usersRepository.findOne({ where: { email } });
+  }
 
-    // Send updated user over socket
-    this.usersGatway.handleUserUpdateSocket(filteredUser);
+  findWorkspaceUsers(): Promise<User[]> {
+    return this.usersRepository.find({ where: { isBot: false } });
+  }
+
+  async markAsVerified(email: string): Promise<User> {
+    // Find User
+    const user = await this.usersRepository.findOneOrFail({ where: { email } });
+
+    // Update User
+    Object.assign(user, { isVerified: true });
+    const updatedUser = await this.usersRepository.save(user);
 
     return updatedUser;
   }
 
-  async updateProfileImage(userId: string, profileImage: string) {
-    const user = await this.userRepository.findUserByUuid(userId);
+  async update(userId: number, updateUserDto: UpdateUserDto): Promise<User> {
+    // Check for existing user
+    const user = await this.usersRepository.findOneOrFail({
+      where: { id: userId },
+    });
 
-    if (!user) {
-      throw new NotFoundException(`User with UUID ${userId} not found`);
-    }
+    // Update user
+    Object.assign(user, updateUserDto);
+    const updatedUser = await this.usersRepository.save(user);
+
+    // Send updated user over socket
+    this.usersGatway.handleUpdateUserSocket(updatedUser);
+
+    return updatedUser;
+  }
+
+  async updateProfileImage(
+    userId: number,
+    profileImage: string,
+  ): Promise<User> {
+    // Find User
+    const user = await this.usersRepository.findOneOrFail({
+      where: { id: userId },
+    });
 
     const imageId = uuid();
-
     // const clientId = 'clientA';
-
     const folderPath = `/static/`;
-
     const imagePath = path.join(folderPath, imageId);
-
     saveBase64Image(profileImage, imagePath);
 
     // Update user with image path
     user.profileImage = imagePath;
 
-    const updatedUser = await this.userRepository.save(user);
+    // Update User
+    const updatedUser = await this.usersRepository.save(user);
 
-    const filteredUser = plainToInstance(UserDto, updatedUser);
+    // Send updated user over socket
+    this.usersGatway.handleUpdateUserSocket(updatedUser);
 
-    this.usersGatway.handleUserUpdateSocket(filteredUser);
-
-    return filteredUser;
+    return updatedUser;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(uuid: string): Promise<void> {
+    const removedUser = await this.usersRepository.removeUserByUuid(uuid);
+
+    if (!removedUser)
+      throw new NotFoundException(`Unable to find user with id ${uuid}`);
+
+    this.usersGatway.handleRemoveUserSocket(removedUser.uuid);
   }
 }
