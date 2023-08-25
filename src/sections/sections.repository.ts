@@ -39,7 +39,6 @@ export class SectionsRepository extends Repository<Section> {
       delete section.channels; // Optionally, remove the full channel subscriptions if you only want the IDs
     }
 
-    console.log(userSections);
     return plainToInstance(SectionDto, userSections);
   }
 

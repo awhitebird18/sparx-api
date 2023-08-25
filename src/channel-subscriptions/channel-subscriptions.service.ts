@@ -74,7 +74,7 @@ export class ChannelSubscriptionsService {
     // );
 
     // Send over socket
-    this.channelGateway.handleLeaveChannelSocket(channelUuid);
+    this.channelGateway.handleRemoveChannelSocket(channelUuid);
   }
 
   async removeUserFromChannel(

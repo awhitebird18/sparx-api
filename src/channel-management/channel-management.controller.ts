@@ -8,7 +8,6 @@ import { ChannelManagementService } from './channel-management.service';
 import { ChannelType } from 'src/channels/enums/channel-type.enum';
 import { CreateChannelDto } from 'src/channels/dto/create-channel.dto';
 import { ChannelDto } from 'src/channels/dto/channel.dto';
-import { ChannelSubscriptionDto } from 'src/channel-subscriptions/dto/channel-subscription.dto';
 
 @Controller('channel-management')
 export class ChannelManagementController {
@@ -40,7 +39,7 @@ export class ChannelManagementController {
   joinChannel(
     @GetUser() user: User,
     @Param('channelId') channelId: string,
-  ): Promise<ChannelSubscriptionDto> {
+  ): Promise<ChannelDto> {
     return this.channelManagementService.joinChannel(
       user.uuid,
       channelId,

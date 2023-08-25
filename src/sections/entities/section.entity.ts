@@ -13,7 +13,7 @@ export class Section extends BaseEntity {
   @Column()
   name: string;
 
-  @Column({ type: 'enum', enum: ChannelType, nullable: true })
+  @Column({ type: 'enum', enum: ChannelType })
   type: ChannelType;
 
   @Column({ default: false, nullable: true })

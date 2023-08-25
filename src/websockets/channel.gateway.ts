@@ -14,6 +14,7 @@ import { WebSocketMessage } from './web-socket-message';
 import { MessageType } from './ws-messagetype.enum';
 import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 import { Channel } from 'src/channels/entities/channel.entity';
+import { plainToInstance } from 'class-transformer';
 
 @WebSocketGateway({
   cors: { origin: 'http://localhost:5173' },
@@ -36,18 +37,17 @@ export class ChannelGateway
     this.clients.delete(client.clientId);
   }
 
-  handleNewChannelSocket(channel: ChannelDto) {
-    this.server.emit('channels', channel);
+  // Channel Sockets
+  joinChannel(channel: ChannelDto) {
+    const serializedChannel = plainToInstance(ChannelDto, channel);
+    const websocketMessage = new WebSocketMessage(MessageType.JoinChannel, {
+      channel: serializedChannel,
+    });
+    this.server.emit('join-channel', websocketMessage);
   }
 
   handleUpdateChannelSocket(channel: Channel) {
     this.server.emit('channels/update', channel);
-  }
-
-  handleUpdateChannelSubscriptionSocket(
-    channelSubscription: ChannelSubscription,
-  ) {
-    this.server.emit('channel-subscription/update', channelSubscription);
   }
 
   handleRemoveChannelSocket(channelId: string) {
@@ -58,12 +58,11 @@ export class ChannelGateway
     this.server.emit('channels/remove', websocketMessage);
   }
 
-  handleLeaveChannelSocket(channelId: string) {
-    this.server.emit('ChannelSubscriptions/leave', channelId);
-  }
-
-  handleJoinChannelSocket(channelSubscription: unknown) {
-    this.server.emit('ChannelSubscriptions/join', channelSubscription);
+  // Channel Subscriptions
+  handleUpdateChannelSubscriptionSocket(
+    channelSubscription: ChannelSubscription,
+  ) {
+    this.server.emit('channel-subscription/update', channelSubscription);
   }
 
   @SubscribeMessage('joinRoom')

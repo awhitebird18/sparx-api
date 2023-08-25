@@ -27,12 +27,12 @@ export class SectionsService {
 
   private readonly defaultSections = [
     {
-      name: 'Channels',
-      type: ChannelType.CHANNEL,
-    },
-    {
       name: 'Direct Messages',
       type: ChannelType.DIRECT,
+    },
+    {
+      name: 'Channels',
+      type: ChannelType.CHANNEL,
     },
   ];
 
@@ -52,13 +52,10 @@ export class SectionsService {
   }
 
   async seedUserDefaultSections(userId: number): Promise<void> {
-    const maxOrderIndex = await this.sectionsRepository.getMaxOrderIndex(
-      userId,
-    );
     for (let i = 0; i < this.defaultSections.length; i++) {
       await this.sectionsRepository.createSection({
         ...this.defaultSections[i],
-        orderIndex: maxOrderIndex,
+        orderIndex: i,
         isSystem: true,
         userId,
       });

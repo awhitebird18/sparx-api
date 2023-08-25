@@ -16,7 +16,6 @@ import { ChannelGateway } from 'src/websockets/channel.gateway';
 import { ChannelType } from 'src/channels/enums/channel-type.enum';
 import { CreateChannelDto } from 'src/channels/dto/create-channel.dto';
 import { Channel } from 'src/channels/entities/channel.entity';
-import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 
 @Injectable()
 export class ChannelManagementService {
@@ -76,7 +75,7 @@ export class ChannelManagementService {
     userUuid: string,
     channelUuid: string,
     channelType: ChannelType,
-  ): Promise<ChannelSubscription> {
+  ): Promise<Channel> {
     const user = await this.usersRepository.findOneOrFail({
       where: { uuid: userUuid },
     });
@@ -119,16 +118,14 @@ export class ChannelManagementService {
       channel: { id: channel.id },
       section: { id: section.id },
     });
+
+    // Save channel subscription
     await this.channelSubscriptionRepository.save(newChannelSubscription);
 
-    const channelSubscription = await this.channelSubscriptionsService.findOne({
-      userId: user.uuid,
-      channelId: channelUuid,
-    });
+    // Send over socket
+    this.channelsGateway.joinChannel(channel);
 
-    this.channelsGateway.handleJoinChannelSocket(channelSubscription);
-
-    return channelSubscription;
+    return channel;
   }
 
   async inviteUsers(

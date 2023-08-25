@@ -1,10 +1,12 @@
 import {
   IsBoolean,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
 } from 'class-validator';
+import { ChannelType } from 'src/channels/enums/channel-type.enum';
 
 export class CreateSectionDto {
   @IsNotEmpty()
@@ -20,4 +22,7 @@ export class CreateSectionDto {
 
   @IsNumber()
   userId: number;
+
+  @IsEnum(ChannelType)
+  type: ChannelType;
 }
