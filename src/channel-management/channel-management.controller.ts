@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post } from '@nestjs/common';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 
 import { User } from 'src/users/entities/user.entity';
@@ -8,6 +8,7 @@ import { ChannelManagementService } from './channel-management.service';
 import { ChannelType } from 'src/channels/enums/channel-type.enum';
 import { CreateChannelDto } from 'src/channels/dto/create-channel.dto';
 import { ChannelDto } from 'src/channels/dto/channel.dto';
+import { ChannelSubscriptionDto } from 'src/channel-subscriptions/dto/channel-subscription.dto';
 
 @Controller('channel-management')
 export class ChannelManagementController {
@@ -57,6 +58,27 @@ export class ChannelManagementController {
       channelId,
       userIds,
       // currentUser.id,
+    );
+  }
+
+  @Delete('leave/:channelId')
+  leaveChannel(
+    @GetUser() user: User,
+    @Param('channelId') channelId: string,
+  ): Promise<void> {
+    return this.channelManagementService.leaveChannel(user.uuid, channelId);
+  }
+
+  @Delete('remove/:channelId/:userId')
+  async removeUserFromChannel(
+    @Param('channelId') channelId: string,
+    @Param('userId') userId: string,
+    @GetUser() currentUser: User,
+  ): Promise<ChannelSubscriptionDto> {
+    return this.channelManagementService.removeUserFromChannel(
+      userId,
+      channelId,
+      currentUser.uuid,
     );
   }
 }

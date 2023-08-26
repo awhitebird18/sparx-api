@@ -1,4 +1,4 @@
-import { Controller, Param, Delete, Patch, Body } from '@nestjs/common';
+import { Controller, Param, Patch, Body } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 
@@ -38,27 +38,6 @@ export class ChannelSubscriptionsController {
       user.uuid,
       channelId,
       updateUserChannel.sectionId,
-    );
-  }
-
-  @Delete('leave/:channelId')
-  leaveChannel(
-    @GetUser() user: User,
-    @Param('channelId') channelId: string,
-  ): Promise<void> {
-    return this.channelSubscriptionsService.leaveChannel(user.uuid, channelId);
-  }
-
-  @Delete('remove/:channelId/:userId')
-  async removeUserFromChannel(
-    @Param('channelId') channelId: string,
-    @Param('userId') userId: string,
-    @GetUser() currentUser: User,
-  ): Promise<ChannelSubscriptionDto> {
-    return this.channelSubscriptionsService.removeUserFromChannel(
-      userId,
-      channelId,
-      currentUser.uuid,
     );
   }
 }

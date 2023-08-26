@@ -12,6 +12,7 @@ import { Channel } from './entities/channel.entity';
 import { ChannelDto } from './dto/channel.dto';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
+import { ChannelUserCount } from './dto/channel-user-count.dto';
 
 @Injectable()
 export class ChannelsService {
@@ -50,21 +51,24 @@ export class ChannelsService {
   async findWorkspaceChannels(
     page: number,
     pageSize = 15,
-  ): Promise<{ channel: ChannelDto; userCount: number }[]> {
+  ): Promise<{
+    channels: ChannelDto[];
+    channelUserCounts: ChannelUserCount[];
+  }> {
     const result =
       await this.channelsRepository.findWorkspaceChannelsWithUserCounts(
         page,
         pageSize,
       );
 
-    const channelsWithUserCount = result.entities.map(
-      (channel: Channel, index: number) => ({
-        channel,
-        userCount: result.raw[index].usercount,
-      }),
-    );
+    const channelUserCounts = result.raw.map((channelUserCount: any) => ({
+      channelUuid: channelUserCount.channel_uuid,
+      userCount: channelUserCount.usercount || 0,
+    }));
 
-    return channelsWithUserCount;
+    const channels = result.entities;
+
+    return { channels, channelUserCounts };
   }
 
   async updateChannel(
@@ -107,6 +111,6 @@ export class ChannelsService {
       throw new NotFoundException(`Unable to find user with id ${uuid}`);
 
     // Send websocket
-    this.channelGateway.handleRemoveChannelSocket(removedChannel.uuid);
+    // this.channelGateway.handleRemoveChannelSocket(removedChannel.uuid);
   }
 }

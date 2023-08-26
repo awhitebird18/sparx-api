@@ -30,6 +30,7 @@ export class SectionsRepository extends Repository<Section> {
       .leftJoinAndSelect('section.channels', 'channelSubscription')
       .leftJoinAndSelect('channelSubscription.channel', 'channel')
       .where('section.userId = :userId', { userId })
+      .andWhere('channelSubscription.isSubscribed')
       .getMany();
 
     // Now, we have the sections and their associated channel subscriptions.

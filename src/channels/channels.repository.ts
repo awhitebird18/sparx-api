@@ -51,6 +51,7 @@ export class ChannelsRepository extends Repository<Channel> {
       .innerJoin('channelSubscription.user', 'user')
       .select('channel')
       .where('user.id = :userId', { userId })
+      .andWhere('channelSubscription.isSubscribed')
       .getMany();
   }
 
@@ -59,7 +60,11 @@ export class ChannelsRepository extends Repository<Channel> {
     pageSize = 15,
   ): Promise<any> {
     return this.createQueryBuilder('channel')
-      .leftJoin('channel.channelSubscriptions', 'channelSubscription')
+      .leftJoinAndSelect(
+        'channel.channelSubscriptions',
+        'channelSubscription',
+        'channelSubscription.isSubscribed = TRUE',
+      ) // Adding condition to join
       .select('channel') // This selects all fields of the `channel` entity
       .addSelect('COUNT(channelSubscription.uuid)', 'usercount')
       .where('channel.type = :type', { type: ChannelType.CHANNEL })
