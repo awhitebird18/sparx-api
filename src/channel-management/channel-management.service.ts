@@ -183,22 +183,6 @@ export class ChannelManagementService {
 
     await this.channelSubscriptionRepository.save(channelSubscription);
 
-    // Todo: review this
-    // const channelUsers =
-    //   await this.channelSubscriptionsRepository.findUsersByChannelId(
-    //     channelUuid,
-    //   );
-
-    // const userChannelToReturn = await this.findUserChannel(
-    //   userUuid,
-    //   channelUuid,
-    // );
-
-    // const channelUserCount =
-    //   await this.channelSubscriptionsRepository.getChannelUsersCount(
-    //     channelUuid,
-    //   );
-
     const channelUserCount =
       await this.channelSubscriptionRepository.getChannelUsersCount(channel.id);
 
