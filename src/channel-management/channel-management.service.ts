@@ -16,6 +16,7 @@ import { ChannelGateway } from 'src/websockets/channel.gateway';
 import { ChannelType } from 'src/channels/enums/channel-type.enum';
 import { CreateChannelDto } from 'src/channels/dto/create-channel.dto';
 import { Channel } from 'src/channels/entities/channel.entity';
+import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 
 @Injectable()
 export class ChannelManagementService {
@@ -100,7 +101,6 @@ export class ChannelManagementService {
         where: {
           user: { id: user.id },
           channel: { id: channel.id },
-          isSubscribed: true,
         },
       });
 
@@ -110,22 +110,113 @@ export class ChannelManagementService {
         HttpStatus.BAD_REQUEST,
       );
 
-    // Create channelSubscription
-    // Todo: May want to create a service method that creates a channelSubscription and returns
-    // In the correct format so we do not need to
-    const newChannelSubscription = this.channelSubscriptionRepository.create({
-      user,
-      channel: { id: channel.id },
-      section: { id: section.id },
-    });
+    if (existingChannelSubscription) {
+      // Update channel subscription
+      await this.channelSubscriptionRepository.update(
+        existingChannelSubscription.id,
+        { isSubscribed: true },
+      );
+    } else {
+      // Create channelSubscription
+      // Todo: May want to create a service method that creates a channelSubscription and returns
+      // In the correct format so we do not need to
+      // Save channel subscription
+      const newChannelSubscription = this.channelSubscriptionRepository.create({
+        user,
+        channel: { id: channel.id },
+        section: { id: section.id },
+      });
+      await this.channelSubscriptionRepository.save(newChannelSubscription);
+    }
 
-    // Save channel subscription
-    await this.channelSubscriptionRepository.save(newChannelSubscription);
+    const channelUserCount =
+      await this.channelSubscriptionRepository.getChannelUsersCount(channel.id);
 
     // Send over socket
     this.channelsGateway.joinChannel(channel);
+    this.channelsGateway.updateChannelCount({
+      channelUuid: channel.uuid,
+      userCount: channelUserCount,
+    });
+
+    // this.channelsGateway.
 
     return channel;
+  }
+
+  async leaveChannel(userUuid: string, channelUuid: string): Promise<void> {
+    // Check if channel exists or is deleted
+    const channel = await this.channelsRepository.findOneOrFail({
+      where: {
+        uuid: channelUuid,
+      },
+    });
+    // Find channel subscription
+    const channelSubscription =
+      await this.channelSubscriptionRepository.findOne({
+        where: {
+          user: { uuid: userUuid },
+          channel: { uuid: channelUuid },
+          isSubscribed: true,
+        },
+        relations: ['channel'],
+      });
+
+    if (!channelSubscription) {
+      return;
+    }
+
+    // Find default section. If channel is in custom section, return it to default
+    const section = await this.sectionsRepository.findOneOrFail({
+      where: {
+        type: channelSubscription.channel.type,
+        user: { uuid: userUuid },
+      },
+    });
+
+    // Update channel subscription
+    const updateFields = {
+      isSubscribed: false,
+      section,
+    };
+    Object.assign(channelSubscription, updateFields);
+
+    await this.channelSubscriptionRepository.save(channelSubscription);
+
+    const channelUserCount =
+      await this.channelSubscriptionRepository.getChannelUsersCount(channel.id);
+
+    // Send over socket
+    this.channelsGateway.leaveChannel(channelUuid);
+
+    this.channelsGateway.updateChannelCount({
+      channelUuid: channelUuid,
+      userCount: channelUserCount,
+    });
+  }
+
+  async removeUserFromChannel(
+    userUuid: string,
+    channelUuid: string,
+    currentUserUuid: string,
+  ): Promise<ChannelSubscription> {
+    await this.leaveChannel(userUuid, channelUuid);
+
+    // const channelUsers =
+    //   await this.channelSubscriptionsRepository.findUsersByChannelId(
+    //     channelUuid,
+    //   );
+
+    const userChannelToReturn =
+      await this.channelSubscriptionsService.findChannelSubscription(
+        currentUserUuid,
+        channelUuid,
+      );
+
+    // Todo: may need to attach users to channel to return
+    // userChannelToReturn.users = channelUsers;
+
+    return userChannelToReturn;
   }
 
   async inviteUsers(

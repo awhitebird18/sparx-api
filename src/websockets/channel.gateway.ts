@@ -15,6 +15,7 @@ import { MessageType } from './ws-messagetype.enum';
 import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 import { Channel } from 'src/channels/entities/channel.entity';
 import { plainToInstance } from 'class-transformer';
+import { ChannelUserCount } from 'src/channels/dto/channel-user-count.dto';
 
 @WebSocketGateway({
   cors: { origin: 'http://localhost:5173' },
@@ -46,16 +47,23 @@ export class ChannelGateway
     this.server.emit('join-channel', websocketMessage);
   }
 
+  updateChannelCount(channelUserCount: ChannelUserCount) {
+    const websocketMessage = new WebSocketMessage(MessageType.JoinChannel, {
+      channelUserCount: channelUserCount,
+    });
+    this.server.emit('update-channel-count', websocketMessage);
+  }
+
   handleUpdateChannelSocket(channel: Channel) {
     this.server.emit('channels/update', channel);
   }
 
-  handleRemoveChannelSocket(channelId: string) {
-    const websocketMessage = new WebSocketMessage(MessageType.RemoveChannel, {
+  leaveChannel(channelId: string) {
+    const websocketMessage = new WebSocketMessage(MessageType.LeaveChannel, {
       channelId,
     });
 
-    this.server.emit('channels/remove', websocketMessage);
+    this.server.emit('leave-channel', websocketMessage);
   }
 
   // Channel Subscriptions

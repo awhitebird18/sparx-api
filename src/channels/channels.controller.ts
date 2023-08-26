@@ -20,6 +20,7 @@ import { User } from 'src/users/entities/user.entity';
 import { ChannelDto } from './dto/channel.dto';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
+import { ChannelUserCount } from './dto/channel-user-count.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Channels')
@@ -39,7 +40,10 @@ export class ChannelsController {
   findWorkspaceChannels(
     @Query('page') page: number,
     @Query('pageSize') pageSize: number,
-  ): Promise<{ channel: ChannelDto; userCount: number }[]> {
+  ): Promise<{
+    channels: ChannelDto[];
+    channelUserCounts: ChannelUserCount[];
+  }> {
     return this.channelsService.findWorkspaceChannels(page, pageSize);
   }
 
