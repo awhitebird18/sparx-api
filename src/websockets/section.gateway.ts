@@ -20,6 +20,18 @@ export class SectionsGateway {
     this.server.emit('sections', webSocketMessage);
   }
 
+  removeChannelFromSection({ sectionId, channelId }) {
+    const webSocketMessage = new WebSocketMessage(
+      MessageType.RemoveChannelFromSection,
+      {
+        sectionId,
+        channelId,
+      },
+    );
+
+    this.server.emit('sections/remove-channel', webSocketMessage);
+  }
+
   handleUpdateSectionSocket(section: Section): void {
     const serializedSection = plainToInstance(SectionDto, section);
     const webSocketMessage = new WebSocketMessage(MessageType.UpdateSection, {

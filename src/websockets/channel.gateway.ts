@@ -16,6 +16,8 @@ import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-su
 import { Channel } from 'src/channels/entities/channel.entity';
 import { plainToInstance } from 'class-transformer';
 import { ChannelUserCount } from 'src/channels/dto/channel-user-count.dto';
+import { UpdateChannelDto } from 'src/channels/dto/update-channel.dto';
+import { UpdateChannelSectionDto } from 'src/sections/dto/update-channel-section.dto';
 
 @WebSocketGateway({
   cors: { origin: 'http://localhost:5173' },
@@ -64,6 +66,15 @@ export class ChannelGateway
     });
 
     this.server.emit('leave-channel', websocketMessage);
+  }
+
+  updateChannelSection(updateChannelSection: UpdateChannelSectionDto) {
+    const websocketMessage = new WebSocketMessage(
+      MessageType.LeaveChannel,
+      updateChannelSection,
+    );
+
+    this.server.emit('update-channel-section', websocketMessage);
   }
 
   // Channel Subscriptions

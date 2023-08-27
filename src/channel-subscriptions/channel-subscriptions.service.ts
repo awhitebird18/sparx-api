@@ -103,9 +103,10 @@ export class ChannelSubscriptionsService {
     const updatedChannelSubscription =
       await this.channelSubscriptionsRepository.save(channelSubscription);
 
-    this.channelGateway.handleUpdateChannelSubscriptionSocket(
-      updatedChannelSubscription,
-    );
+    this.channelGateway.updateChannelSection({
+      channelId: channelUuid,
+      sectionId: sectionUuid,
+    });
 
     return updatedChannelSubscription;
   }
