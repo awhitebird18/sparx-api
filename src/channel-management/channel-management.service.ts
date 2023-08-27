@@ -17,6 +17,7 @@ import { ChannelType } from 'src/channels/enums/channel-type.enum';
 import { CreateChannelDto } from 'src/channels/dto/create-channel.dto';
 import { Channel } from 'src/channels/entities/channel.entity';
 import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class ChannelManagementService {
@@ -32,22 +33,31 @@ export class ChannelManagementService {
 
   async createChannelAndJoin(
     createChannelDto: CreateChannelDto,
-    userId: string,
+    currentUser: User,
+    sectionUuid: string,
   ): Promise<Channel> {
     // Create channel
     const channel = await this.channelsService.createChannel(createChannelDto);
 
+    const section = await this.sectionsRepository.findSectionByUuid(
+      sectionUuid,
+    );
+
     // Add user to channel
-    await this.joinChannel(userId, channel.uuid, ChannelType.CHANNEL);
+    await this.joinChannel(currentUser.uuid, channel.uuid, section.uuid);
 
     return channel;
   }
 
-  async createDirectChannelAndJoin(userUuids: string[]): Promise<Channel> {
+  async createDirectChannelAndJoin(
+    userUuids: string[],
+    currentUserId: number,
+  ): Promise<Channel> {
     // Check if direct channel with both members already exists
     const channel = await this.channelsService.findDirectChannelByUserUuids(
       userUuids,
     );
+
     if (channel) {
       throw new ConflictException(
         `A direct channel with members [${userUuids.join(
@@ -56,6 +66,11 @@ export class ChannelManagementService {
       );
     }
 
+    const section = await this.sectionsRepository.findDefaultSection(
+      ChannelType.DIRECT,
+      currentUserId,
+    );
+
     // Create new direct message channel
     const newChannel = await this.channelsService.createChannel({
       type: ChannelType.DIRECT,
@@ -63,7 +78,7 @@ export class ChannelManagementService {
 
     // Add members to the channel
     const memberPromises = userUuids.map(async (userUuid: string) => {
-      return this.joinChannel(userUuid, newChannel.uuid, ChannelType.DIRECT);
+      return this.joinChannel(userUuid, newChannel.uuid, section.uuid);
     });
     await Promise.all(memberPromises);
 
@@ -75,7 +90,7 @@ export class ChannelManagementService {
   async joinChannel(
     userUuid: string,
     channelUuid: string,
-    channelType: ChannelType,
+    sectionUuid: string,
   ): Promise<Channel> {
     const user = await this.usersRepository.findOneOrFail({
       where: { uuid: userUuid },
@@ -90,8 +105,7 @@ export class ChannelManagementService {
     // Check if section exists
     const section = await this.sectionsRepository.findOneOrFail({
       where: {
-        type: channelType,
-        user: { id: user.id },
+        uuid: sectionUuid,
       },
     });
 
@@ -133,13 +147,11 @@ export class ChannelManagementService {
       await this.channelSubscriptionRepository.getChannelUsersCount(channel.id);
 
     // Send over socket
-    this.channelsGateway.joinChannel(channel);
+    this.channelsGateway.joinChannel(channel, section.uuid);
     this.channelsGateway.updateChannelCount({
       channelUuid: channel.uuid,
       userCount: channelUserCount,
     });
-
-    // this.channelsGateway.
 
     return channel;
   }

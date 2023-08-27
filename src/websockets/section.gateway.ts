@@ -11,10 +11,9 @@ import { MessageType } from './ws-messagetype.enum';
 export class SectionsGateway {
   @WebSocketServer() server: Server;
 
-  handleNewSectionSocket(section: Section): void {
-    const serializedSection = plainToInstance(SectionDto, section);
+  handleNewSectionSocket(section: SectionDto): void {
     const webSocketMessage = new WebSocketMessage(MessageType.UpdateSection, {
-      section: serializedSection,
+      section,
     });
 
     this.server.emit('sections', webSocketMessage);

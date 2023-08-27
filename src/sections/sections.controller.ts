@@ -48,7 +48,10 @@ export class SectionsController {
   }
 
   @Delete(':sectionId')
-  removeSection(@GetUser() user: User, @Param('sectionId') sectionId: string) {
-    return this.sectionsService.removeSection(sectionId, user.id);
+  async removeSection(
+    @GetUser() user: User,
+    @Param('sectionId') sectionId: string,
+  ) {
+    return await this.sectionsService.removeSection(sectionId, user.id);
   }
 }

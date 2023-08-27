@@ -16,7 +16,6 @@ import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-su
 import { Channel } from 'src/channels/entities/channel.entity';
 import { plainToInstance } from 'class-transformer';
 import { ChannelUserCount } from 'src/channels/dto/channel-user-count.dto';
-import { UpdateChannelDto } from 'src/channels/dto/update-channel.dto';
 import { UpdateChannelSectionDto } from 'src/sections/dto/update-channel-section.dto';
 
 @WebSocketGateway({
@@ -41,10 +40,11 @@ export class ChannelGateway
   }
 
   // Channel Sockets
-  joinChannel(channel: ChannelDto) {
+  joinChannel(channel: ChannelDto, sectionId: string) {
     const serializedChannel = plainToInstance(ChannelDto, channel);
     const websocketMessage = new WebSocketMessage(MessageType.JoinChannel, {
       channel: serializedChannel,
+      sectionId: sectionId,
     });
     this.server.emit('join-channel', websocketMessage);
   }

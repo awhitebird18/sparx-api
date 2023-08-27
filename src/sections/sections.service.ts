@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { SectionsRepository } from 'src/sections/sections.repository';
 import { SectionsGateway } from 'src/websockets/section.gateway';
@@ -67,19 +63,21 @@ export class SectionsService {
     userId: number,
   ): Promise<Section> {
     // Get the new sections index
-    const maxOrderIndex = await this.sectionsRepository.getMaxOrderIndex(
-      userId,
-    );
+    // const maxOrderIndex = await this.sectionsRepository.getMaxOrderIndex(
+    //   userId,
+    // );
 
     // Create section
     const newSection = await this.sectionsRepository.createSection({
       ...createSectionDto,
-      orderIndex: maxOrderIndex + 1,
+      // orderIndex: maxOrderIndex + 1,
       userId,
+      type: ChannelType.ANY,
     });
-
     // Send new section over socket
-    this.sectionsGateway.handleNewSectionSocket(newSection);
+    this.sectionsGateway.handleNewSectionSocket(
+      plainToInstance(SectionDto, await this.mapSectionToDto(newSection)),
+    );
 
     return newSection;
   }
@@ -122,52 +120,34 @@ export class SectionsService {
     return updatedSection;
   }
 
-  async removeSection(uuid: string, userId: number): Promise<void> {
-    // Find section
-    const sectionToRemove = await this.sectionsRepository.findSectionByUuid(
-      uuid,
-    );
-    if (!sectionToRemove)
-      throw new NotFoundException(`Section with UUID ${uuid} not found`);
+  async removeSection(uuid: string, userId: number): Promise<string> {
+    try {
+      const sectionToRemove =
+        await this.sectionsRepository.findSectionWithChannels(uuid);
+      const channelSubscriptions = sectionToRemove.channels;
+      const userDefaultSections =
+        await this.sectionsRepository.findDefaultSections(userId);
 
-    // Move nests channels back to default sections
-    const channelSubscriptions = sectionToRemove.channels;
+      const updatePromises = channelSubscriptions.map(async (subscription) => {
+        const defaultSection = userDefaultSections.find(
+          (section) => section.type === subscription.channel.type,
+        );
+        return this.channelSubscriptionsService.updateChannelSection(
+          userId,
+          subscription.channel.uuid,
+          defaultSection.uuid,
+        );
+      });
 
-    const userDefaultSections =
-      await this.sectionsRepository.findDefaultSections(userId);
+      await Promise.all(updatePromises);
 
-    for (let i = 0; i < channelSubscriptions.length; i++) {
-      const defaultSection = userDefaultSections.find(
-        (section: Section) =>
-          section.type === channelSubscriptions[i].channel.type,
-      );
+      await this.sectionsRepository.removeSection(sectionToRemove);
 
-      await this.channelSubscriptionsService.updateChannelSection(
-        channelSubscriptions[i].userId,
-        channelSubscriptions[i].channel.uuid,
-        defaultSection.uuid,
-      );
+      this.sectionsGateway.handleRemoveSectionSocket(uuid);
+
+      return uuid;
+    } catch (error) {
+      console.error('Error in removeSection: ', error);
     }
-
-    // Remove section
-    const removedSection = await this.sectionsRepository.removeSection(
-      sectionToRemove,
-    );
-    if (!removedSection)
-      new NotFoundException('Unable to find section to remove');
-
-    // Shift down orderIndex for remaining sections
-    const updateResult = await this.sectionsRepository.decrementOrderIndexes(
-      userId,
-      sectionToRemove.orderIndex,
-    );
-
-    if (updateResult.affected === 0)
-      throw new InternalServerErrorException(
-        'An error occurred while updating sections.',
-      );
-
-    // Send socket
-    this.sectionsGateway.handleRemoveSectionSocket(uuid);
   }
 }

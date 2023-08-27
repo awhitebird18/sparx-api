@@ -77,38 +77,40 @@ export class ChannelSubscriptionsService {
   }
 
   async updateChannelSection(
-    userUuid: string,
+    userId: number,
     channelUuid: string,
     sectionUuid: string,
   ): Promise<ChannelSubscription> {
-    const channelSubscription =
-      await this.channelSubscriptionsRepository.findOneOrFail({
+    try {
+      const channelSubscription =
+        await this.channelSubscriptionsRepository.findOneOrFail({
+          where: {
+            user: { id: userId },
+            channel: { uuid: channelUuid },
+          },
+          relations: ['channel'],
+        });
+
+      const section = await this.sectionsRepository.findOneOrFail({
         where: {
-          user: { uuid: userUuid },
-          channel: { uuid: channelUuid },
+          uuid: sectionUuid,
         },
-        relations: ['channel'],
       });
 
-    // Find section
-    const section = await this.sectionsRepository.findOneOrFail({
-      where: {
-        uuid: sectionUuid,
-      },
-    });
+      Object.assign(channelSubscription, { section: { id: section.id } });
 
-    // Update channel subscription
-    const updateFields = { section };
-    Object.assign(channelSubscription, updateFields);
-    const updatedChannelSubscription =
-      await this.channelSubscriptionsRepository.save(channelSubscription);
+      const updatedChannelSubscription =
+        await this.channelSubscriptionsRepository.save(channelSubscription);
 
-    this.channelGateway.updateChannelSection({
-      channelId: channelUuid,
-      sectionId: sectionUuid,
-    });
+      this.channelGateway.updateChannelSection({
+        channelId: channelUuid,
+        sectionId: sectionUuid,
+      });
 
-    return updatedChannelSubscription;
+      return updatedChannelSubscription;
+    } catch (error) {
+      console.error('Error in updateChannelSection: ', error);
+    }
   }
 
   // async getUserSubscribedChannels(
