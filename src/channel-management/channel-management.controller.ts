@@ -9,6 +9,7 @@ import { ChannelType } from 'src/channels/enums/channel-type.enum';
 import { CreateChannelDto } from 'src/channels/dto/create-channel.dto';
 import { ChannelDto } from 'src/channels/dto/channel.dto';
 import { ChannelSubscriptionDto } from 'src/channel-subscriptions/dto/channel-subscription.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Controller('channel-management')
 export class ChannelManagementController {
@@ -19,20 +20,27 @@ export class ChannelManagementController {
   @Post()
   createChannel(
     @GetUser() currentUser: User,
-    @Body() createChannelDto: CreateChannelDto,
+    @Body()
+    {
+      createChannel,
+      sectionId,
+    }: { createChannel: CreateChannelDto; sectionId: string },
   ): Promise<ChannelDto> {
     return this.channelManagementService.createChannelAndJoin(
-      createChannelDto,
-      currentUser.uuid,
+      createChannel,
+      currentUser,
+      sectionId,
     );
   }
 
   @Post('direct-channel')
   createDirectChannel(
+    @GetUser() user: User,
     @Body() data: { memberIds: string[] },
   ): Promise<ChannelDto> {
     return this.channelManagementService.createDirectChannelAndJoin(
       data.memberIds,
+      user.id,
     );
   }
 
@@ -75,10 +83,13 @@ export class ChannelManagementController {
     @Param('userId') userId: string,
     @GetUser() currentUser: User,
   ): Promise<ChannelSubscriptionDto> {
-    return this.channelManagementService.removeUserFromChannel(
-      userId,
-      channelId,
-      currentUser.uuid,
-    );
+    const channelSubscription =
+      await this.channelManagementService.removeUserFromChannel(
+        userId,
+        channelId,
+        currentUser.uuid,
+      );
+
+    return plainToInstance(ChannelSubscriptionDto, channelSubscription);
   }
 }

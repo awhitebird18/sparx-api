@@ -7,6 +7,7 @@ import { ChannelSubscriptionsService } from './channel-subscriptions.service';
 import { User } from 'src/users/entities/user.entity';
 
 import { ChannelSubscriptionDto } from './dto/channel-subscription.dto';
+import { plainToInstance } from 'class-transformer';
 
 @ApiBearerAuth('access-token')
 @Controller('channel-subscriptions')
@@ -16,28 +17,34 @@ export class ChannelSubscriptionsController {
   ) {}
 
   @Patch(':channelId')
-  updateUserChannel(
+  async updateUserChannel(
     @GetUser() user: User,
     @Param('channelId') channelId: string,
     @Body() updateUserChannel: ChannelSubscriptionDto,
   ): Promise<ChannelSubscriptionDto> {
-    return this.channelSubscriptionsService.udpateChannelSubscription(
-      user.uuid,
-      channelId,
-      updateUserChannel,
-    );
+    const channelSubscription =
+      await this.channelSubscriptionsService.udpateChannelSubscription(
+        user.uuid,
+        channelId,
+        updateUserChannel,
+      );
+
+    return plainToInstance(ChannelSubscriptionDto, channelSubscription);
   }
 
   @Patch('move/:channelId')
-  updateChannelSection(
+  async updateChannelSection(
     @GetUser() user: User,
     @Param('channelId') channelId: string,
     @Body() updateUserChannel: ChannelSubscriptionDto,
   ): Promise<ChannelSubscriptionDto> {
-    return this.channelSubscriptionsService.updateChannelSection(
-      user.uuid,
-      channelId,
-      updateUserChannel.sectionId,
-    );
+    const channelSubscription =
+      await this.channelSubscriptionsService.updateChannelSection(
+        user.id,
+        channelId,
+        updateUserChannel.sectionId,
+      );
+
+    return plainToInstance(ChannelSubscriptionDto, channelSubscription);
   }
 }

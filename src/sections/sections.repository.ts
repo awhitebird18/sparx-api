@@ -47,11 +47,20 @@ export class SectionsRepository extends Repository<Section> {
       .leftJoin('section.channels', 'channel')
       .select('channel.channelId')
       .where('section.uuid = :sectionUuid', { sectionUuid })
+      .andWhere('channel.channelId != null')
       .getRawMany();
   }
 
   findSectionByUuid(uuid: string): Promise<Section> {
     return this.findOneBy({ uuid });
+  }
+
+  findSectionWithChannels(uuid: string): Promise<Section> {
+    return this.createQueryBuilder('section')
+      .leftJoinAndSelect('section.channels', 'channelSubscription')
+      .leftJoinAndSelect('channelSubscription.channel', 'channel')
+      .where('section.uuid = :uuid', { uuid })
+      .getOneOrFail();
   }
 
   getMaxOrderIndex(userId: number): Promise<number> {
@@ -107,7 +116,7 @@ export class SectionsRepository extends Repository<Section> {
     return this.update({ uuid }, updateSectionDto);
   }
 
-  removeSection(section: Section): Promise<Section> {
-    return this.softRemove(section);
+  removeSection(section: Section): Promise<UpdateResult> {
+    return this.softDelete({ uuid: section.uuid });
   }
 }
