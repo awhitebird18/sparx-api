@@ -5,7 +5,6 @@ import { User } from 'src/users/entities/user.entity';
 
 import { ChannelManagementService } from './channel-management.service';
 
-import { ChannelType } from 'src/channels/enums/channel-type.enum';
 import { CreateChannelDto } from 'src/channels/dto/create-channel.dto';
 import { ChannelDto } from 'src/channels/dto/channel.dto';
 import { ChannelSubscriptionDto } from 'src/channel-subscriptions/dto/channel-subscription.dto';
@@ -44,19 +43,19 @@ export class ChannelManagementController {
     );
   }
 
-  @Post('join/:channelId')
+  @Post('join')
   joinChannel(
     @GetUser() user: User,
-    @Param('channelId') channelId: string,
+    @Body() data: { channelId: string; sectionId: string },
   ): Promise<ChannelDto> {
     return this.channelManagementService.joinChannel(
       user.uuid,
-      channelId,
-      ChannelType.CHANNEL,
+      data.channelId,
+      data.sectionId,
     );
   }
 
-  @Post('invite/:channelId')
+  @Post('invite')
   inviteUsers(
     @Param('channelId') channelId: string,
     @Body() userIds: string[],
