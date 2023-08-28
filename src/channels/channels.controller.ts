@@ -63,6 +63,11 @@ export class ChannelsController {
     ]);
   }
 
+  @Get(':channelId/users')
+  findChannelUserIds(@Param('channelId') channelId: string) {
+    return this.channelsService.findChannelUserIds(channelId);
+  }
+
   @Patch(':channelUuid')
   updateChannel(
     @Param('channelUuid', new ParseUUIDPipe({ version: '4' }))

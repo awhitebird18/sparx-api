@@ -44,6 +44,10 @@ export class ChannelsService {
     return this.channelsRepository.findUserChannels(userId);
   }
 
+  findChannelUserIds(channelId: string): Promise<string[]> {
+    return this.channelsRepository.findChannelUserIds(channelId);
+  }
+
   findDirectChannelByUserUuids(memberIds: string[]): Promise<Channel> {
     return this.channelsRepository.findDirectChannelByUserUuids(memberIds);
   }

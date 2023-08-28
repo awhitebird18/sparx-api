@@ -55,6 +55,16 @@ export class ChannelsRepository extends Repository<Channel> {
       .getMany();
   }
 
+  findChannelUserIds(channelId: string): Promise<string[]> {
+    return this.createQueryBuilder('channel')
+      .leftJoin('channel.channelSubscriptions', 'subscription')
+      .leftJoin('subscription.user', 'user')
+      .select('user.uuid')
+      .where('channel.uuid = :channelId', { channelId })
+      .getRawMany()
+      .then((results) => results.map((result) => result.user_uuid));
+  }
+
   findWorkspaceChannelsWithUserCounts(
     page: number,
     pageSize = 15,
