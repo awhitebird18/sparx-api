@@ -4,19 +4,20 @@ import { UserPreferencessRepository } from './user-preferences.repository';
 
 import { UpdateUserPreferencesDto } from './dto/update-user-preferences';
 import { CreateUserPreferences } from './dto/create-user-preferences.dto';
+import { UserPreferences } from './entities/user-preference.entity';
 
 @Injectable()
 export class UserPreferencesService {
   constructor(private userPreferencesRepository: UserPreferencessRepository) {}
 
-  async createUserPreferences(createUserPreferences: CreateUserPreferences) {
-    return await this.userPreferencesRepository.createUserPreferences(
+  createUserPreferences(createUserPreferences: CreateUserPreferences) {
+    return this.userPreferencesRepository.createUserPreferences(
       createUserPreferences,
     );
   }
 
-  async findUserPreferences(userId: number) {
-    return await this.userPreferencesRepository.findOne({
+  findUserPreferences(userId: number): Promise<UserPreferences> {
+    return this.userPreferencesRepository.findOne({
       where: { userId },
     });
   }
@@ -24,13 +25,15 @@ export class UserPreferencesService {
   async update(
     userId: number,
     updateUserpreferenceDto: UpdateUserPreferencesDto,
-  ) {
-    await this.userPreferencesRepository.updateUserPreferences(
-      userId,
-      updateUserpreferenceDto,
-    );
+  ): Promise<UserPreferences> {
+    const userPreferences =
+      await this.userPreferencesRepository.findUserPreferences(userId);
 
-    // Todo: need to pass in user id
-    return await this.findUserPreferences(1);
+    Object.assign(userPreferences, updateUserpreferenceDto);
+
+    const updatedUserPreferences =
+      this.userPreferencesRepository.saveUserPreferences(userPreferences);
+
+    return updatedUserPreferences;
   }
 }
