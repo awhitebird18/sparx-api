@@ -92,7 +92,6 @@ export class ChannelManagementService {
     channelUuid: string,
     sectionUuid: string,
   ): Promise<Channel> {
-    console.log(userUuid, channelUuid, sectionUuid);
     const user = await this.usersRepository.findOneOrFail({
       where: { uuid: userUuid },
     });
