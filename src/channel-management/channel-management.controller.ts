@@ -55,16 +55,16 @@ export class ChannelManagementController {
     );
   }
 
-  @Post('invite')
+  @Post('invite/:channelId')
   inviteUsers(
     @Param('channelId') channelId: string,
     @Body() userIds: string[],
-    // @GetUser() currentUser: User,
-  ): Promise<ChannelDto> {
+    @GetUser() currentUser: User,
+  ): Promise<string> {
     return this.channelManagementService.inviteUsers(
       channelId,
       userIds,
-      // currentUser.id,
+      currentUser.id,
     );
   }
 
