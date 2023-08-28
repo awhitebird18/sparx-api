@@ -59,12 +59,12 @@ export class ChannelManagementController {
   inviteUsers(
     @Param('channelId') channelId: string,
     @Body() userIds: string[],
-    @GetUser() currentUser: User,
+    // @GetUser() currentUser: User,
   ): Promise<string> {
     return this.channelManagementService.inviteUsers(
       channelId,
       userIds,
-      currentUser.id,
+      // currentUser.id,
     );
   }
 

@@ -235,7 +235,7 @@ export class ChannelManagementService {
   async inviteUsers(
     channelUuid: string,
     userIds: string[],
-    currentUserId: number,
+    // currentUserId: number,
   ): Promise<string> {
     for (let i = 0; i < userIds.length; i++) {
       try {
