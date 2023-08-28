@@ -18,6 +18,10 @@ export class UserPreferencessRepository extends Repository<UserPreferences> {
     return this.save(userPreferences);
   }
 
+  saveUserPreferences(userPreferences: UserPreferences) {
+    return this.save(userPreferences);
+  }
+
   async findOneByProperties(
     searchFields: FindOptionsWhere<UserPreferences>,
     relations?: string[],
@@ -26,6 +30,10 @@ export class UserPreferencessRepository extends Repository<UserPreferences> {
       where: searchFields,
       relations,
     });
+  }
+
+  findUserPreferences(userId: number) {
+    return this.findOneOrFail({ where: { userId } });
   }
 
   async updateUserPreferences(
