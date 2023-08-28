@@ -18,6 +18,7 @@ import { CreateChannelDto } from 'src/channels/dto/create-channel.dto';
 import { Channel } from 'src/channels/entities/channel.entity';
 import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 import { User } from 'src/users/entities/user.entity';
+import { SectionType } from 'src/sections/enums/section-type.enum';
 
 @Injectable()
 export class ChannelManagementService {
@@ -234,11 +235,21 @@ export class ChannelManagementService {
   async inviteUsers(
     channelUuid: string,
     userIds: string[],
-    // currentUserUuid: string,
-  ): Promise<Channel> {
+    // currentUserId: number,
+  ): Promise<string> {
     for (let i = 0; i < userIds.length; i++) {
       try {
-        await this.joinChannel(userIds[i], channelUuid, ChannelType.CHANNEL);
+        const user = await this.usersRepository.findUserByUuid(userIds[i]);
+        const defaultUserSection =
+          await this.sectionsRepository.findDefaultSection(
+            SectionType.CHANNEL,
+            user.id,
+          );
+        await this.joinChannel(
+          userIds[i],
+          channelUuid,
+          defaultUserSection.uuid,
+        );
       } catch (err) {
         console.error(err);
       }
@@ -250,14 +261,14 @@ export class ChannelManagementService {
     //   );
 
     // Todo: need to return channel with users?
-    const updatedChannel = await this.channelsRepository.findOneOrFail({
-      where: {
-        uuid: channelUuid,
-      },
-    });
+    // const updatedChannel = await this.channelsRepository.findOneOrFail({
+    //   where: {
+    //     uuid: channelUuid,
+    //   },
+    // });
 
     // userChannelToReturn.users = channelUsers;
 
-    return updatedChannel;
+    return 'success';
   }
 }
