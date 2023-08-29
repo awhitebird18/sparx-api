@@ -25,6 +25,13 @@ export class SectionsRepository extends Repository<Section> {
     return this.save(section);
   }
 
+  findHighestOrderIndex(userId: number): Promise<number> {
+    return this.createQueryBuilder('section')
+      .select('MAX(section.orderIndex)', 'maxOrderIndex')
+      .where('section.userId = :userId', { userId })
+      .getRawOne();
+  }
+
   async findUserSections(userId: number): Promise<SectionDto[]> {
     const userSections = await this.createQueryBuilder('section')
       .leftJoinAndSelect('section.channels', 'channelSubscription')

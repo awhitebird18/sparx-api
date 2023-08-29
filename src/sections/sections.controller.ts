@@ -17,6 +17,7 @@ import { User } from 'src/users/entities/user.entity';
 import { CreateSectionDto } from './dto/create-section.dto';
 import { UpdateSectionDto } from './dto/update-section.dto';
 import { SectionDto } from './dto/section.dto';
+import { UpdateSectionOrderDto } from './dto/update-section-order.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Sections')
@@ -37,6 +38,15 @@ export class SectionsController {
   @Get()
   findUserSections(@GetUser() user: User): Promise<SectionDto[]> {
     return this.sectionsService.findUserSections(user.id);
+  }
+
+  @Patch('reorder')
+  async reorderSections(
+    @GetUser() user: User,
+    @Body()
+    sectionIndexes: UpdateSectionOrderDto[],
+  ): Promise<SectionDto[]> {
+    return await this.sectionsService.reorderSections(sectionIndexes, user.id);
   }
 
   @Patch(':sectionId')

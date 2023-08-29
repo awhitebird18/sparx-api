@@ -19,6 +19,14 @@ export class SectionsGateway {
     this.server.emit('sections', webSocketMessage);
   }
 
+  sendUserSections(sections: SectionDto[]): void {
+    const webSocketMessage = new WebSocketMessage(MessageType.ReorderSections, {
+      sections,
+    });
+
+    this.server.emit('user-sections', webSocketMessage);
+  }
+
   removeChannelFromSection({ sectionId, channelId }) {
     const webSocketMessage = new WebSocketMessage(
       MessageType.RemoveChannelFromSection,
