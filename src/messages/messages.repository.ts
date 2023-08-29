@@ -42,6 +42,7 @@ export class MessagesRepository extends Repository<Message> {
         'message.content',
         'message.createdAt',
         'message.uuid',
+        'message.isSystem',
         'user.uuid',
         'channel.uuid',
         'reactions',
@@ -82,6 +83,7 @@ export class MessagesRepository extends Repository<Message> {
         return {
           uuid: childMessage.uuid,
           createdAt: childMessage.createdAt,
+          isSystem: childMessage.isSystem,
           content: childMessage.content,
           userId: childMessage.user.uuid,
           channelId: childMessage.channel.uuid,
@@ -94,6 +96,7 @@ export class MessagesRepository extends Repository<Message> {
         uuid: message.uuid,
         createdAt: message.createdAt,
         content: message.content,
+        isSystem: message.isSystem,
         userId: message.user.uuid,
         channelId: message.channel.uuid,
         reactions,
