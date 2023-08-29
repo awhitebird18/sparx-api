@@ -29,7 +29,8 @@ export class SectionsRepository extends Repository<Section> {
     return this.createQueryBuilder('section')
       .select('MAX(section.orderIndex)', 'maxOrderIndex')
       .where('section.userId = :userId', { userId })
-      .getRawOne();
+      .getRawOne()
+      .then((value) => value.maxOrderIndex);
   }
 
   async findUserSections(userId: number): Promise<SectionDto[]> {
