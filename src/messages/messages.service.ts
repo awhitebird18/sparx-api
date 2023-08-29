@@ -117,6 +117,7 @@ export class MessagesService {
       content: message.content,
       userId: message.user.uuid,
       channelId: message.channel.uuid,
+      isSystem: message.isSystem,
       reactions,
       childMessages,
     };
