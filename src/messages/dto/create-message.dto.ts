@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 
 export class CreateMessageDto {
   @IsNotEmpty()
@@ -15,4 +21,8 @@ export class CreateMessageDto {
 
   @IsOptional()
   parentId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isSystem?: boolean;
 }

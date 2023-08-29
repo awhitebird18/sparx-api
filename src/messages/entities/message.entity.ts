@@ -19,6 +19,9 @@ export class Message extends BaseEntity {
   @Column()
   channelId: string;
 
+  @Column({ default: false })
+  isSystem: boolean;
+
   @OneToMany(() => Message, (message) => message.parentMessage, {
     nullable: true,
   })

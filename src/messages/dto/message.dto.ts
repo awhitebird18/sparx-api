@@ -1,4 +1,4 @@
-import { IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsString, IsUUID } from 'class-validator';
 
 import { BaseDto } from 'src/common/dto/base.dto';
 import { ReactionDto } from './reaction.dto';
@@ -17,4 +17,7 @@ export class MessageDto extends BaseDto {
 
   @IsUUID(4)
   parentId: string;
+
+  @IsBoolean()
+  isSystem: boolean;
 }
