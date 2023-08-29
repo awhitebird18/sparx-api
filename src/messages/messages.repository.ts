@@ -139,6 +139,7 @@ export class MessagesRepository extends Repository<Message> {
         'message.content',
         'message.createdAt',
         'message.uuid',
+        'message.isSystem',
         'user.uuid',
         'channel.uuid',
         'reactions',
