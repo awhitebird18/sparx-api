@@ -12,6 +12,7 @@ import { ChannelType } from 'src/channels/enums/channel-type.enum';
 
 import { SectionDto } from './dto/section.dto';
 import { plainToInstance } from 'class-transformer';
+import { UpdateSectionOrderDto } from './dto/update-section-order.dto';
 
 @Injectable()
 export class SectionsService {
@@ -25,10 +26,12 @@ export class SectionsService {
     {
       name: 'Direct Messages',
       type: ChannelType.DIRECT,
+      orderIndex: 0,
     },
     {
       name: 'Channels',
       type: ChannelType.CHANNEL,
+      orderIndex: 1,
     },
   ];
 
@@ -47,6 +50,31 @@ export class SectionsService {
     return this.sectionsRepository.findSectionChannelIds(sectionUuid);
   }
 
+  async reorderSections(
+    sectionIndexes: UpdateSectionOrderDto[],
+    userId: number,
+  ): Promise<SectionDto[]> {
+    const updatePromises = [];
+    // Update section orderIndexes
+    for (let i = 0; i < sectionIndexes.length; i++) {
+      const updatePromise = this.sectionsRepository.updateSection(
+        sectionIndexes[i].uuid,
+        {
+          orderIndex: sectionIndexes[i].orderIndex,
+        },
+      );
+      updatePromises.push(updatePromise);
+    }
+
+    await Promise.all(updatePromises);
+
+    const sections = await this.findUserSections(userId);
+
+    this.sectionsGateway.sendUserSections(sections);
+
+    return sections;
+  }
+
   async seedUserDefaultSections(userId: number): Promise<void> {
     for (let i = 0; i < this.defaultSections.length; i++) {
       await this.sectionsRepository.createSection({
@@ -62,15 +90,13 @@ export class SectionsService {
     createSectionDto: CreateSectionDto,
     userId: number,
   ): Promise<Section> {
-    // Get the new sections index
-    // const maxOrderIndex = await this.sectionsRepository.getMaxOrderIndex(
-    //   userId,
-    // );
+    const lastSectionIndex =
+      await this.sectionsRepository.findHighestOrderIndex(userId);
 
     // Create section
     const newSection = await this.sectionsRepository.createSection({
       ...createSectionDto,
-      // orderIndex: maxOrderIndex + 1,
+      orderIndex: lastSectionIndex + 1,
       userId,
       type: ChannelType.ANY,
     });
