@@ -67,23 +67,31 @@ export class ChannelManagementService {
       );
     }
 
-    const section = await this.sectionsRepository.findDefaultSection(
-      ChannelType.DIRECT,
-      currentUserId,
-    );
-
     // Create new direct message channel
     const newChannel = await this.channelsService.createChannel({
       type: ChannelType.DIRECT,
+      name: userUuids.join(''),
     });
 
     // Add members to the channel
     const memberPromises = userUuids.map(async (userUuid: string) => {
+      const user = await this.usersRepository.findOneOrFail({
+        where: { uuid: userUuid },
+      });
+      const section = await this.sectionsRepository.findDefaultSection(
+        ChannelType.DIRECT,
+        user.id,
+      );
       return this.joinChannel(userUuid, newChannel.uuid, section.uuid);
     });
+
     await Promise.all(memberPromises);
 
-    // Todo: may need to send over socket to all members who are part of the channel
+    newChannel.name = await this.channelsService.findDirectChannelName(
+      newChannel.uuid,
+      currentUserId,
+    );
+    // newChannel.name = `${user.firstName} ${user.lastName}`;
 
     return newChannel;
   }
@@ -144,11 +152,14 @@ export class ChannelManagementService {
       await this.channelSubscriptionRepository.save(newChannelSubscription);
     }
 
+    // Todo: Need to send correct channel name here for direct channels
     const channelUserCount =
       await this.channelSubscriptionRepository.getChannelUsersCount(channel.id);
 
     // Send over socket
+    // Todo: Should send over the users updated section channels separately
     this.channelsGateway.joinChannel(channel, section.uuid);
+
     this.channelsGateway.updateChannelCount({
       channelUuid: channel.uuid,
       userCount: channelUserCount,
