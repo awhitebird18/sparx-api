@@ -13,6 +13,7 @@ import { ChannelDto } from './dto/channel.dto';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
 import { ChannelUserCount } from './dto/channel-user-count.dto';
+import { ChannelType } from './enums/channel-type.enum';
 
 @Injectable()
 export class ChannelsService {
@@ -29,7 +30,8 @@ export class ChannelsService {
         name: createChannelDto.name,
       },
     });
-    if (existingChannel)
+
+    if (existingChannel && existingChannel.type === ChannelType.CHANNEL)
       throw new ConflictException('A channel with this name already exists.');
 
     // Create database entry
@@ -40,8 +42,21 @@ export class ChannelsService {
     return newChannel;
   }
 
-  findUserChannels(userId: number): Promise<Channel[]> {
-    return this.channelsRepository.findUserChannels(userId);
+  async findUserChannels(currentUserId: number): Promise<Channel[]> {
+    const channels = await this.channelsRepository.findUserChannels(
+      currentUserId,
+    );
+
+    for (let i = 0; i < channels.length; i++) {
+      if (channels[i].type === ChannelType.DIRECT) {
+        channels[i].name = await this.findDirectChannelName(
+          channels[i].uuid,
+          currentUserId,
+        );
+      }
+    }
+
+    return channels;
   }
 
   findChannelUserIds(channelId: string): Promise<string[]> {
@@ -73,6 +88,19 @@ export class ChannelsService {
     const channels = result.entities;
 
     return { channels, channelUserCounts };
+  }
+
+  async findDirectChannelName(
+    channelUuid: string,
+    currentUserId: number,
+  ): Promise<string> {
+    const channelUsers = await this.channelsRepository.findChannelUsers(
+      channelUuid,
+    );
+
+    const otherUser = channelUsers.find((u: any) => u.id !== currentUserId);
+
+    return otherUser.name;
   }
 
   async updateChannel(

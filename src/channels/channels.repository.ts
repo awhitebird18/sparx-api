@@ -18,16 +18,23 @@ export class ChannelsRepository extends Repository<Channel> {
 
   async findDirectChannelByUserUuids(userUuids: string[]): Promise<Channel> {
     // Get all DirectChannels where the first user is a member.
-    const user1Channels = await this.createQueryBuilder('directChannel')
-      .innerJoin('directChannel.channelSubscriptions', 'channelSubscription')
-      .innerJoin('channelSubscription.user', 'user', 'user.uuid = :userUuid1', {
-        userUuid1: userUuids[0],
-      })
+    const currentUsersChannels = await this.createQueryBuilder('channel')
+      .innerJoin('channel.channelSubscriptions', 'channelSubscription')
+      .innerJoin(
+        'channelSubscription.user',
+        'user',
+        'user.uuid = :currentUserId',
+        {
+          currentUserId: userUuids[0],
+        },
+      )
+      .where('channel.type = :channelType', { channelType: ChannelType.DIRECT })
       .getMany();
-    for (const channel of user1Channels) {
+
+    for (const channel of currentUsersChannels) {
       // Check if the second user is a member of the channel.
-      const user2Exists = await this.createQueryBuilder('directChannel')
-        .innerJoin('directChannel.channelSubscriptions', 'channelSubscription')
+      const user2Exists = await this.createQueryBuilder('channel')
+        .innerJoin('channel.channelSubscriptions', 'channelSubscription')
         .innerJoin(
           'channelSubscription.user',
           'user',
@@ -36,7 +43,7 @@ export class ChannelsRepository extends Repository<Channel> {
             userUuid2: userUuids[1],
           },
         )
-        .where('directChannel.id = :channelId', { channelId: channel.id })
+        .where('channel.id = :channelId', { channelId: channel.id })
         .getOne();
       if (user2Exists) {
         return channel;
@@ -63,6 +70,24 @@ export class ChannelsRepository extends Repository<Channel> {
       .where('channel.uuid = :channelId', { channelId })
       .getRawMany()
       .then((results) => results.map((result) => result.user_uuid));
+  }
+
+  findChannelUsers(channelId: string): Promise<{ id: string; name: string }[]> {
+    return this.createQueryBuilder('channel')
+      .leftJoin('channel.channelSubscriptions', 'subscription')
+      .leftJoin('subscription.user', 'user')
+      .select(['channel', 'user'])
+      .where('channel.uuid = :channelId', { channelId })
+      .andWhere('channel.type = :channelType', {
+        channelType: ChannelType.DIRECT,
+      })
+      .getRawMany()
+      .then((results) =>
+        results.map((result) => ({
+          id: result.user_id,
+          name: `${result.user_firstName} ${result.user_lastName}`,
+        })),
+      );
   }
 
   findWorkspaceChannelsWithUserCounts(
