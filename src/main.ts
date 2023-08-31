@@ -64,7 +64,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.enableCors({
-    origin: process.env.CLIENT_BASE_URL,
+    origin: ['https://master--sparx-chat.netlify.app', 'http://localhost:5173'],
     credentials: true,
   });
 
