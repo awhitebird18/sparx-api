@@ -36,18 +36,18 @@ export class AuthService {
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: false,
-      domain: 'localhost',
+      secure: true,
+      domain: '165.227.44.99',
       path: '/',
-      sameSite: 'lax',
+      sameSite: 'none',
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: false,
-      domain: 'localhost',
+      secure: true, // because you're using HTTP
+      domain: '165.227.44.99',
       path: '/',
-      sameSite: 'lax',
+      sameSite: 'none',
     });
 
     return {
@@ -59,17 +59,17 @@ export class AuthService {
     res.cookie('access_token', '', {
       expires: new Date(0),
       httpOnly: true,
-      secure: false,
-      domain: 'localhost',
-      sameSite: 'lax',
+      secure: true,
+      domain: '165.227.44.99',
+      sameSite: 'none',
       path: '/',
     });
     res.cookie('refresh_token', '', {
       expires: new Date(0),
       httpOnly: true,
-      secure: false,
-      domain: 'localhost',
-      sameSite: 'lax',
+      secure: true,
+      domain: '165.227.44.99',
+      sameSite: 'none',
       path: '/',
     });
 
@@ -82,10 +82,10 @@ export class AuthService {
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: false,
-      domain: 'localhost',
+      secure: true,
+      domain: '165.227.44.99',
       path: '/',
-      sameSite: 'lax',
+      sameSite: 'none',
     });
 
     return {
@@ -120,7 +120,7 @@ export class AuthService {
 
   async sendVerificationEmail(userEmail: string, token: string) {
     try {
-      const url = `http://localhost:3000/auth/new-user-verification?token=${token}`;
+      const url = `http://165.227.44.99/auth/new-user-verification?token=${token}`;
 
       await this.mailerService.sendMail({
         to: userEmail,

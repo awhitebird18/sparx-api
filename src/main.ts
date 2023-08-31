@@ -1,24 +1,30 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { join } from 'path';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
-import { SpelunkerModule } from 'nestjs-spelunker';
+// import { SpelunkerModule } from 'nestjs-spelunker';
+import * as https from 'https';
 
 import { AppModule } from './app.module';
+import { readFileSync } from 'fs';
+import { ExpressAdapter } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'verbose', 'debug', 'log'],
-  });
-  const tree = SpelunkerModule.explore(app);
-  const root = SpelunkerModule.graph(tree);
-  const edges = SpelunkerModule.findGraphEdges(root);
-  const mermaidEdges = edges.map(
-    ({ from, to }) => `  ${from.module.name}-->${to.module.name}`,
-  );
+  const httpsOptions = {
+    key: readFileSync('/app/key.pem'),
+    cert: readFileSync('/app/cert.pem'),
+  };
+  const server = express();
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+
+  // const tree = SpelunkerModule.explore(app);
+  // const root = SpelunkerModule.graph(tree);
+  // const edges = SpelunkerModule.findGraphEdges(root);
+  // const mermaidEdges = edges.map(
+  //   ({ from, to }) => `  ${from.module.name}-->${to.module.name}`,
+  // );
   // console.info(mermaidEdges.join('\n'));
 
   // app.useGlobalPipes(
@@ -58,10 +64,11 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: 'http://localhost:5173', // replace 'yourdomain.com' with your actual frontend domain
     credentials: true,
   });
 
-  await app.listen(3000);
+  await app.init();
+  https.createServer(httpsOptions, server).listen(3000);
 }
 bootstrap();
