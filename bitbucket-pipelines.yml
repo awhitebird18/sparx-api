@@ -19,9 +19,9 @@ pipelines:
                 SSH_USER: $SSH_USER
                 SERVER: $SSH_SERVER
                 COMMAND: >
-                  docker stop $(docker ps -a -q --filter ancestor=$IMAGE_NAME) || true;
-                  docker rm $(docker ps -a -q --filter ancestor=$IMAGE_NAME) || true;
+                  docker stop sparx-container || true;
+                  docker rm sparx-container || true;
                   docker pull $IMAGE_NAME;
-                  docker run -p $SERVER_PORT:$SERVER_PORT -d $IMAGE_NAME
+                  docker run -p $SERVER_PORT:$SERVER_PORT -d --name sparx-container $IMAGE_NAME
           services:
             - docker
