@@ -13,14 +13,15 @@ pipelines:
       - step:
           name: Deploy to droplet
           script:
-            - export IMAGE_NAME=$DOCKER_HUB_USERNAME/sparx:$BITBUCKET_COMMIT
+            - export IMAGE_NAME=$DOCKER_HUB_USERNAME/sparx:$BITBUCKET_COMMIT # replace <your_dockerhub_username> with your actual username
             - pipe: atlassian/ssh-run:0.2.2
               variables:
                 SSH_USER: $SSH_USER
                 SERVER: $SSH_SERVER
                 COMMAND: >
-                  docker stop $(docker ps -a -q --filter ancestor=$IMAGE_NAME)
-                  docker rm $(docker ps -a -q --filter ancestor=$IMAGE_NAME)
+                  docker stop $(docker ps -a -q --filter ancestor=$IMAGE_NAME) || true;
+                  docker rm $(docker ps -a -q --filter ancestor=$IMAGE_NAME) || true;
+                  docker pull $IMAGE_NAME;
                   docker run -p $SERVER_PORT:$SERVER_PORT -d $IMAGE_NAME
           services:
             - docker
