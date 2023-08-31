@@ -3,6 +3,8 @@ pipelines:
     master:
       - step:
           name: Deploy to Registry
+          services:
+            - docker
           script:
             - export IMAGE_NAME=your_name/project_name:$BITBUCKET_COMMIT
             - docker build -t $IMAGE_NAME .
