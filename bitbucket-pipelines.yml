@@ -19,7 +19,7 @@ pipelines:
                 SERVER: $SSH_SERVER
                 COMMAND: |
                   sh -c '
-                  cd /path/to/your/project && \
+                  cd ~/../var/projects/sparx-api/ && \
                   (docker-compose down || true) && \
                   docker-compose pull && \
                   docker-compose up -d
