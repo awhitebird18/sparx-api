@@ -13,15 +13,12 @@ pipelines:
       - step:
           name: Deploy to droplet
           script:
-            - export IMAGE_NAME=$DOCKER_HUB_USERNAME/sparx:$BITBUCKET_COMMIT
             - pipe: atlassian/ssh-run:0.2.2
               variables:
                 SSH_USER: $SSH_USER
                 SERVER: $SSH_SERVER
                 COMMAND: >
-                  docker stop sparx-container || true;
-                  docker rm sparx-container || true;
-                  docker pull $IMAGE_NAME;
-                  docker run -p $SERVER_PORT:$SERVER_PORT -d --name sparx-container $IMAGE_NAME
-          services:
-            - docker
+                  cd ~/../var/projects/sparx-api
+                  docker-compose down || true;  # stop existing services
+                  docker-compose pull;  # pull the latest versions of all containers
+                  docker-compose up -d;  # start services in the background
