@@ -13,7 +13,7 @@ pipelines:
       - step:
           name: Deploy to droplet
           script:
-            - export IMAGE_NAME=$DOCKER_HUB_USERNAME/sparx:$BITBUCKET_COMMIT # replace <your_dockerhub_username> with your actual username
+            - export IMAGE_NAME=$DOCKER_HUB_USERNAME/sparx:$BITBUCKET_COMMIT
             - pipe: atlassian/ssh-run:0.2.2
               variables:
                 SSH_USER: $SSH_USER
