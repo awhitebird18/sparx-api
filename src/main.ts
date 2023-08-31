@@ -64,7 +64,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.enableCors({
-    origin: 'http://localhost:5173', // replace 'yourdomain.com' with your actual frontend domain
+    origin: process.env.CLIENT_BASE_URL,
     credentials: true,
   });
 
