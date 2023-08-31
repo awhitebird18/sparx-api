@@ -17,8 +17,10 @@ pipelines:
               variables:
                 SSH_USER: $SSH_USER
                 SERVER: $SSH_SERVER
-                COMMAND: >
-                  cd ~/../var/projects/sparx-api
-                  docker-compose down || true;  # stop existing services
-                  docker-compose pull;  # pull the latest versions of all containers
-                  docker-compose up -d;  # start services in the background
+                COMMAND: |
+                  sh -c '
+                  cd /path/to/your/project && \
+                  (docker-compose down || true) && \
+                  docker-compose pull && \
+                  docker-compose up -d
+                  '
