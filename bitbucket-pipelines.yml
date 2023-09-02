@@ -16,6 +16,8 @@ pipelines:
           script:
             - echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" > .env
             - echo "TAG=$BITBUCKET_COMMIT" >> .env
+          artifacts:
+            - .env
 
       - step:
           name: Transfer Files to Droplet
