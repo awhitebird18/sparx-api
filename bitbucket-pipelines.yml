@@ -25,7 +25,7 @@ pipelines:
                 USER: $SSH_USER
                 SERVER: $SSH_SERVER
                 REMOTE_PATH: '../var/projects/sparx-api/'
-                LOCAL_PATH: '.env docker-compose.yml env.prod'
+                LOCAL_PATH: '.env docker-compose.yml .env.prod'
 
       - step:
           name: Deploy to droplet
