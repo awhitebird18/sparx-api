@@ -14,21 +14,24 @@ pipelines:
       - step:
           name: Transfer Files to Droplet
           script:
+            - ls -al # list all files for debugging
+            - cat .env # show the content of .env for debugging
             - pipe: atlassian/scp-deploy:0.3.11
               variables:
                 USER: $SSH_USER
                 SERVER: $SSH_SERVER
                 REMOTE_PATH: '/var/projects/sparx-api/'
                 LOCAL_PATH: 'docker-compose.yml .env .env.prod'
+
       - step:
           name: Deploy to droplet
           script:
+            - export DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME
+            - export TAG=$BITBUCKET_COMMIT
             - pipe: atlassian/ssh-run:0.2.2
               variables:
                 SSH_USER: $SSH_USER
                 SERVER: $SSH_SERVER
-                DOCKER_HUB_USERNAME: $DOCKER_HUB_USERNAME
-                TAG: $BITBUCKET_COMMIT
                 COMMAND: |
                   sh -c '
                   cd ~/../var/projects/sparx-api/ && \
