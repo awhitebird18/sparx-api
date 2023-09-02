@@ -41,6 +41,8 @@ async function bootstrap() {
   app.use('/static', express.static(join(__dirname, '..', 'static')));
   app.use(cookieParser());
 
+  console.log('derp testing!@@@');
+
   // Create a Swagger document
   const config = new DocumentBuilder()
     .setTitle('Your API Title')
