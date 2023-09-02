@@ -6,10 +6,20 @@ pipelines:
           services:
             - docker
           script:
-            - export IMAGE_NAME=$DOCKER_HUB_USERNAME/sparx:$BITBUCKET_COMMIT
+            - export TAG=$BITBUCKET_COMMIT
+            - export IMAGE_NAME=$DOCKER_HUB_USERNAME/sparx:$TAG
             - docker build -t $IMAGE_NAME .
             - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
             - docker push $IMAGE_NAME
+      - step:
+          name: Transfer Files to Droplet
+          script:
+            - pipe: atlassian/scp-deploy:0.3.11
+              variables:
+                USER: $SSH_USER
+                SERVER: $SSH_SERVER
+                REMOTE_PATH: '/var/projects/sparx-api/'
+                LOCAL_PATH: 'docker-compose.yml .env .env.prod'
       - step:
           name: Deploy to droplet
           script:
@@ -22,5 +32,6 @@ pipelines:
                   cd ~/../var/projects/sparx-api/ && \
                   (docker-compose down || true) && \
                   docker-compose pull && \
-                  docker-compose up -d
+                  docker-compose up -d && \
+                  docker image prune -f
                   '
