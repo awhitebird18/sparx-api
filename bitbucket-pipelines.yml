@@ -27,6 +27,8 @@ pipelines:
               variables:
                 SSH_USER: $SSH_USER
                 SERVER: $SSH_SERVER
+                DOCKER_HUB_USERNAME: $DOCKER_HUB_USERNAME
+                TAG: $BITBUCKET_COMMIT
                 COMMAND: |
                   sh -c '
                   cd ~/../var/projects/sparx-api/ && \
