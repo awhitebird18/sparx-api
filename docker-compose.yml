@@ -2,6 +2,7 @@ version: '3.9'
 
 services:
   app:
+    image: $DOCKER_HUB_USERNAME/sparx:$TAG
     build:
       context: .
       dockerfile: Dockerfile
