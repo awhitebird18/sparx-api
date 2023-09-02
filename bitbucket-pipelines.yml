@@ -11,13 +11,19 @@ pipelines:
             - docker build -t $IMAGE_NAME .
             - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
             - docker push $IMAGE_NAME
+
       - step:
-          name: Generate .env file
+          name: Update .env on server
           script:
-            - echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" > .env
-            - echo "TAG=$BITBUCKET_COMMIT" >> .env
-          artifacts:
-            - .env
+            - pipe: atlassian/ssh-run:0.2.2
+              variables:
+                SSH_USER: $SSH_USER
+                SERVER: $SSH_SERVER
+                COMMAND: |
+                  sh -c '
+                  echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" >> /var/projects/sparx-api/.env && \
+                  echo "TAG=$BITBUCKET_COMMIT" >> /var/projects/sparx-api/.env
+                  '
 
       - step:
           name: Transfer Files to Droplet
