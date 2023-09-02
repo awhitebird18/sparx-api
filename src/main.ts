@@ -62,25 +62,10 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
 
   SwaggerModule.setup('api', app, document);
-  console.log(process.env.CLIENT_BASE_URL);
 
   app.enableCors({
-    origin: function (origin, callback) {
-      const whitelist = [
-        'https://master--sparx-chat.netlify.app', // your frontend
-        'http://localhost:5173', // your local dev frontend
-      ];
-      if (!origin || whitelist.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: 'https://master--sparx-chat.netlify.app',
     credentials: true,
-    allowedHeaders:
-      'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, Observe',
-    methods: 'GET,PUT,POST,DELETE,UPDATE,OPTIONS',
-    preflightContinue: false,
   });
 
   await app.init();
