@@ -38,12 +38,16 @@ pipelines:
       - step:
           name: Deploy to droplet
           script:
+            - export DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME
+            - export TAG=$BITBUCKET_COMMIT
             - pipe: atlassian/ssh-run:0.2.2
               variables:
                 SSH_USER: $SSH_USER
                 SERVER: $SSH_SERVER
                 COMMAND: |
                   sh -c '
+                  export DOCKER_HUB_USERNAME='"$DOCKER_HUB_USERNAME"' && \
+                  export TAG='"$TAG"' && \
                   cd ~/../var/projects/sparx-api/ && \
                   (docker-compose down || true) && \
                   docker-compose pull && \
