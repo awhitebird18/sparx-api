@@ -104,11 +104,41 @@ export class MessagesService {
         channelId: message.channel.uuid,
         isSystem: message.isSystem,
         createdAt: message.createdAt,
+        threadCount: message.childMessages?.length,
         reactions,
       };
     });
 
-    return messagesWithGroupedReactions.map((message: MessageDto) =>
+    return messagesWithGroupedReactions.map((message: any) =>
+      plainToInstance(MessageDto, message),
+    );
+  }
+
+  async findThreadMessages(parentMessageId: string): Promise<MessageDto[]> {
+    const messages = await this.messageRepository.findThreadMessages(
+      parentMessageId,
+    );
+
+    const messagesWithGroupedReactions = messages.map((message) => {
+      let reactions = [];
+
+      if (message.reactions) {
+        reactions = this.transformReactions(message.reactions);
+      }
+
+      return {
+        uuid: message.uuid,
+        parentId: message.parentMessage.uuid,
+        content: message.content,
+        userId: message.user.uuid,
+        channelId: message.channel.uuid,
+        isSystem: message.isSystem,
+        createdAt: message.createdAt,
+        reactions,
+      };
+    });
+
+    return messagesWithGroupedReactions.map((message: any) =>
       plainToInstance(MessageDto, message),
     );
   }
@@ -120,6 +150,7 @@ export class MessagesService {
 
     return {
       uuid: message.uuid,
+      parentId: message.parentMessage?.uuid,
       content: message.content,
       userId: message.user.uuid,
       channelId: message.channel.uuid,

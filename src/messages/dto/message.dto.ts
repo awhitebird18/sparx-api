@@ -1,4 +1,4 @@
-import { IsBoolean, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsNumber, IsString, IsUUID } from 'class-validator';
 
 import { BaseDto } from 'src/common/dto/base.dto';
 import { ReactionDto } from './reaction.dto';
@@ -20,4 +20,7 @@ export class MessageDto extends BaseDto {
 
   @IsBoolean()
   isSystem: boolean;
+
+  @IsNumber()
+  threadCount?: number;
 }

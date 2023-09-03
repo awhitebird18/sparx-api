@@ -21,15 +21,13 @@ export class MessagesRepository extends Repository<Message> {
     return this.find();
   }
 
-  async findChannelMessages(
-    channelId: string,
-    page: number,
-  ): Promise<Message[]> {
+  findChannelMessages(channelId: string, page: number): Promise<Message[]> {
     const take = 30;
     const skip = (page - 1) * take;
 
-    return await this.createQueryBuilder('message')
+    return this.createQueryBuilder('message')
       .leftJoinAndSelect('message.reactions', 'reactions')
+      .leftJoinAndSelect('message.childMessages', 'childMessages')
       .innerJoinAndSelect('message.user', 'user')
       .innerJoinAndSelect('message.channel', 'channel')
       .where('channel.uuid = :channelId', { channelId })
@@ -43,10 +41,33 @@ export class MessagesRepository extends Repository<Message> {
         'channel.uuid',
         'message.isSystem',
         'message.createdAt',
+        'childMessages',
         'reactions',
       ])
       .take(take)
       .skip(skip)
+      .orderBy('message.createdAt', 'DESC')
+      .getMany();
+  }
+
+  findThreadMessages(messageId: string): Promise<Message[]> {
+    return this.createQueryBuilder('message')
+      .leftJoinAndSelect('message.reactions', 'reactions')
+      .leftJoinAndSelect('message.parentMessage', 'parentMessage')
+      .innerJoinAndSelect('message.user', 'user')
+      .innerJoinAndSelect('message.channel', 'channel')
+      .where('parentMessage.uuid = :messageId', { messageId })
+      .select([
+        'message.id',
+        'parentMessage.uuid',
+        'message.uuid',
+        'message.content',
+        'user.uuid',
+        'channel.uuid',
+        'message.isSystem',
+        'message.createdAt',
+        'reactions',
+      ])
       .orderBy('message.createdAt', 'DESC')
       .getMany();
   }
@@ -72,6 +93,7 @@ export class MessagesRepository extends Repository<Message> {
   findMessageByUuid(uuid: string): Promise<Message> {
     return this.createQueryBuilder('message')
       .leftJoinAndSelect('message.reactions', 'reactions')
+      .leftJoinAndSelect('message.parentMessage', 'parentMessage')
       .innerJoinAndSelect('message.user', 'user')
       .innerJoinAndSelect('message.channel', 'channel')
       .where('message.uuid = :uuid', { uuid })
@@ -83,6 +105,7 @@ export class MessagesRepository extends Repository<Message> {
         'channel.uuid',
         'message.isSystem',
         'message.createdAt',
+        'parentMessage.uuid',
         'reactions',
       ])
       .getOne();
