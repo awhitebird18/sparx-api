@@ -6,12 +6,24 @@ pipelines:
           services:
             - docker
           script:
-            - export IMAGE_NAME=$DOCKER_HUB_USERNAME/sparx:$BITBUCKET_COMMIT
+            - export TAG=$BITBUCKET_COMMIT
+            - export IMAGE_NAME=$DOCKER_HUB_USERNAME/sparx:$TAG
             - docker build -t $IMAGE_NAME .
             - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
             - docker push $IMAGE_NAME
+
       - step:
-          name: Deploy to droplet
+          name: Transfer Files to Droplet
+          script:
+            - pipe: atlassian/scp-deploy:0.3.11
+              variables:
+                USER: $SSH_USER
+                SERVER: $SSH_SERVER
+                REMOTE_PATH: '/var/projects/sparx-api/'
+                LOCAL_PATH: '.env docker-compose.yml .env.prod'
+
+      - step:
+          name: Update .env on server
           script:
             - pipe: atlassian/ssh-run:0.2.2
               variables:
@@ -19,8 +31,26 @@ pipelines:
                 SERVER: $SSH_SERVER
                 COMMAND: |
                   sh -c '
+                  echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" >> /var/projects/sparx-api/.env && \
+                  echo "TAG=$BITBUCKET_COMMIT" >> /var/projects/sparx-api/.env
+                  '
+
+      - step:
+          name: Deploy to droplet
+          script:
+            - export DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME
+            - export TAG=$BITBUCKET_COMMIT
+            - pipe: atlassian/ssh-run:0.2.2
+              variables:
+                SSH_USER: $SSH_USER
+                SERVER: $SSH_SERVER
+                COMMAND: |
+                  sh -c '
+                  export DOCKER_HUB_USERNAME='"$DOCKER_HUB_USERNAME"' && \
+                  export TAG='"$TAG"' && \
                   cd ~/../var/projects/sparx-api/ && \
                   (docker-compose down || true) && \
                   docker-compose pull && \
-                  docker-compose up -d
+                  docker-compose up -d && \
+                  docker image prune -f
                   '

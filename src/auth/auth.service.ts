@@ -37,7 +37,7 @@ export class AuthService {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
-      domain: '165.227.44.99',
+      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
       path: '/',
       sameSite: 'none',
     });
@@ -45,7 +45,7 @@ export class AuthService {
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: true, // because you're using HTTP
-      domain: '165.227.44.99',
+      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
       path: '/',
       sameSite: 'none',
     });
@@ -60,7 +60,7 @@ export class AuthService {
       expires: new Date(0),
       httpOnly: true,
       secure: true,
-      domain: '165.227.44.99',
+      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
       sameSite: 'none',
       path: '/',
     });
@@ -68,7 +68,7 @@ export class AuthService {
       expires: new Date(0),
       httpOnly: true,
       secure: true,
-      domain: '165.227.44.99',
+      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
       sameSite: 'none',
       path: '/',
     });
@@ -83,7 +83,7 @@ export class AuthService {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
-      domain: '165.227.44.99',
+      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
       path: '/',
       sameSite: 'none',
     });
@@ -120,7 +120,7 @@ export class AuthService {
 
   async sendVerificationEmail(userEmail: string, token: string) {
     try {
-      const url = `http://165.227.44.99/auth/new-user-verification?token=${token}`;
+      const url = `${process.env.BASE_URL}/auth/new-user-verification?token=${token}`;
 
       await this.mailerService.sendMail({
         to: userEmail,
