@@ -41,8 +41,6 @@ async function bootstrap() {
   app.use('/static', express.static(join(__dirname, '..', 'static')));
   app.use(cookieParser());
 
-  console.log('derp testing!@@@');
-
   // Create a Swagger document
   const config = new DocumentBuilder()
     .setTitle('Your API Title')
@@ -66,7 +64,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.enableCors({
-    origin: 'https://master--sparx-chat.netlify.app',
+    origin: 'http://localhost:5173',
     credentials: true,
   });
 
