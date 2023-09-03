@@ -9,6 +9,8 @@ import { Server, Socket } from 'socket.io';
 
 import { MessageDto } from 'src/messages/dto/message.dto';
 import { SectionDto } from 'src/sections/dto/section.dto';
+import { WebSocketMessage } from './web-socket-message';
+import { MessageType } from './ws-messagetype.enum';
 
 @WebSocketGateway()
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -35,12 +37,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // This is a message handler for 'chatToServer' events
   handleSendMessageSocket(message: MessageDto) {
-    this.server.to(message.channelId).emit('new message', message);
+    const webSocketMessage = new WebSocketMessage(MessageType.UpdateMessage, {
+      message,
+    });
+
+    this.server.to(message.channelId).emit('new-message', webSocketMessage);
   }
 
   // This is a message handler for 'chatToServer' events
   handleUpdateMessageSocket(message: MessageDto) {
-    this.server.emit(`messages/${message.channelId}/update`, message);
+    const webSocketMessage = new WebSocketMessage(MessageType.UpdateMessage, {
+      message,
+    });
+
+    this.server.emit('updated-message', webSocketMessage);
   }
 
   // This is a message handler for 'chatToServer' events

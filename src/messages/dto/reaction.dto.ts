@@ -1,14 +1,12 @@
-import { IsString, IsUUID } from 'class-validator';
+import { IsArray, IsNumber, IsString } from 'class-validator';
 
-import { BaseDto } from 'src/common/dto/base.dto';
-
-export class ReactionDto extends BaseDto {
+export class ReactionDto {
   @IsString()
   emojiId: string;
 
-  @IsUUID(4)
-  userId: string;
+  @IsArray()
+  users: string[];
 
-  @IsUUID(4)
-  messageId: string;
+  @IsNumber()
+  count: number;
 }
