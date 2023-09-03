@@ -5,7 +5,7 @@ import { IsDate } from 'class-validator';
 export class BaseDto {
   @Exclude()
   @IsNumber()
-  id: number;
+  id?: number;
 
   @IsUUID(4)
   uuid: string;
@@ -17,5 +17,5 @@ export class BaseDto {
   updatedAt: Date;
 
   @Exclude()
-  deletedAt: Date;
+  deletedAt?: Date;
 }

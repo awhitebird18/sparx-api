@@ -16,7 +16,7 @@ export class MessageDto extends BaseDto {
   userId: string;
 
   @IsUUID(4)
-  parentId: string;
+  parentId?: string;
 
   @IsBoolean()
   isSystem: boolean;
