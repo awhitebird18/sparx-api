@@ -12,10 +12,15 @@ import { readFileSync } from 'fs';
 import { ExpressAdapter } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const httpsOptions = {
-    key: readFileSync('/app/key.pem'),
-    cert: readFileSync('/app/cert.pem'),
-  };
+  const isProduction = process.env.NODE_ENV === 'production';
+  let httpsOptions = {};
+
+  if (isProduction) {
+    httpsOptions = {
+      key: readFileSync('/app/key.pem'),
+      cert: readFileSync('/app/cert.pem'),
+    };
+  }
   const server = express();
   const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
 
@@ -69,6 +74,10 @@ async function bootstrap() {
   });
 
   await app.init();
-  https.createServer(httpsOptions, server).listen(3000);
+  if (isProduction) {
+    https.createServer(httpsOptions, server).listen(3000);
+  } else {
+    app.listen(3000);
+  }
 }
 bootstrap();

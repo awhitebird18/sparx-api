@@ -19,7 +19,7 @@ import { ChannelUserCount } from 'src/channels/dto/channel-user-count.dto';
 import { UpdateChannelSectionDto } from 'src/sections/dto/update-channel-section.dto';
 
 @WebSocketGateway({
-  cors: { origin: process.env.CLIENT_BASE_URL },
+  cors: { origin: 'http://localhost:5173' },
 })
 export class ChannelGateway
   implements OnGatewayConnection, OnGatewayDisconnect
@@ -32,6 +32,7 @@ export class ChannelGateway
   handleConnection(client: any) {
     const clientId = 'Some ID';
     client.clientId = clientId;
+
     this.clients.set(clientId, client);
   }
 
@@ -46,6 +47,7 @@ export class ChannelGateway
       channel: serializedChannel,
       sectionId: sectionId,
     });
+
     this.server.emit('join-channel', websocketMessage);
   }
 
