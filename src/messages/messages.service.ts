@@ -191,11 +191,11 @@ export class MessagesService {
   }
 
   async updateMessageReactions(
-    uuid: string,
+    messageUuid: string,
     updateReactionDto: UpdateReactionDto,
   ): Promise<MessageDto> {
     const message = await this.messageRepository.findOneOrFail({
-      where: { uuid },
+      where: { uuid: messageUuid },
       relations: ['reactions'],
     });
 
@@ -235,7 +235,7 @@ export class MessagesService {
 
     const messageToReturn = await this.findPopulatedMessage(newMessage.uuid);
 
-    this.chatGateway.handleSendMessageSocket(messageToReturn);
+    this.chatGateway.handleUpdateMessageSocket(messageToReturn);
 
     return messageToReturn;
   }
