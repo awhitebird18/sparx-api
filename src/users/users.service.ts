@@ -73,6 +73,16 @@ export class UsersService {
     return newBotUser;
   }
 
+  async updateUserPassword(userId: number, hashedPassword: string) {
+    const res = await this.usersRepository.update(userId, {
+      password: hashedPassword,
+    });
+
+    if (res.affected === 0) {
+      throw new Error('Unable to update user');
+    }
+  }
+
   findOne(searchProperties: any): Promise<User> {
     return this.usersRepository.findOneBy(searchProperties);
   }
