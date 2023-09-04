@@ -10,5 +10,7 @@ export class ChangePasswordDto {
   })
   password: string;
 
-  token: string;
+  token?: string;
+
+  email?: string;
 }
