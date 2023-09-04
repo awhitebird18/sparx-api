@@ -15,6 +15,9 @@ import { UserPreferencesService } from 'src/user-preferences/user-preferences.se
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RegisterDto } from 'src/auth/dto/register.dto';
 import { User } from './entities/user.entity';
+import { InviteUserDto } from './dto/invite-user.dto';
+import { MailerService } from '@nestjs-modules/mailer';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UsersService {
@@ -23,6 +26,8 @@ export class UsersService {
     private sectionsService: SectionsService,
     private userPreferencesService: UserPreferencesService,
     private usersGatway: UsersGateway,
+    private mailerService: MailerService,
+    private jwtService: JwtService,
   ) {}
 
   async create(registerDto: RegisterDto): Promise<User> {
@@ -87,8 +92,58 @@ export class UsersService {
     return this.usersRepository.findOneBy(searchProperties);
   }
 
+  async sendInvite(user: User, inviteUser: InviteUserDto): Promise<void> {
+    const { email } = inviteUser;
+
+    // Todo: once workspaces are implemented, need to find the users workspace to
+    // to be able to add workspace name and details in the email.
+
+    const userWithEmailExists = await this.usersRepository.findOne({
+      where: { email },
+    });
+    if (userWithEmailExists)
+      throw new ConflictException(
+        'This email is already registered as part of this workspace',
+      );
+
+    // Format name of user who is sending the invite
+    const username = `${user.firstName[0].toUpperCase()}${user.firstName
+      .substring(1)
+      .toLowerCase()} ${user.lastName[0].toUpperCase()}${user.lastName
+      .substring(1)
+      .toLowerCase()}`;
+
+    // Format name of workspace
+    const workspaceName = 'Bananas!';
+
+    // Generate payload for token
+    const userInvitePayload = {
+      userId: user.uuid,
+      type: 'userInvite',
+    };
+
+    // Generate a password reset token
+    const passwordResetToken = this.jwtService.sign(userInvitePayload, {
+      expiresIn: '1d',
+    });
+
+    const url = `${process.env.CLIENT_BASE_URL}/auth/register?token=${passwordResetToken}`;
+
+    // Email user informing of the password change
+    await this.mailerService.sendMail({
+      to: email,
+      subject: `Sparx - Invitation to join ${workspaceName}`,
+      template: 'invitation',
+      context: {
+        username,
+        workspaceName,
+        url,
+      },
+    });
+  }
+
   async findOneByEmail(email: string): Promise<User> {
-    return this.usersRepository.findOne({ where: { email } });
+    return this.usersRepository.findOne({ where: { email, isVerified: true } });
   }
 
   findWorkspaceUsers(): Promise<User[]> {

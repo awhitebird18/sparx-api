@@ -23,6 +23,7 @@ import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { User } from './entities/user.entity';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UserDto } from './dto/user.dto';
+import { InviteUserDto } from './dto/invite-user.dto';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiBearerAuth('access-token')
@@ -49,6 +50,14 @@ export class UsersController {
   @Get()
   finalWorkspaceUsers(): Promise<UserDto[]> {
     return this.usersService.findWorkspaceUsers();
+  }
+
+  @Post('send-invite')
+  sendInvite(
+    @GetUser() currentUser: User,
+    @Body() inviteUser: InviteUserDto,
+  ): Promise<void> {
+    return this.usersService.sendInvite(currentUser, inviteUser);
   }
 
   @Patch('self/image-upload')

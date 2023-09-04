@@ -119,6 +119,23 @@ export class AuthService {
     return user;
   }
 
+  async sendVerificationEmail(userEmail: string, token: string) {
+    try {
+      const url = `${process.env.BASE_URL}/auth/new-user-verification?token=${token}`;
+
+      await this.mailerService.sendMail({
+        to: userEmail,
+        subject: 'Please verify your email',
+        template: 'verification',
+        context: {
+          url,
+        },
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   async changePassword(changePasswordDto: ChangePasswordDto) {
     const { password, token, email } = changePasswordDto;
 
@@ -199,23 +216,6 @@ export class AuthService {
         username,
       },
     });
-  }
-
-  async sendVerificationEmail(userEmail: string, token: string) {
-    try {
-      const url = `${process.env.BASE_URL}/auth/new-user-verification?token=${token}`;
-
-      await this.mailerService.sendMail({
-        to: userEmail,
-        subject: 'Please verify your email',
-        template: 'verification',
-        context: {
-          url,
-        },
-      });
-    } catch (err) {
-      console.error(err);
-    }
   }
 
   async verifyNewUser(token: string) {
