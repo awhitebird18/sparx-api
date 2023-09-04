@@ -35,6 +35,8 @@ import { UserDto } from 'src/users/dto/user.dto';
 import { SectionDto } from 'src/sections/dto/section.dto';
 import { ChannelDto } from 'src/channels/dto/channel.dto';
 import { UserPreferencesDto } from 'src/user-preferences/dto/user-preferences.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -66,7 +68,7 @@ export class AuthController {
   @Public()
   @ApiBody({ type: RegisterDto })
   @Post('register')
-  async register(@Body() registerDto: RegisterDto) {
+  register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 
@@ -76,6 +78,25 @@ export class AuthController {
   async refreshToken(@Request() req, @Res() res: any) {
     const response = await this.authService.refresh(req.user, res);
     return res.send(response);
+  }
+
+  @Public()
+  @Post('reset-password')
+  sendResetPasswordEmail(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.sendResetPasswordEmail(resetPasswordDto.email);
+  }
+
+  @Public()
+  @Post('change-password')
+  async changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @Res() res: Response,
+  ) {
+    const user = await this.authService.changePassword(changePasswordDto);
+
+    await this.authService.login(user, res);
+
+    res.send('success');
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
