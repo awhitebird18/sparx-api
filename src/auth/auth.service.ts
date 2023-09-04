@@ -120,17 +120,23 @@ export class AuthService {
   }
 
   async changePassword(changePasswordDto: ChangePasswordDto) {
-    const { password, token } = changePasswordDto;
+    const { password, token, email } = changePasswordDto;
 
     // Extract jwt token
-    const decodedToken = this.jwtService.verify(token);
+    let decodedToken;
 
-    if (decodedToken.type !== 'password-reset') {
+    if (token) {
+      decodedToken = this.jwtService.verify(token);
+    }
+
+    if (decodedToken && decodedToken.type !== 'password-reset') {
       throw new ConflictException('Could not change password');
     }
 
     // Find if user exists
-    const user = await this.usersService.findOneByEmail(decodedToken.email);
+    const user = await this.usersService.findOneByEmail(
+      decodedToken?.email || email,
+    );
 
     if (!user) throw new ConflictException('Could not change password');
 
