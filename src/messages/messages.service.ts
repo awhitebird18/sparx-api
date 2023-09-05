@@ -15,6 +15,7 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { ReactionDto } from './dto/reaction.dto';
 import { Message } from './entities/message.entity';
+import { ThreadDto } from './dto/thread.dto';
 
 @Injectable()
 export class MessagesService {
@@ -159,6 +160,45 @@ export class MessagesService {
       updatedAt: message.updatedAt,
       reactions: groupedReactions,
     };
+  }
+
+  async findUserThreads(user: User): Promise<ThreadDto[]> {
+    const rootMessages = await this.messageRepository.findUserThreads(user.id);
+
+    // const threadsFormatted = threads.map((t: any) => {
+    //   const childMessages = t.childMessages;
+    //   const replyCount = t.replyCount;
+
+    //   delete t.childMessages;
+    //   delete t.replyCount;
+
+    //   return {
+    //     rootMessage: t,
+    //     latestReplies: childMessages,
+    //     replyCount,
+    //   };
+    // });
+
+    const result = [];
+
+    for (const rootMessage of rootMessages) {
+      const latestReplies = await this.findThreadMessages(rootMessage.uuid);
+
+      const replyCount = latestReplies.length;
+
+      const userId = rootMessage.user.uuid;
+      const channelId = rootMessage.channel.uuid;
+      delete rootMessage.user;
+      delete rootMessage.channel;
+
+      result.push({
+        rootMessage: { ...rootMessage, userId, channelId },
+        latestReplies: latestReplies.slice(-2),
+        replyCount,
+      });
+    }
+
+    return result;
   }
 
   async getUnreadMessageCount(channelId: string, lastRead: Date) {
