@@ -72,6 +72,18 @@ export class MessagesRepository extends Repository<Message> {
       .getMany();
   }
 
+  async findUserThreads(userId: number): Promise<Message[]> {
+    return await this.createQueryBuilder('message')
+      .leftJoin('message.childMessages', 'childMessage')
+      .leftJoin('message.user', 'user')
+      .innerJoinAndSelect('message.channel', 'channel')
+      .select(['message', 'user', 'channel'])
+      .where('childMessage.userId = :userId', { userId })
+      .groupBy('message.id, message.uuid, user.uuid, user.id, channel.id')
+      .orderBy('message.createdAt', 'DESC')
+      .getMany();
+  }
+
   async getUnreadMessageCount(
     channelId: string,
     lastRead: Date,
