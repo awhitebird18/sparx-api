@@ -12,10 +12,15 @@ import { readFileSync } from 'fs';
 import { ExpressAdapter } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const httpsOptions = {
-    key: readFileSync('/app/key.pem'),
-    cert: readFileSync('/app/cert.pem'),
-  };
+  const isProduction = process.env.NODE_ENV === 'production';
+  let httpsOptions = {};
+
+  if (isProduction) {
+    httpsOptions = {
+      key: readFileSync('/app/key.pem'),
+      cert: readFileSync('/app/cert.pem'),
+    };
+  }
   const server = express();
   const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
 
@@ -41,8 +46,6 @@ async function bootstrap() {
   app.use('/static', express.static(join(__dirname, '..', 'static')));
   app.use(cookieParser());
 
-  console.log('derp testing!@@@');
-
   // Create a Swagger document
   const config = new DocumentBuilder()
     .setTitle('Your API Title')
@@ -66,11 +69,15 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.enableCors({
-    origin: 'https://master--sparx-chat.netlify.app',
+    origin: 'http://localhost:5173',
     credentials: true,
   });
 
   await app.init();
-  https.createServer(httpsOptions, server).listen(3000);
+  if (isProduction) {
+    https.createServer(httpsOptions, server).listen(3000);
+  } else {
+    app.listen(3000);
+  }
 }
 bootstrap();

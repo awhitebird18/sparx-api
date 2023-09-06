@@ -46,6 +46,18 @@ export class MessagesController {
     return messages;
   }
 
+  @Get('thread/:parentMessageId')
+  findThreadMessages(
+    @Param('parentMessageId') parentMessageId: string,
+  ): Promise<MessageDto[]> {
+    return this.messagesService.findThreadMessages(parentMessageId);
+  }
+
+  @Get('user-threads')
+  findUserThreads(@GetUser() user: User): Promise<any[]> {
+    return this.messagesService.findUserThreads(user);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.messagesService.findOne(id);

@@ -19,6 +19,17 @@ export class UsersRepository extends Repository<User> {
     return this.findOne({ where: { uuid } });
   }
 
+  findWorkspaceUsers(): Promise<User[]> {
+    return this.createQueryBuilder('user')
+      .leftJoinAndSelect(
+        'user.customStatuses',
+        'customStatus',
+        'customStatus.isActive = :isActive',
+        { isActive: true },
+      )
+      .getMany();
+  }
+
   removeUserByUuid(uuid: string): Promise<User> {
     return this.softRemove({ uuid });
   }

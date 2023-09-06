@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '@nestjs-modules/mailer';
 import * as bcrypt from 'bcrypt';
@@ -8,6 +8,7 @@ import { UsersService } from 'src/users/users.service';
 
 import { UserDto } from 'src/users/dto/user.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ChangePasswordDto } from './dto/change-password';
 
 @Injectable()
 export class AuthService {
@@ -37,7 +38,7 @@ export class AuthService {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
-      domain: '165.227.44.99',
+      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
       path: '/',
       sameSite: 'none',
     });
@@ -45,7 +46,7 @@ export class AuthService {
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: true, // because you're using HTTP
-      domain: '165.227.44.99',
+      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
       path: '/',
       sameSite: 'none',
     });
@@ -60,7 +61,7 @@ export class AuthService {
       expires: new Date(0),
       httpOnly: true,
       secure: true,
-      domain: '165.227.44.99',
+      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
       sameSite: 'none',
       path: '/',
     });
@@ -68,7 +69,7 @@ export class AuthService {
       expires: new Date(0),
       httpOnly: true,
       secure: true,
-      domain: '165.227.44.99',
+      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
       sameSite: 'none',
       path: '/',
     });
@@ -83,7 +84,7 @@ export class AuthService {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
-      domain: '165.227.44.99',
+      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
       path: '/',
       sameSite: 'none',
     });
@@ -120,7 +121,7 @@ export class AuthService {
 
   async sendVerificationEmail(userEmail: string, token: string) {
     try {
-      const url = `http://165.227.44.99/auth/new-user-verification?token=${token}`;
+      const url = `${process.env.BASE_URL}/auth/new-user-verification?token=${token}`;
 
       await this.mailerService.sendMail({
         to: userEmail,
@@ -133,6 +134,88 @@ export class AuthService {
     } catch (err) {
       console.error(err);
     }
+  }
+
+  async changePassword(changePasswordDto: ChangePasswordDto) {
+    const { password, token, email } = changePasswordDto;
+
+    // Extract jwt token
+    let decodedToken;
+
+    if (token) {
+      decodedToken = this.jwtService.verify(token);
+    }
+
+    if (decodedToken && decodedToken.type !== 'password-reset') {
+      throw new ConflictException('Could not change password');
+    }
+
+    // Find if user exists
+    const user = await this.usersService.findOneByEmail(
+      decodedToken?.email || email,
+    );
+
+    if (!user) throw new ConflictException('Could not change password');
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update user
+    await this.usersService.updateUserPassword(user.id, hashedPassword);
+
+    const username = `${user.firstName[0].toUpperCase()}${user.firstName
+      .substring(1)
+      .toLowerCase()} ${user.lastName[0].toUpperCase()}${user.lastName
+      .substring(1)
+      .toLowerCase()}`;
+
+    // Email user informing of the password change
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Password changed',
+      template: 'password-changed',
+      context: {
+        username,
+      },
+    });
+
+    return user;
+  }
+
+  async sendResetPasswordEmail(email: string) {
+    // Verify user exists. If not, dont send email. However, should not produce error.
+    const user = await this.usersService.findOneByEmail(email);
+    if (!user) return;
+
+    // Generate payload for token
+    const verificationPayload = {
+      email: user.email,
+      type: 'password-reset',
+    };
+
+    // Generate a password reset token
+    const passwordResetToken = this.jwtService.sign(verificationPayload, {
+      expiresIn: '3m',
+    });
+
+    // Send email to user
+    const url = `${process.env.CLIENT_BASE_URL}/auth/change-password?token=${passwordResetToken}`;
+
+    const username = `${user.firstName[0].toUpperCase()}${user.firstName
+      .substring(1)
+      .toLowerCase()} ${user.lastName[0].toUpperCase()}${user.lastName
+      .substring(1)
+      .toLowerCase()}`;
+
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Password reset request',
+      template: 'password-reset',
+      context: {
+        url,
+        username,
+      },
+    });
   }
 
   async verifyNewUser(token: string) {

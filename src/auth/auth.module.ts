@@ -16,6 +16,7 @@ import { ChannelSubscriptionsModule } from 'src/channel-subscriptions/channel-su
 import { UsersModule } from 'src/users/users.module';
 import { SectionsModule } from 'src/sections/sections.module';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { UserStatusesModule } from 'src/user-statuses/user-statuses.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
     PassportModule,
     UserPreferencesModule,
     MailerModule,
+    UserStatusesModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy, RefreshJWTStrategy],

@@ -1,13 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-import { groupBy } from 'lodash';
 
 import { ChatGateway } from 'src/websockets/chat.gateway';
 import { MessagesRepository } from './messages.repository';
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { ReactionRepository } from './reactions.repository';
 
-import { Message } from './entities/message.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Reaction } from './entities/reaction.entity';
 
@@ -15,6 +13,9 @@ import { MessageDto } from './dto/message.dto';
 import { UpdateReactionDto } from './dto/update-reaction.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
+import { ReactionDto } from './dto/reaction.dto';
+import { Message } from './entities/message.entity';
+import { ThreadDto } from './dto/thread.dto';
 
 @Injectable()
 export class MessagesService {
@@ -24,6 +25,24 @@ export class MessagesService {
     private channelsRepository: ChannelsRepository,
     private chatGateway: ChatGateway,
   ) {}
+
+  private transformReactions(reactions: Reaction[]): ReactionDto[] {
+    const reactionMap: {
+      [emojiId: string]: ReactionDto;
+    } = {};
+
+    for (const reaction of reactions) {
+      const { emojiId, userId } = reaction;
+      if (!reactionMap[emojiId]) {
+        reactionMap[emojiId] = { emojiId: emojiId, users: [], count: 0 };
+      }
+
+      reactionMap[emojiId].users.push(userId);
+      reactionMap[emojiId].count++;
+    }
+
+    return Object.values(reactionMap);
+  }
 
   async create(createMessageDto: CreateMessageDto, user: User) {
     // Find channel
@@ -59,7 +78,7 @@ export class MessagesService {
     return message;
   }
 
-  findOne(uuid: string) {
+  findOne(uuid: string): Promise<Message> {
     return this.messageRepository.findOneBy({ uuid });
   }
 
@@ -72,57 +91,114 @@ export class MessagesService {
       page,
     );
 
-    return messages.map((message: Message) =>
+    const messagesWithGroupedReactions = messages.map((message) => {
+      let reactions = [];
+
+      if (message.reactions) {
+        reactions = this.transformReactions(message.reactions);
+      }
+
+      return {
+        uuid: message.uuid,
+        content: message.content,
+        userId: message.user.uuid,
+        channelId: message.channel.uuid,
+        isSystem: message.isSystem,
+        createdAt: message.createdAt,
+        threadCount: message.childMessages?.length,
+        reactions,
+      };
+    });
+
+    return messagesWithGroupedReactions.map((message: any) =>
       plainToInstance(MessageDto, message),
     );
   }
 
-  async findPopulatedMessage(uuid: string) {
-    const message = await this.messageRepository.findMessageByUuid(uuid);
-
-    const groupedReactions = groupBy(message.reactions, 'emojiId');
-
-    const reactions = Object.entries(groupedReactions).map(
-      ([emojiId, reactions]: any) => ({
-        uuid: reactions[0].uuid,
-        emojiId,
-        users: reactions.map((reaction) => reaction.userId),
-      }),
+  async findThreadMessages(parentMessageId: string): Promise<MessageDto[]> {
+    const messages = await this.messageRepository.findThreadMessages(
+      parentMessageId,
     );
 
-    const childMessages = message.childMessages.map((childMessage) => {
-      const childGroupedReactions = groupBy(childMessage.reactions, 'emojiId');
-      const childReactions = Object.entries(childGroupedReactions).map(
-        ([emojiId, reactions]: any) => ({
-          uuid: reactions[0].uuid,
-          emojiId,
-          users: reactions.map((reaction) => reaction.userId),
-        }),
-      );
+    const messagesWithGroupedReactions = messages.map((message) => {
+      let reactions = [];
+
+      if (message.reactions) {
+        reactions = this.transformReactions(message.reactions);
+      }
 
       return {
-        uuid: childMessage.uuid,
-        createdAt: childMessage.createdAt,
-        content: childMessage.content,
-        userId: childMessage.user.uuid,
-        channelId: childMessage.channel.uuid,
-        reactions: childReactions,
-        childMessages: [], // Assuming childMessages can't have further nested childMessages
+        uuid: message.uuid,
+        parentId: message.parentMessage.uuid,
+        content: message.content,
+        userId: message.user.uuid,
+        channelId: message.channel.uuid,
+        isSystem: message.isSystem,
+        createdAt: message.createdAt,
+        reactions,
       };
     });
 
-    const populatedMessage = {
+    return messagesWithGroupedReactions.map((message: any) =>
+      plainToInstance(MessageDto, message),
+    );
+  }
+
+  async findPopulatedMessage(uuid: string): Promise<MessageDto> {
+    const message = await this.messageRepository.findMessageByUuid(uuid);
+
+    const groupedReactions = this.transformReactions(message.reactions);
+
+    return {
       uuid: message.uuid,
-      createdAt: message.createdAt,
+      parentId: message.parentMessage?.uuid,
       content: message.content,
       userId: message.user.uuid,
       channelId: message.channel.uuid,
       isSystem: message.isSystem,
-      reactions,
-      childMessages,
+      createdAt: message.createdAt,
+      updatedAt: message.updatedAt,
+      reactions: groupedReactions,
     };
+  }
 
-    return plainToInstance(MessageDto, populatedMessage);
+  async findUserThreads(user: User): Promise<ThreadDto[]> {
+    const rootMessages = await this.messageRepository.findUserThreads(user.id);
+
+    // const threadsFormatted = threads.map((t: any) => {
+    //   const childMessages = t.childMessages;
+    //   const replyCount = t.replyCount;
+
+    //   delete t.childMessages;
+    //   delete t.replyCount;
+
+    //   return {
+    //     rootMessage: t,
+    //     latestReplies: childMessages,
+    //     replyCount,
+    //   };
+    // });
+
+    const result = [];
+
+    for (const rootMessage of rootMessages) {
+      const latestReplies = await this.findThreadMessages(rootMessage.uuid);
+
+      const replyCount = latestReplies.length;
+
+      const userId = rootMessage.user.uuid;
+      const channelId = rootMessage.channel.uuid;
+      delete rootMessage.user;
+      delete rootMessage.channel;
+
+      result.push({
+        rootMessage: { ...rootMessage, userId, channelId },
+        latestReplies: latestReplies.slice(-2),
+        replyCount,
+      });
+    }
+
+    return result;
   }
 
   async getUnreadMessageCount(channelId: string, lastRead: Date) {
@@ -136,18 +212,16 @@ export class MessagesService {
     uuid: string,
     updateMessageDto: UpdateMessageDto,
   ): Promise<MessageDto> {
-    // Find the original message
-    const message = await this.messageRepository.findOneOrFail({
+    // Check if message exists and not deleted
+    await this.messageRepository.findOneOrFail({
       where: { uuid },
     });
 
-    // Update the original message with the new data
-    Object.assign(message, updateMessageDto);
+    // Update message
+    await this.messageRepository.updateMessage(uuid, updateMessageDto);
 
-    // Save the updated message and get the returned value
-    const updatedMessage = await this.messageRepository.save(message);
-
-    const serializedMessage = plainToInstance(MessageDto, updatedMessage);
+    // Obtain updated formatted message
+    const serializedMessage = await this.findPopulatedMessage(uuid);
 
     // Send the updated message to the socket
     this.chatGateway.handleUpdateMessageSocket(serializedMessage);
@@ -157,11 +231,11 @@ export class MessagesService {
   }
 
   async updateMessageReactions(
-    uuid: string,
+    messageUuid: string,
     updateReactionDto: UpdateReactionDto,
   ): Promise<MessageDto> {
     const message = await this.messageRepository.findOneOrFail({
-      where: { uuid },
+      where: { uuid: messageUuid },
       relations: ['reactions'],
     });
 
@@ -201,20 +275,24 @@ export class MessagesService {
 
     const messageToReturn = await this.findPopulatedMessage(newMessage.uuid);
 
-    this.chatGateway.handleSendMessageSocket(messageToReturn);
+    this.chatGateway.handleUpdateMessageSocket(messageToReturn);
 
     return messageToReturn;
   }
 
   async remove(uuid: string) {
+    const message = await this.messageRepository.findMessageByUuid(uuid);
     // Soft remove message
-    const message = await this.messageRepository.softRemove({ uuid });
+    const deletedMessage = await this.messageRepository.softRemove(message);
 
-    if (!message)
+    if (!deletedMessage)
       throw new NotFoundException('Unable to find message to remove');
 
     // Send signal over socket to remove message
-    this.chatGateway.handleRemoveMessageSocket(message.channelId, message.uuid);
+    this.chatGateway.handleRemoveMessageSocket(
+      deletedMessage.channelId,
+      deletedMessage.uuid,
+    );
 
     return 'Message Removed';
   }

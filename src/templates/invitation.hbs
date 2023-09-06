@@ -3,52 +3,44 @@
     <meta charset='UTF-8' />
     <meta http-equiv='X-UA-Compatible' content='IE=edge' />
     <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-    <title>Verify Your Account</title>
-    <style>
-      /* Add some basic styling */ .verification-container { max-width: 600px;
-      margin: 50px auto; padding: 20px; border-radius: 5px; font-family: Arial,
-      sans-serif; } .header { display: flex; gap: 0.5rem; margin-bottom: 3rem;
-      align-items: center; border-bottom: 1px solid #e2e8f0; } .image-container
-      { height: 2.5rem; width: 2.5rem; overflow: hidden; } .user-image-container
-      { height: 6rem; width: 6rem; overflow: hidden; border-radius: 50%; margin:
-      1rem 0; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.25); border: 1px solid
-      #cbd5e1; } .image { height: 100%; width: 100%; } .header-name {
-      margin-top: 1.5rem; } .main-text { margin: 1rem 0; } .ignore-statement {
-      color: #94a3b8; font-size: 0.8rem; } .user-avatar { display: flex;
-      justify-content: center; } .btn-verify { display: inline-block; padding:
-      10px 20px; background-color: #4f46e5; color: #ffffff; border: none;
-      border-radius: 5px; text-decoration: none; box-shadow: 1px 1px 5px rgba(0,
-      0, 0, 0.3); margin-top: 2rem; margin-bottom: 1rem; } .btn-verify:hover {
-      background-color: #3730a3; } .link { color: #3b82f6; text-decoration:
-      underline; cursor: pointer; } .workspace-name { font-weight: 600; }
-    </style>
+    <title>Password Changed</title>
   </head>
   <body>
-    <div class='verification-container'>
-      <div class='header'>
-        <div class='image-container'>
-          <img src='public/logo.png' class='image' />
+    <div
+      style='max-width: 600px; margin: 50px auto; padding: 20px; border-radius: 5px; font-family: Arial, sans-serif;'
+    >
+      <div
+        style='display: flex; gap: 0.5rem; margin-bottom: 3rem; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem'
+      >
+        <div
+          style='height: 2.5rem; width: 2.5rem; overflow: hidden; margin-right: 0.5rem;'
+        >
+          <img
+            src='https://res.cloudinary.com/dwkvw91pm/image/upload/v1692153581/logo_p2v66f.png'
+            alt='sparx logo'
+            style='height: 100%; width: 100%;'
+          />
         </div>
-        <h1 class='header-name'>SPARX</h1>
+        <h1 style='margin: 0'>SPARX</h1>
       </div>
+
       <h2>Join your team on Sparx</h2>
-      <div class='user-avatar'>
-        <div class='user-image-container'>
-          <img class='image' src='public/shanu.png' />
-        </div>
+
+      <div style='margin: 1rem 0;'>
+        <p class='main-text'>
+          {{username}}
+          has invited you to use Sparx with them, in a workspace called
+          <span class='workspace-name'>{{workspaceName}}</span>
+        </p>
+        <a
+          href='{{url}}'
+          style='display: inline-block; padding: 10px 20px; background-color: #4f46e5; color: #ffffff; border: none; border-radius: 5px; text-decoration: none; box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3); margin-top: 2rem; margin-bottom: 1rem;'
+        >Register</a>
       </div>
 
-      <p class='main-text'>
-        {{inviterName}}
-        (<span class='link'>{{inviterEmail}}</span>) has invited you to use
-        Sparx with them, in a workspace called
-        <span class='workspace-name'>Personal Work</span>
-      </p>
-
-      <a href={{url}} class='btn-verify'>Verify Email</a>
-      <p class='ignore-statement'>
-        If you were not expecting this invitation, you may safely ignore this
-        email.
+      <p style='color: #94a3b8; font-size: 0.8rem;'>
+        Remember, SPARX will never ask for your password or personal information
+        in emails. Always be cautious of suspicious emails.
       </p>
     </div>
   </body>
