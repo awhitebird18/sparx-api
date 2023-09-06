@@ -25,6 +25,7 @@ import { AuthModule } from './auth/auth.module';
 import { SectionsModule } from './sections/sections.module';
 import { WebsocketsModule } from './websockets/websockets.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
+import { UserStatusesModule } from './user-statuses/user-statuses.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     FilesModule,
     ChannelManagementModule,
     WorkspacesModule,
+    UserStatusesModule,
   ],
   controllers: [AppController],
   providers: [

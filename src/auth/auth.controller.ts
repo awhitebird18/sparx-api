@@ -37,6 +37,8 @@ import { ChannelDto } from 'src/channels/dto/channel.dto';
 import { UserPreferencesDto } from 'src/user-preferences/dto/user-preferences.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password';
+import { UserStatusesService } from 'src/user-statuses/user-statuses.service';
+import { UserStatusDto } from 'src/user-statuses/dto/user-status.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -48,6 +50,7 @@ export class AuthController {
     private channelsService: ChannelsService,
     private channelSubscriptionsService: ChannelSubscriptionsService,
     private userPreferencesService: UserPreferencesService,
+    private userStatusesService: UserStatusesService,
   ) {}
 
   @Public()
@@ -108,6 +111,7 @@ export class AuthController {
     sections: SectionDto[];
     channels: ChannelDto[];
     channelUnreads: ChannelUnreads[];
+    userStatuses: UserStatusDto[];
   }> {
     const usersPromise = this.usersService.findWorkspaceUsers();
 
@@ -127,14 +131,25 @@ export class AuthController {
         currentUser.id,
       );
 
-    const [users, userPreferences, sections, channels, channelUnreads] =
-      await Promise.all([
-        usersPromise,
-        userPreferencesPromise,
-        sectionsPromise,
-        channelsPromise,
-        channelUnreadsPromise,
-      ]);
+    const userStatusesPromise = this.userStatusesService.findAllUserStatuses(
+      currentUser.id,
+    );
+
+    const [
+      users,
+      userPreferences,
+      sections,
+      channels,
+      channelUnreads,
+      userStatuses,
+    ] = await Promise.all([
+      usersPromise,
+      userPreferencesPromise,
+      sectionsPromise,
+      channelsPromise,
+      channelUnreadsPromise,
+      userStatusesPromise,
+    ]);
 
     return {
       currentUser,
@@ -143,6 +158,7 @@ export class AuthController {
       sections,
       channels,
       channelUnreads,
+      userStatuses,
     };
   }
 

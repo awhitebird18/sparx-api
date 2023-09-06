@@ -6,6 +6,7 @@ import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-su
 import { UserPreferences } from 'src/user-preferences/entities/user-preference.entity';
 import { Workspace } from 'src/workspaces/entities/workspace.entity';
 import { UserRoles } from '../enums/roles.enum';
+import { UserStatus } from 'src/user-statuses/entities/user-status.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -41,6 +42,9 @@ export class User extends BaseEntity {
 
   @Column({ default: UserRoles.USER })
   role: UserRoles;
+
+  @OneToMany(() => UserStatus, (userStatus) => userStatus.user)
+  customStatuses: UserStatus[];
 
   @OneToOne(() => UserPreferences, (userPreferences) => userPreferences.user)
   preferences: UserPreferences;
