@@ -18,6 +18,7 @@ import { User } from './entities/user.entity';
 import { InviteUserDto } from './dto/invite-user.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
+import { UserDto } from './dto/user.dto';
 
 @Injectable()
 export class UsersService {
@@ -146,8 +147,21 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { email, isVerified: true } });
   }
 
-  findWorkspaceUsers(): Promise<User[]> {
-    return this.usersRepository.find({ where: { isBot: false } });
+  async findWorkspaceUsers(): Promise<UserDto[]> {
+    const users = await this.usersRepository.findWorkspaceUsers();
+
+    const result = users.map((u: any) => {
+      if (u.customStatuses.length) {
+        u.status = u.customStatuses[0];
+      }
+      delete u.customStatuses;
+
+      return u;
+    });
+
+    console.log(users);
+
+    return result;
   }
 
   async markAsVerified(email: string): Promise<User> {

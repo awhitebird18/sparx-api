@@ -43,6 +43,7 @@ export class UserStatusesController {
 
   @Delete(':uuid')
   removeUserStatus(@Param('uuid') uuid: string) {
+    console.log(uuid);
     return this.userStatusesService.removeUserStatus(uuid);
   }
 }
