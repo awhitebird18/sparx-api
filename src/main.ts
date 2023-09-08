@@ -16,6 +16,8 @@ async function bootstrap() {
   const isProduction = process.env.NODE_ENV === 'production';
   let httpsOptions = {};
 
+  console.log(isProduction);
+
   if (isProduction) {
     httpsOptions = {
       key: readFileSync('/app/key.pem'),
@@ -76,7 +78,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: process.env.CLIENT_BASE_URL,
     credentials: true,
   });
 
