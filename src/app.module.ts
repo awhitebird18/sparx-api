@@ -26,9 +26,12 @@ import { SectionsModule } from './sections/sections.module';
 import { WebsocketsModule } from './websockets/websockets.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 import { UserStatusesModule } from './user-statuses/user-statuses.module';
+import { LoggerModule } from 'nestjs-pino';
+import { pinoConfig } from './config/pino-config';
 
 @Module({
   imports: [
+    LoggerModule.forRoot(pinoConfig),
     ConfigModule.forRoot({ isGlobal: true }),
     MailerModule.forRootAsync({
       useFactory: () => ({
