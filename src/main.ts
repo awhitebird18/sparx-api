@@ -15,12 +15,16 @@ async function bootstrap() {
   const isProduction = process.env.NODE_ENV === 'production';
   let httpsOptions = {};
 
+  console.log(isProduction);
+
   if (isProduction) {
     httpsOptions = {
       key: readFileSync('/app/key.pem'),
       cert: readFileSync('/app/cert.pem'),
     };
   }
+
+  console.log(httpsOptions);
   const server = express();
   const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
 
