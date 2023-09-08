@@ -19,7 +19,7 @@ import { ChannelUserCount } from 'src/channels/dto/channel-user-count.dto';
 import { UpdateChannelSectionDto } from 'src/sections/dto/update-channel-section.dto';
 
 @WebSocketGateway({
-  cors: { origin: 'http://localhost:5173' },
+  cors: { origin: process.env.CLIENT_BASE_URL },
 })
 export class ChannelGateway
   implements OnGatewayConnection, OnGatewayDisconnect
