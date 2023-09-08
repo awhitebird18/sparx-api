@@ -10,6 +10,7 @@ import * as https from 'https';
 import { AppModule } from './app.module';
 import { readFileSync } from 'fs';
 import { ExpressAdapter } from '@nestjs/platform-express';
+import { Logger } from 'nestjs-pino';
 
 async function bootstrap() {
   const isProduction = process.env.NODE_ENV === 'production';
@@ -21,8 +22,11 @@ async function bootstrap() {
       cert: readFileSync('/app/cert.pem'),
     };
   }
+
   const server = express();
-  const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(server), {
+    bufferLogs: true,
+  });
 
   // const tree = SpelunkerModule.explore(app);
   // const root = SpelunkerModule.graph(tree);
@@ -40,10 +44,13 @@ async function bootstrap() {
   //     validationError: { target: false },
   //   }),
   // );
+  console.log(__dirname, 'main');
+  app.useLogger(app.get(Logger));
 
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
   app.use('/static', express.static(join(__dirname, '..', 'static')));
+  app.use('/logs', express.static(join(__dirname, '..', 'logs')));
   app.use(cookieParser());
 
   // Create a Swagger document

@@ -19,6 +19,8 @@ services:
       - '3000:3000'
     depends_on:
       - db
+    volumes:
+      - C:\logs:/var/logs
 
   db:
     container_name: postgres
