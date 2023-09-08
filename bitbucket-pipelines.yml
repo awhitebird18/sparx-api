@@ -19,7 +19,7 @@ pipelines:
               variables:
                 USER: $SSH_USER
                 SERVER: $SSH_SERVER
-                REMOTE_PATH: '/var/projects/sparx-api/'
+                REMOTE_PATH: '/var/www/sparx-api/'
                 LOCAL_PATH: '.env docker-compose.yml .env.prod'
 
       - step:
@@ -31,8 +31,8 @@ pipelines:
                 SERVER: $SSH_SERVER
                 COMMAND: |
                   sh -c '
-                  echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" >> /var/projects/sparx-api/.env && \
-                  echo "TAG=$BITBUCKET_COMMIT" >> /var/projects/sparx-api/.env
+                  echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" >> /var/www/sparx-api/.env && \
+                  echo "TAG=$BITBUCKET_COMMIT" >> /var/www/sparx-api/.env
                   '
 
       - step:
@@ -48,7 +48,7 @@ pipelines:
                   sh -c '
                   export DOCKER_HUB_USERNAME='"$DOCKER_HUB_USERNAME"' && \
                   export TAG='"$TAG"' && \
-                  cd ~/../var/projects/sparx-api/ && \
+                  cd /var/www/sparx-api/ && \
                   (docker-compose down || true) && \
                   docker-compose pull && \
                   docker-compose up -d && \

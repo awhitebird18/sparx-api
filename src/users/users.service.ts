@@ -19,6 +19,7 @@ import { InviteUserDto } from './dto/invite-user.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
 import { UserDto } from './dto/user.dto';
+import { Logger } from 'nestjs-pino';
 
 @Injectable()
 export class UsersService {
@@ -29,6 +30,7 @@ export class UsersService {
     private usersGatway: UsersGateway,
     private mailerService: MailerService,
     private jwtService: JwtService,
+    private readonly logger: Logger,
   ) {}
 
   async create(registerDto: RegisterDto): Promise<User> {
@@ -158,8 +160,6 @@ export class UsersService {
 
       return u;
     });
-
-    console.log(users);
 
     return result;
   }
