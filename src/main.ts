@@ -16,6 +16,7 @@ async function bootstrap() {
   const isProduction = process.env.NODE_ENV === 'production';
   let httpsOptions = {};
 
+  console.log(process.env);
   console.log(isProduction);
 
   if (isProduction) {
@@ -46,7 +47,7 @@ async function bootstrap() {
   //     validationError: { target: false },
   //   }),
   // );
-  console.log(__dirname, 'main');
+
   app.useLogger(app.get(Logger));
 
   app.use(bodyParser.json({ limit: '50mb' }));
