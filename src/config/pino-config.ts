@@ -1,5 +1,4 @@
 import { Params } from 'nestjs-pino';
-import * as path from 'path';
 import { PrettyOptions } from 'pino-pretty';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -25,10 +24,10 @@ export const pinoConfig: Params = {
           options: pinoPrettyOptions,
         },
         {
-          level: 'error',
+          level: 'info',
           target: 'pino/file',
           options: {
-            destination: path.join(__dirname, '..', '..', 'logs', 'app.log'),
+            destination: '/var/logs/app.log',
           },
         },
       ],
