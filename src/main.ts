@@ -52,7 +52,6 @@ async function bootstrap() {
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
   app.use('/static', express.static(join(__dirname, '..', 'static')));
-  app.use('/logs', express.static(join(__dirname, '..', 'logs')));
   app.use(cookieParser());
 
   // Create a Swagger document
@@ -81,6 +80,8 @@ async function bootstrap() {
     origin: process.env.CLIENT_BASE_URL,
     credentials: true,
   });
+
+  console.log('main derp! is production?:', isProduction);
 
   await app.init();
   if (isProduction) {
