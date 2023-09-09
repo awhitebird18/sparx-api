@@ -35,10 +35,13 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
+    // Extract the domain from CLIENT_BASE_URL
+    const clientDomain = new URL(process.env.CLIENT_BASE_URL).hostname;
+
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
-      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
+      domain: process.env.NODE_ENV === 'production' ? clientDomain : undefined,
       path: '/',
       sameSite: 'none',
     });
@@ -46,7 +49,7 @@ export class AuthService {
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: true, // because you're using HTTP
-      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
+      domain: process.env.NODE_ENV === 'production' ? clientDomain : undefined,
       path: '/',
       sameSite: 'none',
     });
@@ -57,11 +60,13 @@ export class AuthService {
   }
 
   async logout(res: Response) {
+    // Extract the domain from CLIENT_BASE_URL
+    const clientDomain = new URL(process.env.CLIENT_BASE_URL).hostname;
     res.cookie('access_token', '', {
       expires: new Date(0),
       httpOnly: true,
       secure: true,
-      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
+      domain: process.env.NODE_ENV === 'production' ? clientDomain : undefined,
       sameSite: 'none',
       path: '/',
     });
@@ -69,7 +74,7 @@ export class AuthService {
       expires: new Date(0),
       httpOnly: true,
       secure: true,
-      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
+      domain: process.env.NODE_ENV === 'production' ? clientDomain : undefined,
       sameSite: 'none',
       path: '/',
     });
@@ -81,10 +86,13 @@ export class AuthService {
     const payload = { email: user.email, sub: user.uuid };
     const accessToken = this.jwtService.sign(payload);
 
+    // Extract the domain from CLIENT_BASE_URL
+    const clientDomain = new URL(process.env.CLIENT_BASE_URL).hostname;
+
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
-      domain: process.env.NODE_ENV === 'production' && process.env.BASE_URL,
+      domain: process.env.NODE_ENV === 'production' ? clientDomain : undefined,
       path: '/',
       sameSite: 'none',
     });
