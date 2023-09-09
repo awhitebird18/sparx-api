@@ -20,7 +20,7 @@ services:
     depends_on:
       - db
     volumes:
-      - /var/logs:var/logs
+      - /var/logs:/var/logs
 
   db:
     container_name: postgres
