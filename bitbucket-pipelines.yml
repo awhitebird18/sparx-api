@@ -41,10 +41,9 @@ pipelines:
                     else
                         echo "$key=$value" >> "$file"
                     fi
-                    }
-
-                  update_or_append "/var/www/sparx-api/.env" "DOCKER_HUB_USERNAME" "$DOCKER_HUB_USERNAME"
-                  update_or_append "/var/www/sparx-api/.env" "TAG" "$BITBUCKET_COMMIT"
+                  }
+                  update_or_append "/var/www/sparx-api/.env" "DOCKER_HUB_USERNAME" "'$DOCKER_HUB_USERNAME'"
+                  update_or_append "/var/www/sparx-api/.env" "TAG" "'$BITBUCKET_COMMIT'"
                   '
 
       - step:
