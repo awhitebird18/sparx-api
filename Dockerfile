@@ -9,7 +9,6 @@ RUN npm install
 COPY . .
 COPY ./cert.pem /app/cert.pem
 COPY ./key.pem /app/key.pem
-COPY ./key.pem /app/key.pem
 COPY ./.env /app/.env
 COPY ./.env.prod /app/.env.prod
 RUN npm run build
