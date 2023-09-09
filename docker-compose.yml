@@ -2,12 +2,14 @@ version: '3.9'
 
 services:
   app:
+    env_file:
+      - .env.prod
     image: $DOCKER_HUB_USERNAME/sparx:$TAG
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        - NODE_ENV=${NODE_ENV}
+        - NODE_ENV=production
     environment:
       DB_TYPE: postgres
       PG_USER: ${PG_USER}
@@ -15,6 +17,7 @@ services:
       PG_DB: ${PG_DB}
       PG_PORT: ${PG_PORT}
       PG_HOST: db
+      NODE_ENV: production
     ports:
       - '3000:3000'
     depends_on:
