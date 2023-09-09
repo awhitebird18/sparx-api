@@ -8,14 +8,13 @@ const pinoPrettyOptions: PrettyOptions = {
   singleLine: true,
   translateTime: 'yyyy-mm-dd HH:MM:ss.l', // Make timestamp more readable
   ignore: 'pid,hostname', // If you don't want to display the process id and hostname (optional)
-  levelLabel: 'level',
 };
 
 export const pinoConfig: Params = {
   pinoHttp: {
-    customProps: (req, res) => ({
-      context: 'HTTP',
-    }),
+    // customProps: (req, res) => ({
+    //   context: 'HTTP',
+    // }),
     transport: {
       targets: [
         {
@@ -34,9 +33,9 @@ export const pinoConfig: Params = {
     },
     autoLogging: true, // Enable auto logging globally
     redact: ['req.headers.authorization'], // Redact auth headers
-    serializers: {
-      req: (req) => ({ url: req.url }),
-      res: () => ({}),
-    },
+    // serializers: {
+    //   req: (req) => ({ url: req.url }),
+    //   res: () => ({}),
+    // },
   },
 };
