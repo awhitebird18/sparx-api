@@ -27,7 +27,7 @@ export const pinoConfig: Params = {
           level: 'info',
           target: 'pino/file',
           options: {
-            destination: '/var/logs/app.log',
+            destination: '/var/log/app.log',
           },
         },
       ],

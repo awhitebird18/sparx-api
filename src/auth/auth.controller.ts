@@ -39,6 +39,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password';
 import { UserStatusesService } from 'src/user-statuses/user-statuses.service';
 import { UserStatusDto } from 'src/user-statuses/dto/user-status.dto';
+import { Logger } from 'nestjs-pino';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -51,6 +52,7 @@ export class AuthController {
     private channelSubscriptionsService: ChannelSubscriptionsService,
     private userPreferencesService: UserPreferencesService,
     private userStatusesService: UserStatusesService,
+    private readonly logger: Logger,
   ) {}
 
   @Public()
@@ -58,6 +60,7 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @Post('login')
   async login(@Request() req, @Res() res: any) {
+    this.logger.debug(req, 'logging login');
     const response = await this.authService.login(req.user, res);
     return res.send(response);
   }
@@ -113,6 +116,7 @@ export class AuthController {
     channelUnreads: ChannelUnreads[];
     userStatuses: UserStatusDto[];
   }> {
+    this.logger.debug(currentUser, 'Logging!');
     const usersPromise = this.usersService.findWorkspaceUsers();
 
     const userPreferencesPromise =
@@ -150,6 +154,8 @@ export class AuthController {
       channelUnreadsPromise,
       userStatusesPromise,
     ]);
+
+    this.logger.debug('Logging 2!');
 
     return {
       currentUser,
