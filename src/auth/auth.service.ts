@@ -35,6 +35,9 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
+    const accessTokenMaxAge = 15 * 60 * 1000; // 15 minutes in milliseconds
+    const refreshTokenMaxAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+
     // Extract the domain from CLIENT_BASE_URL
     const clientDomain = new URL(process.env.CLIENT_BASE_URL).hostname;
 
@@ -48,6 +51,7 @@ export class AuthService {
       domain: cookieDomain,
       path: '/',
       sameSite: 'none',
+      maxAge: accessTokenMaxAge,
     });
 
     res.cookie('refresh_token', refreshToken, {
@@ -56,6 +60,7 @@ export class AuthService {
       domain: cookieDomain,
       path: '/',
       sameSite: 'none',
+      maxAge: refreshTokenMaxAge,
     });
 
     return {
@@ -72,20 +77,20 @@ export class AuthService {
       process.env.NODE_ENV === 'production' ? '.' + clientDomain : undefined;
 
     res.cookie('access_token', '', {
-      expires: new Date(0),
       httpOnly: true,
       secure: true,
       domain: cookieDomain,
       sameSite: 'none',
       path: '/',
+      maxAge: 0,
     });
     res.cookie('refresh_token', '', {
-      expires: new Date(0),
       httpOnly: true,
       secure: true,
       domain: cookieDomain,
       sameSite: 'none',
       path: '/',
+      maxAge: 0,
     });
 
     return { message: 'Logged out successfully' };
@@ -94,6 +99,7 @@ export class AuthService {
   async refresh(user: UserDto, res: any) {
     const payload = { email: user.email, sub: user.uuid };
     const accessToken = this.jwtService.sign(payload);
+    const accessTokenMaxAge = 15 * 60 * 1000; // 15 minutes in milliseconds
 
     // Extract the domain from CLIENT_BASE_URL
     const clientDomain = new URL(process.env.CLIENT_BASE_URL).hostname;
@@ -108,6 +114,7 @@ export class AuthService {
       domain: cookieDomain,
       path: '/',
       sameSite: 'none',
+      maxAge: accessTokenMaxAge,
     });
 
     return {
