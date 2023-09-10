@@ -1,32 +1,24 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { join } from 'path';
-import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
 // import { SpelunkerModule } from 'nestjs-spelunker';
-import * as https from 'https';
-
 import { AppModule } from './app.module';
 import { readFileSync } from 'fs';
-import { ExpressAdapter } from '@nestjs/platform-express';
 import { Logger } from 'nestjs-pino';
 
 async function bootstrap() {
   const isProduction = process.env.NODE_ENV === 'production';
-  let httpsOptions = {};
+  const appOptions = { bufferLogs: true };
 
   if (isProduction) {
-    httpsOptions = {
+    appOptions['httpsOptions'] = {
       key: readFileSync('/etc/letsencrypt/live/api.spa-rx.ca/privkey.pem'),
       cert: readFileSync('/etc/letsencrypt/live/api.spa-rx.ca/fullchain.pem'),
     };
   }
 
-  const server = express();
-  const app = await NestFactory.create(AppModule, new ExpressAdapter(server), {
-    bufferLogs: true,
-  });
+  const app = await NestFactory.create(AppModule, appOptions);
 
   // const tree = SpelunkerModule.explore(app);
   // const root = SpelunkerModule.graph(tree);
@@ -49,7 +41,6 @@ async function bootstrap() {
 
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-  app.use('/static', express.static(join(__dirname, '..', 'static')));
   app.use(cookieParser());
 
   // Create a Swagger document
@@ -81,11 +72,6 @@ async function bootstrap() {
 
   console.log('We are running in production:', process.env.NODE_ENV);
 
-  await app.init();
-  if (isProduction) {
-    https.createServer(httpsOptions, server).listen(3000);
-  } else {
-    app.listen(3000);
-  }
+  await app.listen(3000, '0.0.0.0');
 }
 bootstrap();

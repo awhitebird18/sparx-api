@@ -28,6 +28,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
 import { UserStatusesModule } from './user-statuses/user-statuses.module';
 import { LoggerModule } from 'nestjs-pino';
 import { pinoConfig } from './config/pino-config';
+import { ServeStaticModule } from '@nestjs/serve-static';
 
 @Module({
   imports: [
@@ -50,6 +51,9 @@ import { pinoConfig } from './config/pino-config';
           adapter: new HandlebarsAdapter(undefined, { inlineCssEnabled: true }),
         },
       }),
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: path.join(__dirname, '..', 'static'),
     }),
     TypeOrmModule.forRoot(config),
     ChannelsModule,
