@@ -38,18 +38,22 @@ export class AuthService {
     // Extract the domain from CLIENT_BASE_URL
     const clientDomain = new URL(process.env.CLIENT_BASE_URL).hostname;
 
+    // For subdomain cookies, the domain should be prefixed with a dot
+    const cookieDomain =
+      process.env.NODE_ENV === 'production' ? '.' + clientDomain : undefined;
+
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
-      domain: process.env.NODE_ENV === 'production' ? clientDomain : undefined,
+      domain: cookieDomain,
       path: '/',
       sameSite: 'none',
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: true, // because you're using HTTP
-      domain: process.env.NODE_ENV === 'production' ? clientDomain : undefined,
+      secure: true,
+      domain: cookieDomain,
       path: '/',
       sameSite: 'none',
     });
@@ -62,11 +66,16 @@ export class AuthService {
   async logout(res: Response) {
     // Extract the domain from CLIENT_BASE_URL
     const clientDomain = new URL(process.env.CLIENT_BASE_URL).hostname;
+
+    // For subdomain cookies, the domain should be prefixed with a dot
+    const cookieDomain =
+      process.env.NODE_ENV === 'production' ? '.' + clientDomain : undefined;
+
     res.cookie('access_token', '', {
       expires: new Date(0),
       httpOnly: true,
       secure: true,
-      domain: process.env.NODE_ENV === 'production' ? clientDomain : undefined,
+      domain: cookieDomain,
       sameSite: 'none',
       path: '/',
     });
@@ -74,7 +83,7 @@ export class AuthService {
       expires: new Date(0),
       httpOnly: true,
       secure: true,
-      domain: process.env.NODE_ENV === 'production' ? clientDomain : undefined,
+      domain: cookieDomain,
       sameSite: 'none',
       path: '/',
     });
@@ -89,10 +98,14 @@ export class AuthService {
     // Extract the domain from CLIENT_BASE_URL
     const clientDomain = new URL(process.env.CLIENT_BASE_URL).hostname;
 
+    // For subdomain cookies, the domain should be prefixed with a dot
+    const cookieDomain =
+      process.env.NODE_ENV === 'production' ? '.' + clientDomain : undefined;
+
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
-      domain: process.env.NODE_ENV === 'production' ? clientDomain : undefined,
+      domain: cookieDomain,
       path: '/',
       sameSite: 'none',
     });
