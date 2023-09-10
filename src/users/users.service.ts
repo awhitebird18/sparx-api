@@ -3,8 +3,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { v4 as uuid } from 'uuid';
-import { saveBase64Image } from 'src/utils';
 import * as path from 'path';
 
 import { UsersRepository } from './users.repository';
@@ -19,7 +17,7 @@ import { InviteUserDto } from './dto/invite-user.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
 import { UserDto } from './dto/user.dto';
-import { Logger } from 'nestjs-pino';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class UsersService {
@@ -30,7 +28,7 @@ export class UsersService {
     private usersGatway: UsersGateway,
     private mailerService: MailerService,
     private jwtService: JwtService,
-    private readonly logger: Logger,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
   async create(registerDto: RegisterDto): Promise<User> {
@@ -200,14 +198,10 @@ export class UsersService {
       where: { id: userId },
     });
 
-    const imageId = uuid();
-    // const clientId = 'clientA';
-    const folderPath = `/static/`;
-    const imagePath = path.join(folderPath, imageId);
-    saveBase64Image(profileImage, imagePath);
+    const uploadedImageUrl = await this.cloudinaryService.upload(profileImage);
 
     // Update user with image path
-    user.profileImage = imagePath;
+    user.profileImage = uploadedImageUrl;
 
     // Update User
     const updatedUser = await this.usersRepository.save(user);

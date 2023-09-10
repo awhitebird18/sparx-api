@@ -13,6 +13,7 @@ import { UserPreferencesModule } from 'src/user-preferences/user-preferences.mod
 import { JwtModule } from '@nestjs/jwt';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { jwtConstants } from 'src/auth/constants';
+import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { jwtConstants } from 'src/auth/constants';
       signOptions: { expiresIn: '60s' },
     }),
     MailerModule,
+    CloudinaryModule,
   ],
   controllers: [UsersController],
   providers: [UsersService, UsersRepository],

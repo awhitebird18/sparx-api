@@ -6,7 +6,6 @@ import {
 
 import { ChannelsRepository } from './channels.repository';
 import { ChannelGateway } from 'src/websockets/channel.gateway';
-import { FilesService } from 'src/files/files.service';
 import { Channel } from './entities/channel.entity';
 
 import { ChannelDto } from './dto/channel.dto';
@@ -14,13 +13,14 @@ import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
 import { ChannelUserCount } from './dto/channel-user-count.dto';
 import { ChannelType } from './enums/channel-type.enum';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class ChannelsService {
   constructor(
     private channelsRepository: ChannelsRepository,
-    private filesService: FilesService,
     private channelGateway: ChannelGateway,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
   async createChannel(createChannelDto: CreateChannelDto): Promise<Channel> {
@@ -116,10 +116,10 @@ export class ChannelsService {
 
     // Handle image storage
     if (updateChannelDto.icon) {
-      const imagePath = await this.filesService.saveImage(
+      const uploadedImageUrl = await this.cloudinaryService.upload(
         updateChannelDto.icon,
       );
-      channel.icon = imagePath;
+      channel.icon = uploadedImageUrl;
       delete updateChannelDto.icon;
     }
 

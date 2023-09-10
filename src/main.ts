@@ -70,8 +70,6 @@ async function bootstrap() {
     credentials: true,
   });
 
-  console.log('We are running in production:', process.env.NODE_ENV);
-
   await app.listen(3000, '0.0.0.0');
 }
 bootstrap();
