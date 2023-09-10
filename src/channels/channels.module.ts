@@ -7,10 +7,14 @@ import { ChannelsRepository } from './channels.repository';
 import { Channel } from './entities/channel.entity';
 
 import { WebsocketsModule } from 'src/websockets/websockets.module';
-import { FilesModule } from 'src/files/files.module';
+import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Channel]), WebsocketsModule, FilesModule],
+  imports: [
+    TypeOrmModule.forFeature([Channel]),
+    WebsocketsModule,
+    CloudinaryModule,
+  ],
   controllers: [ChannelsController],
   providers: [ChannelsService, ChannelsRepository],
   exports: [ChannelsService, ChannelsRepository],
