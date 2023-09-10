@@ -129,7 +129,7 @@ export class AuthService {
 
   async sendVerificationEmail(userEmail: string, token: string) {
     try {
-      const url = `${process.env.BASE_URL}/auth/new-user-verification?token=${token}`;
+      const url = `${process.env.BASE_URL}:${process.env.PORT}/auth/new-user-verification?token=${token}`;
 
       await this.mailerService.sendMail({
         to: userEmail,

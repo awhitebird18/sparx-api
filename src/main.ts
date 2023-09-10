@@ -16,13 +16,10 @@ async function bootstrap() {
   const isProduction = process.env.NODE_ENV === 'production';
   let httpsOptions = {};
 
-  console.log(process.env);
-  console.log(isProduction);
-
   if (isProduction) {
     httpsOptions = {
-      key: readFileSync('/app/key.pem'),
-      cert: readFileSync('/app/cert.pem'),
+      key: readFileSync('/etc/letsencrypt/live/api.spa-rx.ca/privkey.pem'),
+      cert: readFileSync('/etc/letsencrypt/live/api.spa-rx.ca/fullchain.pem'),
     };
   }
 
@@ -82,7 +79,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  console.log('main derp! is production?:', isProduction);
+  console.log('We are running in production:', process.env.NODE_ENV);
 
   await app.init();
   if (isProduction) {
