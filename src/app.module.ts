@@ -14,7 +14,6 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { FilesModule } from './files/files.module';
 import { ChannelSubscriptionsModule } from './channel-subscriptions/channel-subscriptions.module';
 import { UserPreferencesModule } from './user-preferences/user-preferences.module';
 import { ChannelManagementModule } from './channel-management/channel-management.module';
@@ -28,7 +27,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
 import { UserStatusesModule } from './user-statuses/user-statuses.module';
 import { LoggerModule } from 'nestjs-pino';
 import { pinoConfig } from './config/pino-config';
-import { ServeStaticModule } from '@nestjs/serve-static';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -52,9 +51,6 @@ import { ServeStaticModule } from '@nestjs/serve-static';
         },
       }),
     }),
-    ServeStaticModule.forRoot({
-      rootPath: path.join(__dirname, '..', 'static'),
-    }),
     TypeOrmModule.forRoot(config),
     ChannelsModule,
     MessagesModule,
@@ -64,10 +60,10 @@ import { ServeStaticModule } from '@nestjs/serve-static';
     AuthModule,
     WebsocketsModule,
     ChannelSubscriptionsModule,
-    FilesModule,
     ChannelManagementModule,
     WorkspacesModule,
     UserStatusesModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [
