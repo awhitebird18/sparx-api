@@ -128,7 +128,7 @@ export class UsersService {
       expiresIn: '1d',
     });
 
-    const url = `${process.env.CLIENT_BASE_URL}/auth/register?token=${passwordResetToken}`;
+    const url = `${process.env.CLIENT_BASE_URL}/register?token=${passwordResetToken}`;
 
     // Email user informing of the password change
     await this.mailerService.sendMail({

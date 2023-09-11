@@ -227,7 +227,7 @@ export class AuthService {
     });
 
     // Send email to user
-    const url = `${process.env.CLIENT_BASE_URL}/auth/change-password?token=${passwordResetToken}`;
+    const url = `${process.env.CLIENT_BASE_URL}/change-password?token=${passwordResetToken}`;
 
     const username = `${user.firstName[0].toUpperCase()}${user.firstName
       .substring(1)
