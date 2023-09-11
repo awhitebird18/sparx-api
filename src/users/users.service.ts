@@ -198,7 +198,10 @@ export class UsersService {
       where: { id: userId },
     });
 
-    const uploadedImageUrl = await this.cloudinaryService.upload(profileImage);
+    const uploadedImageUrl = await this.cloudinaryService.upload(
+      profileImage,
+      user.uuid,
+    );
 
     // Update user with image path
     user.profileImage = uploadedImageUrl;
