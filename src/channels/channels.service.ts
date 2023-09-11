@@ -118,6 +118,7 @@ export class ChannelsService {
     if (updateChannelDto.icon) {
       const uploadedImageUrl = await this.cloudinaryService.upload(
         updateChannelDto.icon,
+        id,
       );
       channel.icon = uploadedImageUrl;
       delete updateChannelDto.icon;
