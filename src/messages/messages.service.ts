@@ -293,7 +293,7 @@ export class MessagesService {
     this.events.emit(
       'websocket-event',
       'removeMessage',
-      deletedMessage.channelId,
+      deletedMessage.channel.uuid,
       deletedMessage.uuid,
     );
 
