@@ -34,12 +34,10 @@ export class ChannelManagementController {
 
   @Post('direct-channel')
   createDirectChannel(
-    @GetUser() user: User,
     @Body() data: { memberIds: string[] },
   ): Promise<ChannelDto> {
     return this.channelManagementService.createDirectChannelAndJoin(
       data.memberIds,
-      user.id,
     );
   }
 

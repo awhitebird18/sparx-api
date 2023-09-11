@@ -85,6 +85,7 @@ export class ChannelsRepository extends Repository<Channel> {
       .then((results) =>
         results.map((result) => ({
           id: result.user_id,
+          uuid: result.user_uuid,
           name: `${result.user_firstName} ${result.user_lastName}`,
         })),
       );

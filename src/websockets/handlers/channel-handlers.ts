@@ -9,7 +9,7 @@ import { Channel } from 'src/channels/entities/channel.entity';
 
 export const channelHandlers = {
   joinChannel: (server: Server) => {
-    return (channel: ChannelDto, sectionId: string, workspaceId?: string) => {
+    return (channel: ChannelDto, sectionId: string, userId: string) => {
       const serializedChannel = plainToInstance(ChannelDto, channel);
 
       const websocketMessage = new WebSocketMessage(MessageType.JoinChannel, {
@@ -17,9 +17,7 @@ export const channelHandlers = {
         sectionId: sectionId,
       });
 
-      server
-        .to(workspaceId || 'tempWorkspaceId')
-        .emit('join-channel', websocketMessage);
+      server.to(userId).emit('join-channel', websocketMessage);
     };
   },
   updateChannelUserCount: (server: Server) => {
@@ -42,13 +40,11 @@ export const channelHandlers = {
   },
 
   leaveChannel: (server: Server) => {
-    return (channelId: string, workspaceId?: string) => {
+    return (channelId: string, userId: string) => {
       const websocketMessage = new WebSocketMessage(MessageType.LeaveChannel, {
         channelId,
       });
-      server
-        .to(workspaceId || 'tempWorkspaceId')
-        .emit('leave-channel', websocketMessage);
+      server.to(userId).emit('leave-channel', websocketMessage);
     };
   },
 
