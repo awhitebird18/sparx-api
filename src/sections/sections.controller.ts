@@ -31,7 +31,7 @@ export class SectionsController {
     @GetUser() user: User,
   ): Promise<SectionDto> {
     return this.sectionsService.mapSectionToDto(
-      await this.sectionsService.createSection(createSectionDto, user.id),
+      await this.sectionsService.createSection(createSectionDto, user),
     );
   }
 
@@ -46,15 +46,20 @@ export class SectionsController {
     @Body()
     sectionIndexes: UpdateSectionOrderDto[],
   ): Promise<SectionDto[]> {
-    return await this.sectionsService.reorderSections(sectionIndexes, user.id);
+    return await this.sectionsService.reorderSections(sectionIndexes, user);
   }
 
   @Patch(':sectionId')
   updateSection(
+    @GetUser() user: User,
     @Param('sectionId') sectionId: string,
     @Body() updateSectionDto: UpdateSectionDto,
   ) {
-    return this.sectionsService.updateSection(sectionId, updateSectionDto);
+    return this.sectionsService.updateSection(
+      sectionId,
+      updateSectionDto,
+      user,
+    );
   }
 
   @Delete(':sectionId')
@@ -62,6 +67,6 @@ export class SectionsController {
     @GetUser() user: User,
     @Param('sectionId') sectionId: string,
   ) {
-    return await this.sectionsService.removeSection(sectionId, user.id);
+    return await this.sectionsService.removeSection(sectionId, user);
   }
 }

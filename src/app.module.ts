@@ -28,6 +28,7 @@ import { UserStatusesModule } from './user-statuses/user-statuses.module';
 import { LoggerModule } from 'nestjs-pino';
 import { pinoConfig } from './config/pino-config';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
         },
       }),
     }),
+    EventEmitterModule.forRoot(),
     TypeOrmModule.forRoot(config),
     ChannelsModule,
     MessagesModule,

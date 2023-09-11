@@ -11,7 +11,6 @@ import { ChannelSubscriptionsRepository } from 'src/channel-subscriptions/channe
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { SectionsRepository } from 'src/sections/sections.repository';
 import { UsersRepository } from 'src/users/users.repository';
-import { ChannelGateway } from 'src/websockets/channel.gateway';
 
 import { ChannelType } from 'src/channels/enums/channel-type.enum';
 import { CreateChannelDto } from 'src/channels/dto/create-channel.dto';
@@ -19,6 +18,7 @@ import { Channel } from 'src/channels/entities/channel.entity';
 import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 import { User } from 'src/users/entities/user.entity';
 import { SectionType } from 'src/sections/enums/section-type.enum';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ChannelManagementService {
@@ -29,7 +29,7 @@ export class ChannelManagementService {
     private channelsRepository: ChannelsRepository,
     private sectionsRepository: SectionsRepository,
     private usersRepository: UsersRepository,
-    private channelsGateway: ChannelGateway,
+    private events: EventEmitter2,
   ) {}
 
   async createChannelAndJoin(
@@ -158,9 +158,9 @@ export class ChannelManagementService {
 
     // Send over socket
     // Todo: Should send over the users updated section channels separately
-    this.channelsGateway.joinChannel(channel, section.uuid);
+    this.events.emit('websocket-event', 'joinChannel', channel, section.uuid);
 
-    this.channelsGateway.updateChannelCount({
+    this.events.emit('websocket-event', 'updateChannel', {
       channelUuid: channel.uuid,
       userCount: channelUserCount,
     });
@@ -211,9 +211,10 @@ export class ChannelManagementService {
       await this.channelSubscriptionRepository.getChannelUsersCount(channel.id);
 
     // Send over socket
-    this.channelsGateway.leaveChannel(channelUuid);
 
-    this.channelsGateway.updateChannelCount({
+    this.events.emit('websocket-event', 'leaveChannel', channelUuid);
+
+    this.events.emit('websocket-event', 'updateChannel', {
       channelUuid: channelUuid,
       userCount: channelUserCount,
     });

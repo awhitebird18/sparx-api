@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { SectionsRepository } from 'src/sections/sections.repository';
-import { SectionsGateway } from 'src/websockets/section.gateway';
 import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
 
 import { Section } from './entities/section.entity';
@@ -13,13 +12,15 @@ import { ChannelType } from 'src/channels/enums/channel-type.enum';
 import { SectionDto } from './dto/section.dto';
 import { plainToInstance } from 'class-transformer';
 import { UpdateSectionOrderDto } from './dto/update-section-order.dto';
+import { User } from 'src/users/entities/user.entity';
+import { EventEmitter2 } from 'eventemitter2';
 
 @Injectable()
 export class SectionsService {
   constructor(
     private sectionsRepository: SectionsRepository,
-    private sectionsGateway: SectionsGateway,
     private channelSubscriptionsService: ChannelSubscriptionsService,
+    private readonly events: EventEmitter2,
   ) {}
 
   private readonly defaultSections = [
@@ -52,7 +53,7 @@ export class SectionsService {
 
   async reorderSections(
     sectionIndexes: UpdateSectionOrderDto[],
-    userId: number,
+    user: User,
   ): Promise<SectionDto[]> {
     const updatePromises = [];
     // Update section orderIndexes
@@ -68,9 +69,9 @@ export class SectionsService {
 
     await Promise.all(updatePromises);
 
-    const sections = await this.findUserSections(userId);
+    const sections = await this.findUserSections(user.id);
 
-    this.sectionsGateway.sendUserSections(sections);
+    this.events.emit('websocket-event', 'userSections', sections, user.uuid);
 
     return sections;
   }
@@ -88,21 +89,30 @@ export class SectionsService {
 
   async createSection(
     createSectionDto: CreateSectionDto,
-    userId: number,
+    user: User,
   ): Promise<Section> {
     const lastSectionIndex =
-      await this.sectionsRepository.findHighestOrderIndex(userId);
+      await this.sectionsRepository.findHighestOrderIndex(user.id);
 
     // Create section
     const newSection = await this.sectionsRepository.createSection({
       ...createSectionDto,
       orderIndex: lastSectionIndex + 1,
-      userId,
+      userId: user.id,
       type: ChannelType.ANY,
     });
     // Send new section over socket
-    this.sectionsGateway.handleNewSectionSocket(
-      plainToInstance(SectionDto, await this.mapSectionToDto(newSection)),
+
+    const serializedSection = plainToInstance(
+      SectionDto,
+      await this.mapSectionToDto(newSection),
+    );
+
+    this.events.emit(
+      'websocket-event',
+      'newSection',
+      serializedSection,
+      user.uuid,
     );
 
     return newSection;
@@ -126,6 +136,7 @@ export class SectionsService {
   async updateSection(
     sectionUuid: string,
     updateSectionDto: UpdateSectionDto,
+    user: User,
   ): Promise<Section> {
     // Update section
     const updateResult = await this.sectionsRepository.updateSection(
@@ -140,26 +151,30 @@ export class SectionsService {
       sectionUuid,
     );
 
-    // Send updated section over socket
-    this.sectionsGateway.handleUpdateSectionSocket(updatedSection);
+    this.events.emit(
+      'websocket-event',
+      'updateSection',
+      updatedSection,
+      user.uuid,
+    );
 
     return updatedSection;
   }
 
-  async removeSection(uuid: string, userId: number): Promise<string> {
+  async removeSection(uuid: string, user: User): Promise<string> {
     try {
       const sectionToRemove =
         await this.sectionsRepository.findSectionWithChannels(uuid);
       const channelSubscriptions = sectionToRemove.channels;
       const userDefaultSections =
-        await this.sectionsRepository.findDefaultSections(userId);
+        await this.sectionsRepository.findDefaultSections(user.id);
 
       const updatePromises = channelSubscriptions.map(async (subscription) => {
         const defaultSection = userDefaultSections.find(
           (section) => section.type === subscription.channel.type,
         );
         return this.channelSubscriptionsService.updateChannelSection(
-          userId,
+          user,
           subscription.channel.uuid,
           defaultSection.uuid,
         );
@@ -169,7 +184,7 @@ export class SectionsService {
 
       await this.sectionsRepository.removeSection(sectionToRemove);
 
-      this.sectionsGateway.handleRemoveSectionSocket(uuid);
+      this.events.emit('websocket-event', 'removeSection', uuid, user.uuid);
 
       return uuid;
     } catch (error) {

@@ -40,7 +40,7 @@ export class ChannelSubscriptionsController {
   ): Promise<ChannelSubscriptionDto> {
     const channelSubscription =
       await this.channelSubscriptionsService.updateChannelSection(
-        user.id,
+        user,
         channelId,
         updateUserChannel.sectionId,
       );
