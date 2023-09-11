@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 
 import { ChannelsRepository } from './channels.repository';
-import { ChannelGateway } from 'src/websockets/channel.gateway';
 import { Channel } from './entities/channel.entity';
 
 import { ChannelDto } from './dto/channel.dto';
@@ -14,13 +13,14 @@ import { UpdateChannelDto } from './dto/update-channel.dto';
 import { ChannelUserCount } from './dto/channel-user-count.dto';
 import { ChannelType } from './enums/channel-type.enum';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ChannelsService {
   constructor(
     private channelsRepository: ChannelsRepository,
-    private channelGateway: ChannelGateway,
     private cloudinaryService: CloudinaryService,
+    private events: EventEmitter2,
   ) {}
 
   async createChannel(createChannelDto: CreateChannelDto): Promise<Channel> {
@@ -128,7 +128,7 @@ export class ChannelsService {
     const updatedChannel = await this.channelsRepository.save(channel);
 
     // Send updated channel by socket
-    this.channelGateway.handleUpdateChannelSocket(updatedChannel);
+    this.events.emit('websocket-event', 'updateChannel', updatedChannel);
 
     return updatedChannel;
   }

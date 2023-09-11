@@ -33,9 +33,9 @@ export const pinoConfig: Params = {
     },
     autoLogging: true, // Enable auto logging globally
     redact: ['req.headers.authorization'], // Redact auth headers
-    // serializers: {
-    //   req: (req) => ({ url: req.url }),
-    //   res: () => ({}),
-    // },
+    serializers: {
+      req: (req) => ({ url: req.url }),
+      res: () => ({}),
+    },
   },
 };

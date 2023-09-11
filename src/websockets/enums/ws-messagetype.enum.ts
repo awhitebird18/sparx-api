@@ -6,8 +6,8 @@ export enum MessageType {
   LeaveChannel = 'LEAVE_CHANNEL',
   UpdateSection = 'UPDATE_SECTION',
   RemoveSection = 'REMOVE_SECTION',
-  RemoveChannelFromSection = 'REMOVE_CHANNEL_FROM_SECTION',
   AddChannelToSection = 'ADD_CHANNEL_TO_SECTION',
   ReorderSections = 'REORDER_SECTIONS',
   UpdateMessage = 'UPDATE_MESSAGE',
+  RemoveMessage = 'REMOVE_MESSAGE',
 }

@@ -10,14 +10,9 @@ import { Message } from './entities/message.entity';
 import { Reaction } from './entities/reaction.entity';
 
 import { ChannelsModule } from 'src/channels/channels.module';
-import { WebsocketsModule } from 'src/websockets/websockets.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Message, Reaction]),
-    ChannelsModule,
-    WebsocketsModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Message, Reaction]), ChannelsModule],
   controllers: [MessagesController],
   providers: [MessagesService, MessagesRepository, ReactionRepository],
   exports: [MessagesService, MessagesRepository],
