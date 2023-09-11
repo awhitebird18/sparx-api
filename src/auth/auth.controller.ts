@@ -175,6 +175,6 @@ export class AuthController {
 
     await this.authService.login(user, res);
 
-    res.redirect(`${process.env.CLIENT_BASE_URL}/app/verification-success`);
+    res.redirect(`${process.env.CLIENT_BASE_URL}/app`);
   }
 }
