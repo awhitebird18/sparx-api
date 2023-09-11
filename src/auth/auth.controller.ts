@@ -126,9 +126,7 @@ export class AuthController {
       currentUser.id,
     );
 
-    const channelsPromise = this.channelsService.findUserChannels(
-      currentUser.id,
-    );
+    const channelsPromise = this.channelsService.findUserChannels(currentUser);
 
     const channelUnreadsPromise =
       this.channelSubscriptionsService.getUserUnreadMessagesCount(

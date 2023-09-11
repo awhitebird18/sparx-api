@@ -47,13 +47,12 @@ export class ChannelManagementService {
     // Add user to channel
     await this.joinChannel(currentUser.uuid, channel.uuid, section.uuid);
 
+    this.sendUserChannelSocket(currentUser.uuid, channel, section.uuid);
+
     return channel;
   }
 
-  async createDirectChannelAndJoin(
-    userUuids: string[],
-    currentUserId: number,
-  ): Promise<Channel> {
+  async createDirectChannelAndJoin(userUuids: string[]): Promise<Channel> {
     // Check if direct channel with both members already exists
     const channel = await this.channelsService.findDirectChannelByUserUuids(
       userUuids,
@@ -87,13 +86,41 @@ export class ChannelManagementService {
 
     await Promise.all(memberPromises);
 
-    newChannel.name = await this.channelsService.findDirectChannelName(
-      newChannel.uuid,
-      currentUserId,
-    );
+    for (let i = 0; i < userUuids.length; i++) {
+      newChannel.name = await this.channelsService.findDirectChannelName(
+        newChannel.uuid,
+        userUuids[i],
+      );
+
+      const user = await this.usersRepository.findOneOrFail({
+        where: { uuid: userUuids[i] },
+      });
+
+      const section = await this.sectionsRepository.findDefaultSection(
+        ChannelType.DIRECT,
+        user.id,
+      );
+
+      this.sendUserChannelSocket(userUuids[i], newChannel, section.uuid);
+    }
+
     // newChannel.name = `${user.firstName} ${user.lastName}`;
 
     return newChannel;
+  }
+
+  async sendUserChannelSocket(
+    userId: string,
+    channel: Channel,
+    sectionUuid: string,
+  ): Promise<void> {
+    this.events.emit(
+      'websocket-event',
+      'joinChannel',
+      channel,
+      sectionUuid,
+      userId,
+    );
   }
 
   async joinChannel(
@@ -156,14 +183,18 @@ export class ChannelManagementService {
     const channelUserCount =
       await this.channelSubscriptionRepository.getChannelUsersCount(channel.id);
 
-    // Send over socket
-    // Todo: Should send over the users updated section channels separately
-    this.events.emit('websocket-event', 'joinChannel', channel, section.uuid);
+    // channel.name = await this.channelsService.findDirectChannelName(
+    //   channel.uuid,
+    //   userUuid,
+    // );
 
     this.events.emit('websocket-event', 'updateChannel', {
       channelUuid: channel.uuid,
       userCount: channelUserCount,
     });
+
+    // Send over socket
+    // Todo: Should send over the users updated section channels separately
 
     return channel;
   }
@@ -212,7 +243,7 @@ export class ChannelManagementService {
 
     // Send over socket
 
-    this.events.emit('websocket-event', 'leaveChannel', channelUuid);
+    this.events.emit('websocket-event', 'leaveChannel', channelUuid, userUuid);
 
     this.events.emit('websocket-event', 'updateChannel', {
       channelUuid: channelUuid,
