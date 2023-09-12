@@ -150,7 +150,7 @@ export class AuthService {
 
   async sendVerificationEmail(userEmail: string, user: User, token: string) {
     try {
-      const url = `${process.env.BASE_URL}/auth/new-user-verification?token=${token}`;
+      const url = `${process.env.BASE_URL}:3000/auth/new-user-verification?token=${token}`;
 
       const username = `${user.firstName[0].toUpperCase()}${user.firstName
         .substring(1)
