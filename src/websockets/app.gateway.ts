@@ -124,6 +124,15 @@ export class AppGateway
     client.to(data.channelId).emit('typing', data);
   }
 
+  @SubscribeMessage('stopped-typing')
+  handleStoppedTyping(
+    client: Socket,
+    data: { userId: string; channelId: string },
+  ): void {
+    this.users.delete(data.userId);
+    client.to(data.channelId).emit('stopped-typing', data);
+  }
+
   // User online status methods
   initCleanupRoutine() {
     setInterval(() => {
