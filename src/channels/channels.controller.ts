@@ -49,7 +49,7 @@ export class ChannelsController {
 
   @Get('user-channels')
   findUserChannels(@GetUser() currentUser: User): Promise<ChannelDto[]> {
-    return this.channelsService.findUserChannels(currentUser.id);
+    return this.channelsService.findUserChannels(currentUser);
   }
 
   @Get('direct')

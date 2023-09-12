@@ -11,10 +11,11 @@ export class CloudinaryService {
     });
   }
 
-  async upload(image: string): Promise<string> {
+  async upload(image: string, userId: string): Promise<string> {
     try {
       const result = await cloudinary.v2.uploader.upload(image, {
         folder: 'sparx',
+        public_id: `user_${userId}`,
       });
 
       return result.secure_url;

@@ -1,12 +1,14 @@
-import { OnModuleInit } from '@nestjs/common';
 import {
-  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { OnModuleInit } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Server, Socket } from 'socket.io';
+import handlers from './handlers';
 
 type UserStatus = 'online' | 'away' | 'busy';
 type UserData = {
@@ -14,25 +16,42 @@ type UserData = {
   status: UserStatus;
 };
 
-@WebSocketGateway()
-export class OnlineStatusGateway
+@WebSocketGateway({ cors: process.env.CLIENT_BASE_URL })
+export class AppGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
 {
-  @WebSocketServer()
-  server: Server;
-
+  @WebSocketServer() server: Server;
+  handlers: any = {};
   private users = new Map<string, UserData>();
 
+  constructor(private readonly events: EventEmitter2) {}
+
   onModuleInit() {
+    for (const [key, handlerFunc] of Object.entries(handlers)) {
+      this.handlers[key] = handlerFunc(this.server);
+    }
+
+    this.events.on('websocket-event', (eventType, ...args) => {
+      const handler = this.handlers[eventType];
+      if (handler) {
+        handler.apply(this, args);
+      } else {
+        console.warn(`No handler for event type ${eventType}`);
+      }
+    });
+
     this.initCleanupRoutine();
   }
 
+  // Initial connection to gateway
   handleConnection(client: Socket) {
     const userId = client.handshake.query.userId;
+
     if (!userId) {
       client.disconnect();
       return;
     }
+
     this.users.set(userId as string, {
       lastHeartbeat: new Date(),
       status: 'online',
@@ -44,6 +63,37 @@ export class OnlineStatusGateway
     const userId = client.handshake.query.userId;
     this.users.delete(userId as string);
     this.broadcastUpdatedUsers();
+  }
+
+  // Join/ leave rooms
+  @SubscribeMessage('joinWorkspace')
+  handleJoinWorkspace(client: Socket, workspaceId: string) {
+    client.join(workspaceId);
+  }
+
+  @SubscribeMessage('leaveWorkspace')
+  handleLeaveWorkspace(client: Socket, workspaceId: string) {
+    client.leave(workspaceId);
+  }
+
+  @SubscribeMessage('joinChannel')
+  handleSubscribe(client: Socket, channelId: string) {
+    client.join(channelId);
+  }
+
+  @SubscribeMessage('leaveChannel')
+  handleUnsubscribe(client: Socket, channelId: string) {
+    client.leave(channelId);
+  }
+
+  @SubscribeMessage('joinSelf')
+  handleJoinSelf(client: Socket, userId: string) {
+    client.join(userId);
+  }
+
+  @SubscribeMessage('leaveSelf')
+  handleLeaveSelf(client: Socket, userId: string) {
+    client.leave(userId);
   }
 
   @SubscribeMessage('heartbeat')
@@ -66,6 +116,24 @@ export class OnlineStatusGateway
     }
   }
 
+  @SubscribeMessage('typing')
+  handleTyping(
+    client: Socket,
+    data: { userId: string; userName: string; channelId: string },
+  ): void {
+    client.to(data.channelId).emit('typing', data);
+  }
+
+  @SubscribeMessage('stopped-typing')
+  handleStoppedTyping(
+    client: Socket,
+    data: { userId: string; channelId: string },
+  ): void {
+    this.users.delete(data.userId);
+    client.to(data.channelId).emit('stopped-typing', data);
+  }
+
+  // User online status methods
   initCleanupRoutine() {
     setInterval(() => {
       const now = new Date();
@@ -78,6 +146,7 @@ export class OnlineStatusGateway
     }, 10000);
   }
 
+  // TODO: need to make this work with workspaces
   broadcastUpdatedUsers() {
     const userIdsAndStatus = Array.from(this.users.entries()).map(
       ([userId, data]) => ({

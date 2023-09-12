@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 
 import { ChannelsRepository } from './channels.repository';
-import { ChannelGateway } from 'src/websockets/channel.gateway';
 import { Channel } from './entities/channel.entity';
 
 import { ChannelDto } from './dto/channel.dto';
@@ -14,13 +13,15 @@ import { UpdateChannelDto } from './dto/update-channel.dto';
 import { ChannelUserCount } from './dto/channel-user-count.dto';
 import { ChannelType } from './enums/channel-type.enum';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class ChannelsService {
   constructor(
     private channelsRepository: ChannelsRepository,
-    private channelGateway: ChannelGateway,
     private cloudinaryService: CloudinaryService,
+    private events: EventEmitter2,
   ) {}
 
   async createChannel(createChannelDto: CreateChannelDto): Promise<Channel> {
@@ -42,16 +43,14 @@ export class ChannelsService {
     return newChannel;
   }
 
-  async findUserChannels(currentUserId: number): Promise<Channel[]> {
-    const channels = await this.channelsRepository.findUserChannels(
-      currentUserId,
-    );
+  async findUserChannels(user: User): Promise<Channel[]> {
+    const channels = await this.channelsRepository.findUserChannels(user.id);
 
     for (let i = 0; i < channels.length; i++) {
       if (channels[i].type === ChannelType.DIRECT) {
         channels[i].name = await this.findDirectChannelName(
           channels[i].uuid,
-          currentUserId,
+          user.uuid,
         );
       }
     }
@@ -92,13 +91,13 @@ export class ChannelsService {
 
   async findDirectChannelName(
     channelUuid: string,
-    currentUserId: number,
+    currentUserId: string,
   ): Promise<string> {
     const channelUsers = await this.channelsRepository.findChannelUsers(
       channelUuid,
     );
 
-    const otherUser = channelUsers.find((u: any) => u.id !== currentUserId);
+    const otherUser = channelUsers.find((u: any) => u.uuid !== currentUserId);
 
     return otherUser.name;
   }
@@ -118,6 +117,7 @@ export class ChannelsService {
     if (updateChannelDto.icon) {
       const uploadedImageUrl = await this.cloudinaryService.upload(
         updateChannelDto.icon,
+        id,
       );
       channel.icon = uploadedImageUrl;
       delete updateChannelDto.icon;
@@ -128,7 +128,7 @@ export class ChannelsService {
     const updatedChannel = await this.channelsRepository.save(channel);
 
     // Send updated channel by socket
-    this.channelGateway.handleUpdateChannelSocket(updatedChannel);
+    this.events.emit('websocket-event', 'updateChannel', updatedChannel);
 
     return updatedChannel;
   }

@@ -9,6 +9,7 @@ import { UsersService } from 'src/users/users.service';
 import { UserDto } from 'src/users/dto/user.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -142,14 +143,20 @@ export class AuthService {
     });
 
     // Send the verification email
-    await this.sendVerificationEmail(user.email, verificationToken);
+    await this.sendVerificationEmail(user.email, user, verificationToken);
 
     return user;
   }
 
-  async sendVerificationEmail(userEmail: string, token: string) {
+  async sendVerificationEmail(userEmail: string, user: User, token: string) {
     try {
-      const url = `${process.env.BASE_URL}:${process.env.PORT}/auth/new-user-verification?token=${token}`;
+      const url = `${process.env.BASE_URL}/auth/new-user-verification?token=${token}`;
+
+      const username = `${user.firstName[0].toUpperCase()}${user.firstName
+        .substring(1)
+        .toLowerCase()} ${user.lastName[0].toUpperCase()}${user.lastName
+        .substring(1)
+        .toLowerCase()}`;
 
       await this.mailerService.sendMail({
         to: userEmail,
@@ -157,6 +164,7 @@ export class AuthService {
         template: 'verification',
         context: {
           url,
+          username,
         },
       });
     } catch (err) {
@@ -223,11 +231,11 @@ export class AuthService {
 
     // Generate a password reset token
     const passwordResetToken = this.jwtService.sign(verificationPayload, {
-      expiresIn: '3m',
+      expiresIn: '120m',
     });
 
     // Send email to user
-    const url = `${process.env.CLIENT_BASE_URL}/auth/change-password?token=${passwordResetToken}`;
+    const url = `${process.env.CLIENT_BASE_URL}/change-password?token=${passwordResetToken}`;
 
     const username = `${user.firstName[0].toUpperCase()}${user.firstName
       .substring(1)

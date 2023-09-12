@@ -6,7 +6,6 @@ import {
 import * as path from 'path';
 
 import { UsersRepository } from './users.repository';
-import { UsersGateway } from 'src/websockets/user.gateway';
 import { SectionsService } from 'src/sections/sections.service';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
 
@@ -18,6 +17,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
 import { UserDto } from './dto/user.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class UsersService {
@@ -25,10 +25,10 @@ export class UsersService {
     private usersRepository: UsersRepository,
     private sectionsService: SectionsService,
     private userPreferencesService: UserPreferencesService,
-    private usersGatway: UsersGateway,
     private mailerService: MailerService,
     private jwtService: JwtService,
     private cloudinaryService: CloudinaryService,
+    private events: EventEmitter2,
   ) {}
 
   async create(registerDto: RegisterDto): Promise<User> {
@@ -128,7 +128,7 @@ export class UsersService {
       expiresIn: '1d',
     });
 
-    const url = `${process.env.CLIENT_BASE_URL}/auth/register?token=${passwordResetToken}`;
+    const url = `${process.env.CLIENT_BASE_URL}/register?token=${passwordResetToken}`;
 
     // Email user informing of the password change
     await this.mailerService.sendMail({
@@ -184,7 +184,7 @@ export class UsersService {
     const updatedUser = await this.usersRepository.save(user);
 
     // Send updated user over socket
-    this.usersGatway.handleUpdateUserSocket(updatedUser);
+    this.events.emit('websocket', 'updateUser', updatedUser);
 
     return updatedUser;
   }
@@ -198,7 +198,10 @@ export class UsersService {
       where: { id: userId },
     });
 
-    const uploadedImageUrl = await this.cloudinaryService.upload(profileImage);
+    const uploadedImageUrl = await this.cloudinaryService.upload(
+      profileImage,
+      user.uuid,
+    );
 
     // Update user with image path
     user.profileImage = uploadedImageUrl;
@@ -207,7 +210,7 @@ export class UsersService {
     const updatedUser = await this.usersRepository.save(user);
 
     // Send updated user over socket
-    this.usersGatway.handleUpdateUserSocket(updatedUser);
+    this.events.emit('websocket', 'updateUser', updatedUser);
 
     return updatedUser;
   }
@@ -218,6 +221,6 @@ export class UsersService {
     if (!removedUser)
       throw new NotFoundException(`Unable to find user with id ${uuid}`);
 
-    this.usersGatway.handleRemoveUserSocket(removedUser.uuid);
+    this.events.emit('websocket-event', 'removeUser', removedUser.uuid);
   }
 }

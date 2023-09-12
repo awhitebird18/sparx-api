@@ -8,7 +8,6 @@ import { ChannelSubscription } from './entity/channel-subscription.entity';
 
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SectionsModule } from 'src/sections/sections.module';
-import { WebsocketsModule } from 'src/websockets/websockets.module';
 import { MessagesModule } from 'src/messages/messages.module';
 
 @Module({
@@ -16,7 +15,6 @@ import { MessagesModule } from 'src/messages/messages.module';
     TypeOrmModule.forFeature([ChannelSubscription]),
     forwardRef(() => SectionsModule),
     MessagesModule,
-    WebsocketsModule,
   ],
   controllers: [ChannelSubscriptionsController],
   providers: [ChannelSubscriptionsService, ChannelSubscriptionsRepository],

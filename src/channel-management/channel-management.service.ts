@@ -11,7 +11,6 @@ import { ChannelSubscriptionsRepository } from 'src/channel-subscriptions/channe
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { SectionsRepository } from 'src/sections/sections.repository';
 import { UsersRepository } from 'src/users/users.repository';
-import { ChannelGateway } from 'src/websockets/channel.gateway';
 
 import { ChannelType } from 'src/channels/enums/channel-type.enum';
 import { CreateChannelDto } from 'src/channels/dto/create-channel.dto';
@@ -19,6 +18,7 @@ import { Channel } from 'src/channels/entities/channel.entity';
 import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 import { User } from 'src/users/entities/user.entity';
 import { SectionType } from 'src/sections/enums/section-type.enum';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ChannelManagementService {
@@ -29,7 +29,7 @@ export class ChannelManagementService {
     private channelsRepository: ChannelsRepository,
     private sectionsRepository: SectionsRepository,
     private usersRepository: UsersRepository,
-    private channelsGateway: ChannelGateway,
+    private events: EventEmitter2,
   ) {}
 
   async createChannelAndJoin(
@@ -47,13 +47,12 @@ export class ChannelManagementService {
     // Add user to channel
     await this.joinChannel(currentUser.uuid, channel.uuid, section.uuid);
 
+    this.sendUserChannelSocket(currentUser.uuid, channel, section.uuid);
+
     return channel;
   }
 
-  async createDirectChannelAndJoin(
-    userUuids: string[],
-    currentUserId: number,
-  ): Promise<Channel> {
+  async createDirectChannelAndJoin(userUuids: string[]): Promise<Channel> {
     // Check if direct channel with both members already exists
     const channel = await this.channelsService.findDirectChannelByUserUuids(
       userUuids,
@@ -87,13 +86,41 @@ export class ChannelManagementService {
 
     await Promise.all(memberPromises);
 
-    newChannel.name = await this.channelsService.findDirectChannelName(
-      newChannel.uuid,
-      currentUserId,
-    );
+    for (let i = 0; i < userUuids.length; i++) {
+      newChannel.name = await this.channelsService.findDirectChannelName(
+        newChannel.uuid,
+        userUuids[i],
+      );
+
+      const user = await this.usersRepository.findOneOrFail({
+        where: { uuid: userUuids[i] },
+      });
+
+      const section = await this.sectionsRepository.findDefaultSection(
+        ChannelType.DIRECT,
+        user.id,
+      );
+
+      this.sendUserChannelSocket(userUuids[i], newChannel, section.uuid);
+    }
+
     // newChannel.name = `${user.firstName} ${user.lastName}`;
 
     return newChannel;
+  }
+
+  async sendUserChannelSocket(
+    userId: string,
+    channel: Channel,
+    sectionUuid: string,
+  ): Promise<void> {
+    this.events.emit(
+      'websocket-event',
+      'joinChannel',
+      channel,
+      sectionUuid,
+      userId,
+    );
   }
 
   async joinChannel(
@@ -156,14 +183,18 @@ export class ChannelManagementService {
     const channelUserCount =
       await this.channelSubscriptionRepository.getChannelUsersCount(channel.id);
 
-    // Send over socket
-    // Todo: Should send over the users updated section channels separately
-    this.channelsGateway.joinChannel(channel, section.uuid);
+    // channel.name = await this.channelsService.findDirectChannelName(
+    //   channel.uuid,
+    //   userUuid,
+    // );
 
-    this.channelsGateway.updateChannelCount({
+    this.events.emit('websocket-event', 'updateChannel', {
       channelUuid: channel.uuid,
       userCount: channelUserCount,
     });
+
+    // Send over socket
+    // Todo: Should send over the users updated section channels separately
 
     return channel;
   }
@@ -211,9 +242,10 @@ export class ChannelManagementService {
       await this.channelSubscriptionRepository.getChannelUsersCount(channel.id);
 
     // Send over socket
-    this.channelsGateway.leaveChannel(channelUuid);
 
-    this.channelsGateway.updateChannelCount({
+    this.events.emit('websocket-event', 'leaveChannel', channelUuid, userUuid);
+
+    this.events.emit('websocket-event', 'updateChannel', {
       channelUuid: channelUuid,
       userCount: channelUserCount,
     });

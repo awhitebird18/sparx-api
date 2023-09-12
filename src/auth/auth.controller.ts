@@ -126,9 +126,7 @@ export class AuthController {
       currentUser.id,
     );
 
-    const channelsPromise = this.channelsService.findUserChannels(
-      currentUser.id,
-    );
+    const channelsPromise = this.channelsService.findUserChannels(currentUser);
 
     const channelUnreadsPromise =
       this.channelSubscriptionsService.getUserUnreadMessagesCount(
@@ -175,6 +173,6 @@ export class AuthController {
 
     await this.authService.login(user, res);
 
-    res.redirect(`${process.env.CLIENT_BASE_URL}/app/verification-success`);
+    res.redirect(`${process.env.CLIENT_BASE_URL}/app`);
   }
 }

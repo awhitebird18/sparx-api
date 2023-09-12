@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 
-import { ChatGateway } from 'src/websockets/chat.gateway';
 import { MessagesRepository } from './messages.repository';
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { ReactionRepository } from './reactions.repository';
@@ -16,6 +15,7 @@ import { UpdateMessageDto } from './dto/update-message.dto';
 import { ReactionDto } from './dto/reaction.dto';
 import { Message } from './entities/message.entity';
 import { ThreadDto } from './dto/thread.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class MessagesService {
@@ -23,7 +23,7 @@ export class MessagesService {
     private messageRepository: MessagesRepository,
     private reactionRepository: ReactionRepository,
     private channelsRepository: ChannelsRepository,
-    private chatGateway: ChatGateway,
+    private events: EventEmitter2,
   ) {}
 
   private transformReactions(reactions: Reaction[]): ReactionDto[] {
@@ -73,7 +73,7 @@ export class MessagesService {
     const message = await this.findPopulatedMessage(savedMessage.uuid);
 
     // Send over socket
-    this.chatGateway.handleSendMessageSocket(message);
+    this.events.emit('websocket-event', 'newMessage', message);
 
     return message;
   }
@@ -224,7 +224,7 @@ export class MessagesService {
     const serializedMessage = await this.findPopulatedMessage(uuid);
 
     // Send the updated message to the socket
-    this.chatGateway.handleUpdateMessageSocket(serializedMessage);
+    this.events.emit('websocket-event', 'updateMessage', serializedMessage);
 
     // Return the updated message
     return serializedMessage;
@@ -275,7 +275,8 @@ export class MessagesService {
 
     const messageToReturn = await this.findPopulatedMessage(newMessage.uuid);
 
-    this.chatGateway.handleUpdateMessageSocket(messageToReturn);
+    // Emit Socket
+    this.events.emit('websocket-event', 'updateMessage', messageToReturn);
 
     return messageToReturn;
   }
@@ -289,8 +290,10 @@ export class MessagesService {
       throw new NotFoundException('Unable to find message to remove');
 
     // Send signal over socket to remove message
-    this.chatGateway.handleRemoveMessageSocket(
-      deletedMessage.channelId,
+    this.events.emit(
+      'websocket-event',
+      'removeMessage',
+      deletedMessage.channel.uuid,
       deletedMessage.uuid,
     );
 

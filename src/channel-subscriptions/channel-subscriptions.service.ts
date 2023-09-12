@@ -2,13 +2,14 @@ import { Injectable } from '@nestjs/common';
 
 import { ChannelSubscription } from './entity/channel-subscription.entity';
 
-import { ChannelGateway } from 'src/websockets/channel.gateway';
 import { ChannelSubscriptionsRepository } from './channel-subscriptions.repository';
 import { SectionsRepository } from 'src/sections/sections.repository';
 import { MessagesRepository } from 'src/messages/messages.repository';
 
 import { CreateChannelSubscription } from './dto/create-channel-subscription.dto';
 import { ChannelSubscriptionDto } from './dto/channel-subscription.dto';
+import { User } from 'src/users/entities/user.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ChannelSubscriptionsService {
@@ -16,7 +17,7 @@ export class ChannelSubscriptionsService {
     private channelSubscriptionsRepository: ChannelSubscriptionsRepository,
     private sectionsRepository: SectionsRepository,
     private messagesRepository: MessagesRepository,
-    private channelGateway: ChannelGateway,
+    private events: EventEmitter2,
   ) {}
 
   create(
@@ -68,8 +69,9 @@ export class ChannelSubscriptionsService {
     const updatedChannelSubscription =
       await this.channelSubscriptionsRepository.save(channelSubscription);
 
-    // Send socket
-    this.channelGateway.handleUpdateChannelSubscriptionSocket(
+    this.events.emit(
+      'websocket-event',
+      'updateChannelSubscription',
       updatedChannelSubscription,
     );
 
@@ -77,7 +79,7 @@ export class ChannelSubscriptionsService {
   }
 
   async updateChannelSection(
-    userId: number,
+    user: User,
     channelUuid: string,
     sectionUuid: string,
   ): Promise<ChannelSubscription> {
@@ -85,7 +87,7 @@ export class ChannelSubscriptionsService {
       const channelSubscription =
         await this.channelSubscriptionsRepository.findOneOrFail({
           where: {
-            user: { id: userId },
+            user: { id: user.id },
             channel: { uuid: channelUuid },
           },
           relations: ['channel'],
@@ -102,69 +104,21 @@ export class ChannelSubscriptionsService {
       const updatedChannelSubscription =
         await this.channelSubscriptionsRepository.save(channelSubscription);
 
-      this.channelGateway.updateChannelSection({
-        channelId: channelUuid,
-        sectionId: sectionUuid,
-      });
+      this.events.emit(
+        'websocket-event',
+        'updateChannelSection',
+        {
+          channelId: channelUuid,
+          sectionId: sectionUuid,
+        },
+        user.uuid,
+      );
 
       return updatedChannelSubscription;
     } catch (error) {
       console.error('Error in updateChannelSection: ', error);
     }
   }
-
-  // async getUserSubscribedChannels(
-  //   userUuid: string,
-  // ): Promise<{ channels: any; channelSubscriptionDetails: any }> {
-  //   const channelSubscriptions = await this.channelSubscriptionsRepository.find(
-  //     {
-  //       where: { user: { uuid: userUuid } },
-  //       relations: ['channel'],
-  //     },
-  //   );
-
-  //   if (!channelSubscriptions) {
-  //     throw new NotFoundException('No user channels found');
-  //   }
-
-  //   const channelSubscriptionDetails = [];
-
-  //   const channels = await Promise.all(
-  //     channelSubscriptions.map(async (channelSubscription) => {
-  //       const channel = channelSubscription.channel;
-  //       let directChannelName;
-
-  //       if (channel.type === ChannelType.DIRECT) {
-  //         const users =
-  //           await this.channelSubscriptionsRepository.findUsersByChannelId(
-  //             channelSubscription.channel.uuid,
-  //           );
-
-  //         if (channelSubscription.channel.type === ChannelType.DIRECT) {
-  //           const otherUser = users.find(
-  //             (user: User) => user.uuid !== userUuid,
-  //           );
-
-  //           directChannelName = `${otherUser.firstName} ${otherUser.lastName}`;
-  //         }
-  //       }
-
-  //       const channels = {
-  //         ...plainToClass(ChannelDto, channel),
-  //         ...(channel.type === ChannelType.DIRECT && {
-  //           name: directChannelName,
-  //         }),
-  //       };
-
-  //       delete channelSubscription.channel;
-  //       channelSubscriptionDetails.push(channelSubscription);
-
-  //       return channels;
-  //     }),
-  //   );
-
-  //   return { channels, channelSubscriptionDetails };
-  // }
 
   async getUserUnreadMessagesCount(
     userId: number,
