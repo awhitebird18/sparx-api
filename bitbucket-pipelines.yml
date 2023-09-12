@@ -8,7 +8,7 @@ pipelines:
           script:
             - export TAG=$BITBUCKET_COMMIT
             - export IMAGE_NAME=$DOCKER_HUB_USERNAME/sparx:$TAG
-            - docker build --build-arg NODE_ENV=production -t $IMAGE_NAME .
+            - docker build --no-cache --build-arg NODE_ENV=production -t $IMAGE_NAME .
             - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
             - docker push $IMAGE_NAME
 
