@@ -17,7 +17,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --only=production
 COPY --from=development /app/dist ./dist
-COPY /.env.prod /app/.env.prod
+COPY /.env.prod /app/.env
 COPY /cert.pem /app/cert.pem
 COPY /key.pem /app/key.pem
 CMD ["npm", "run", "start:prod"]
