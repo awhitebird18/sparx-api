@@ -37,6 +37,13 @@ async function bootstrap() {
   //   }),
   // );
 
+  console.log(
+    'testing environment',
+    process.env.NODE_ENV,
+    process.env.TEST,
+    'derp',
+  );
+
   app.useLogger(app.get(Logger));
 
   app.use(bodyParser.json({ limit: '50mb' }));
