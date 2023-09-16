@@ -20,7 +20,7 @@ pipelines:
                 USER: $SSH_USER
                 SERVER: $SSH_SERVER
                 REMOTE_PATH: '/var/www/sparx-api/'
-                LOCAL_PATH: '.env docker-compose.prod.yml .env.prod'
+                LOCAL_PATH: 'docker-compose.prod.yml .env.prod'
 
       - step:
           name: Update .env on server
