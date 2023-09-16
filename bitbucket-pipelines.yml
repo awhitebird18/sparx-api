@@ -31,8 +31,8 @@ pipelines:
                 SERVER: $SSH_SERVER
                 COMMAND: |
                   sh -c '
-                  sed -i "s|DOCKER_HUB_USERNAME=.*|DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME|" /var/www/sparx-api/.env
-                  sed -i "s|TAG=.*|TAG=$BITBUCKET_COMMIT|" /var/www/sparx-api/.env
+                  sed -i "s|DOCKER_HUB_USERNAME=.*|DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME|" /var/www/sparx-api/.env.prod
+                  sed -i "s|TAG=.*|TAG=$BITBUCKET_COMMIT|" /var/www/sparx-api/.env.prod
                   '
 
       - step:
