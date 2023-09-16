@@ -3,7 +3,7 @@ version: '3.9'
 services:
   app:
     env_file:
-      - .env.prod
+      - .env
     image: $DOCKER_HUB_USERNAME/sparx:$TAG
     build:
       context: .
