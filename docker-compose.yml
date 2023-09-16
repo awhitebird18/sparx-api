@@ -9,7 +9,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - NODE_ENV=production
+        - NODE_ENV=development
     environment:
       DB_TYPE: postgres
       PG_USER: ${PG_USER}
@@ -17,7 +17,7 @@ services:
       PG_DB: ${PG_DB}
       PG_PORT: ${PG_PORT}
       PG_HOST: db
-      NODE_ENV: production
+      NODE_ENV: development
     ports:
       - '3000:3000'
     depends_on:

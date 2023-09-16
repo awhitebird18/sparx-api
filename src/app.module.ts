@@ -33,7 +33,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 @Module({
   imports: [
     LoggerModule.forRoot(pinoConfig),
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }),
     MailerModule.forRootAsync({
       useFactory: () => ({
         transport: Mailgun({
