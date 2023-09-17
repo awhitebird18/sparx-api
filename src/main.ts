@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
-// import { SpelunkerModule } from 'nestjs-spelunker';
 import { AppModule } from './app.module';
 import { readFileSync } from 'fs';
 import { Logger } from 'nestjs-pino';
@@ -19,23 +18,6 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create(AppModule, appOptions);
-
-  // const tree = SpelunkerModule.explore(app);
-  // const root = SpelunkerModule.graph(tree);
-  // const edges = SpelunkerModule.findGraphEdges(root);
-  // const mermaidEdges = edges.map(
-  //   ({ from, to }) => `  ${from.module.name}-->${to.module.name}`,
-  // );
-  // console.info(mermaidEdges.join('\n'));
-
-  // app.useGlobalPipes(
-  //   new ValidationPipe({
-  //     whitelist: true,
-  //     forbidNonWhitelisted: true,
-  //     transform: true,
-  //     validationError: { target: false },
-  //   }),
-  // );
 
   app.useLogger(app.get(Logger));
 
