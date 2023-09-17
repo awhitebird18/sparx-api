@@ -184,7 +184,7 @@ export class UsersService {
     const updatedUser = await this.usersRepository.save(user);
 
     // Send updated user over socket
-    this.events.emit('websocket', 'updateUser', updatedUser);
+    this.events.emit('websocket-event', 'updateUser', updatedUser);
 
     return updatedUser;
   }
@@ -210,7 +210,7 @@ export class UsersService {
     const updatedUser = await this.usersRepository.save(user);
 
     // Send updated user over socket
-    this.events.emit('websocket', 'updateUser', updatedUser);
+    this.events.emit('websocket-event', 'updateUser', updatedUser);
 
     return updatedUser;
   }

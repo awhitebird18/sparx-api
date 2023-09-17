@@ -10,4 +10,7 @@ export enum MessageType {
   ReorderSections = 'REORDER_SECTIONS',
   UpdateMessage = 'UPDATE_MESSAGE',
   RemoveMessage = 'REMOVE_MESSAGE',
+  AddUserStatus = 'ADD_USER_STATUS',
+  UpdateUserStatus = 'UPDATE_USER_STATUS',
+  RemoveUserStatus = 'REMOVE_USER_STATUS',
 }
