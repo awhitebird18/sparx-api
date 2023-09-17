@@ -2,30 +2,42 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserStatusDto } from './dto/create-user-status.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { UserStatusesRepository } from './user-statuses.repository';
-import { UserStatusDto } from './dto/user-status.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { UserStatus } from './entities/user-status.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class UserStatusesService {
-  constructor(private userStatusesRepository: UserStatusesRepository) {}
+  constructor(
+    private userStatusesRepository: UserStatusesRepository,
+    private events: EventEmitter2,
+  ) {}
 
-  createUserStatus(
-    userId: number,
+  async createUserStatus(
+    user: User,
     createUserStatusDto: CreateUserStatusDto,
-  ): Promise<UserStatusDto> {
-    return this.userStatusesRepository.createUserStatus(
-      userId,
+  ): Promise<UserStatus> {
+    const userStatus = await this.userStatusesRepository.createUserStatus(
+      user.id,
       createUserStatusDto,
     );
+    this.events.emit('websocket-event', 'updateUserStatus', {
+      userStatus,
+      userId: user.uuid,
+    });
+
+    return userStatus;
   }
 
-  findAllUserStatuses(userId: number): Promise<UserStatusDto[]> {
+  findAllUserStatuses(userId: number): Promise<UserStatus[]> {
     return this.userStatusesRepository.findAllUserStatuses(userId);
   }
 
   async updateUserStatus(
     userStatusUuid: string,
     updateUserStatusDto: UpdateUserStatusDto,
-  ): Promise<UserStatusDto> {
+    userId: string,
+  ): Promise<UserStatus> {
     // Find existing userStatus
     const userStatusFound =
       await this.userStatusesRepository.findOneUserStatusByUuid(userStatusUuid);
@@ -33,13 +45,27 @@ export class UserStatusesService {
     // Update userStatus
     Object.assign(userStatusFound, updateUserStatusDto);
 
-    return await this.userStatusesRepository.save(userStatusFound);
+    const updatedUserStatus = await this.userStatusesRepository.save(
+      userStatusFound,
+    );
+
+    this.events.emit('websocket-event', 'updateUserStatus', {
+      userStatus: updatedUserStatus,
+      userId,
+    });
+
+    return updatedUserStatus;
   }
 
-  async removeUserStatus(uuid: string): Promise<void> {
+  async removeUserStatus(uuid: string, user: User): Promise<void> {
     const updateResult = await this.userStatusesRepository.softDelete({ uuid });
 
     if (updateResult.affected === 0)
       throw new NotFoundException('Unable to remove user status');
+
+    this.events.emit('websocket-event', 'updateUserStatus', {
+      userStatus: {},
+      userId: user.uuid,
+    });
   }
 }

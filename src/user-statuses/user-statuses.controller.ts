@@ -22,10 +22,7 @@ export class UserStatusesController {
     @GetUser() user: User,
     @Body() createUserStatusDto: CreateUserStatusDto,
   ) {
-    return this.userStatusesService.createUserStatus(
-      user.id,
-      createUserStatusDto,
-    );
+    return this.userStatusesService.createUserStatus(user, createUserStatusDto);
   }
 
   @Get()
@@ -36,13 +33,18 @@ export class UserStatusesController {
   @Patch(':uuid')
   updateUserStatus(
     @Param('uuid') uuid: string,
+    @GetUser() user: User,
     @Body() updateUserStatusDto: UpdateUserStatusDto,
   ) {
-    return this.userStatusesService.updateUserStatus(uuid, updateUserStatusDto);
+    return this.userStatusesService.updateUserStatus(
+      uuid,
+      updateUserStatusDto,
+      user.uuid,
+    );
   }
 
   @Delete(':uuid')
-  removeUserStatus(@Param('uuid') uuid: string) {
-    return this.userStatusesService.removeUserStatus(uuid);
+  removeUserStatus(@Param('uuid') uuid: string, @GetUser() user: User) {
+    return this.userStatusesService.removeUserStatus(uuid, user);
   }
 }
