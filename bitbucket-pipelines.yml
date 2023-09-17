@@ -20,7 +20,7 @@ pipelines:
                 USER: $SSH_USER
                 SERVER: $SSH_SERVER
                 REMOTE_PATH: '/var/www/sparx-api/'
-                LOCAL_PATH: '.env docker-compose.yml .env.prod'
+                LOCAL_PATH: 'docker-compose.prod.yml .env.prod'
 
       - step:
           name: Update .env on server
@@ -31,8 +31,8 @@ pipelines:
                 SERVER: $SSH_SERVER
                 COMMAND: |
                   sh -c '
-                  sed -i "s|DOCKER_HUB_USERNAME=.*|DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME|" /var/www/sparx-api/.env
-                  sed -i "s|TAG=.*|TAG=$BITBUCKET_COMMIT|" /var/www/sparx-api/.env
+                  echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" >> /var/www/sparx-api/.env.prod
+                  echo "TAG=$BITBUCKET_COMMIT" >> /var/www/sparx-api/.env.prod
                   '
 
       - step:
@@ -45,8 +45,8 @@ pipelines:
                 COMMAND: |
                   sh -c '
                   cd /var/www/sparx-api/ && \
-                  (docker-compose down || true) && \
-                  docker-compose pull && \
-                  docker-compose up -d && \
+                  (docker-compose -f docker-compose.prod.yml down || true) && \
+                  docker-compose -f docker-compose.prod.yml pull && \
+                  docker-compose -f docker-compose.prod.yml up -d && \
                   docker image prune -f
                   '
