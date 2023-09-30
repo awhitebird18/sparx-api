@@ -1,21 +1,16 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { readFileSync } from 'fs';
 import { Logger } from 'nestjs-pino';
+import * as Sentry from '@sentry/node';
+import { SentryFilter } from './common/filters/sentry.filter';
 
 async function bootstrap() {
   const isProduction = process.env.NODE_ENV === 'production';
   const appOptions = { bufferLogs: true };
-
-  if (isProduction) {
-    appOptions['httpsOptions'] = {
-      key: readFileSync('/etc/letsencrypt/live/api.spa-rx.ca/privkey.pem'),
-      cert: readFileSync('/etc/letsencrypt/live/api.spa-rx.ca/fullchain.pem'),
-    };
-  }
 
   const app = await NestFactory.create(AppModule, appOptions);
 
@@ -24,6 +19,21 @@ async function bootstrap() {
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
   app.use(cookieParser());
+
+  if (isProduction) {
+    appOptions['httpsOptions'] = {
+      key: readFileSync('/etc/letsencrypt/live/api.spa-rx.ca/privkey.pem'),
+      cert: readFileSync('/etc/letsencrypt/live/api.spa-rx.ca/fullchain.pem'),
+    };
+
+    Sentry.init({
+      dsn: process.env.SENTRY_DNS,
+    });
+
+    const { httpAdapter } = app.get(HttpAdapterHost);
+
+    app.useGlobalFilters(new SentryFilter(httpAdapter));
+  }
 
   // Create a Swagger document
   const config = new DocumentBuilder()
