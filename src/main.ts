@@ -25,15 +25,14 @@ async function bootstrap() {
       key: readFileSync('/etc/letsencrypt/live/api.spa-rx.ca/privkey.pem'),
       cert: readFileSync('/etc/letsencrypt/live/api.spa-rx.ca/fullchain.pem'),
     };
-
-    Sentry.init({
-      dsn: process.env.SENTRY_DNS,
-    });
-
-    const { httpAdapter } = app.get(HttpAdapterHost);
-
-    app.useGlobalFilters(new SentryFilter(httpAdapter));
   }
+
+  // Global error handling
+  Sentry.init({
+    dsn: process.env.SENTRY_DNS,
+  });
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new SentryFilter(httpAdapter));
 
   // Create a Swagger document
   const config = new DocumentBuilder()

@@ -22,7 +22,7 @@ export class MessagesService {
   constructor(
     private messageRepository: MessagesRepository,
     private reactionRepository: ReactionRepository,
-    private channelsRepository: ChannelsRepository,
+    private channelRepository: ChannelsRepository,
     private events: EventEmitter2,
   ) {}
 
@@ -46,7 +46,7 @@ export class MessagesService {
 
   async create(createMessageDto: CreateMessageDto, user: User) {
     // Find channel
-    const channel = await this.channelsRepository.findOneOrFail({
+    const channel = await this.channelRepository.findOneOrFail({
       where: {
         uuid: createMessageDto.channelId,
       },
@@ -86,6 +86,11 @@ export class MessagesService {
     channelId: string,
     page: number,
   ): Promise<MessageDto[]> {
+    // Check if the channel exists
+    await this.channelRepository.findOneByOrFail({
+      uuid: channelId,
+    });
+
     const messages = await this.messageRepository.findChannelMessages(
       channelId,
       page,
