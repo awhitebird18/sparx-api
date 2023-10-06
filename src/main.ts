@@ -60,7 +60,7 @@ async function bootstrap() {
     origin: [
       process.env.CLIENT_BASE_URL,
       'https://awhitebird.ca',
-      'http://localhost:5173/',
+      'http://localhost:5173',
     ],
     credentials: true,
   });
