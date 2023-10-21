@@ -5,8 +5,8 @@ pipelines:
     - step:
         name: Run Tests
         script:
-          - npm install --force
-          - ls -la node_modules/*
+          - export NODE_ENV=development
+          - npm install --no-production
           - npm test
 
   branches:
