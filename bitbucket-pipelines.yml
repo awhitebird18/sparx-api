@@ -17,7 +17,7 @@ pipelines:
             - docker
           script:
             - export TAG=$BITBUCKET_COMMIT
-            - export IMAGE_NAME=$DOCKER_HUB_USERNAME/sparx:$TAG
+            - export IMAGE_NAME=sparx/production:$TAG
             - docker build --no-cache --build-arg NODE_ENV=production -t $IMAGE_NAME .
             - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
             - docker push $IMAGE_NAME
@@ -30,7 +30,7 @@ pipelines:
                 USER: $SSH_USER
                 SERVER: $SSH_SERVER
                 REMOTE_PATH: '/var/www/sparx-api/'
-                LOCAL_PATH: 'docker-compose.prod.yml .env.prod'
+                LOCAL_PATH: 'docker-compose.prod.yml'
 
       - step:
           name: Update .env on server
@@ -41,10 +41,7 @@ pipelines:
                 SERVER: $SSH_SERVER
                 COMMAND: |
                   sh -c '
-                  echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" >> /var/www/sparx-api/.env.prod
                   echo "TAG=$BITBUCKET_COMMIT" >> /var/www/sparx-api/.env.prod
-                  echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" >> /var/www/sparx-api/.env
-                  echo "TAG=$BITBUCKET_COMMIT" >> /var/www/sparx-api/.env
                   '
 
       - step:
