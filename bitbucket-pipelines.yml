@@ -1,4 +1,11 @@
 pipelines:
+  default:
+    - step:
+        name: Run Tests
+        script:
+          - npm install
+          - npm test
+
   branches:
     master:
       - step:
