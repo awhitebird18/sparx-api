@@ -3,7 +3,7 @@ pipelines:
     - step:
         name: Run Tests
         script:
-          - npm install
+          - npm install --verbose
           - npm test
 
   branches:
