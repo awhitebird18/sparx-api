@@ -6,6 +6,7 @@ pipelines:
         name: Run Tests
         script:
           - npm install --force
+          - ls -la node_modules/*
           - npm test
 
   branches:
