@@ -5,7 +5,7 @@ pipelines:
     - step:
         name: Run Tests
         script:
-          - npm install --only=dev
+          - npm install --force
           - npm test
 
   branches:
