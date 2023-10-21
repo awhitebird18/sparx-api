@@ -4,7 +4,7 @@ services:
   app:
     env_file:
       - .env
-    image: sparx/production:$TAG
+    image: $DOCKER_HUB_USERNAME/sparx:$TAG
     build:
       context: .
       dockerfile: Dockerfile
