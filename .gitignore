@@ -6,8 +6,11 @@
 # Node artifact files
 node_modules/
 dist/
-
 pgdata/
+coverage/
+logs/
+
+.env*
 
 # Compiled Java class files
 *.class
