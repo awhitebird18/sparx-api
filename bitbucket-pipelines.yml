@@ -1,3 +1,5 @@
+image: node:18
+
 pipelines:
   default:
     - step:
