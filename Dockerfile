@@ -7,7 +7,6 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-COPY /.env /app/.env
 RUN npm run build
 CMD [ "npm", "run", "start:dev" ]
 
@@ -17,9 +16,6 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --only=production
 COPY --from=development /app/dist ./dist
-COPY /.env.prod /app/.env.prod
-COPY /cert.pem /app/cert.pem
-COPY /key.pem /app/key.pem
 CMD ["npm", "run", "start:prod"]
 
 # Use the argument to switch between the two
