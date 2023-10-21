@@ -5,3 +5,4 @@ coverage
 logs
 scripts
 .vscode
+.env*

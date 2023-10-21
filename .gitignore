@@ -10,6 +10,8 @@ pgdata/
 coverage/
 logs/
 
+.env*
+
 # Compiled Java class files
 *.class
 
