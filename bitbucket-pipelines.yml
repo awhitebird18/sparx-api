@@ -12,7 +12,22 @@ pipelines:
   branches:
     master:
       - step:
-          name: Deploy to Registry
+          name: Transfer DB docker-compose to droplet
+          script:
+            - pipe: atlassian/scp-deploy:0.3.11
+              variables:
+                USER: $SSH_USER
+                SERVER: $SSH_SERVER
+                REMOTE_PATH: '/var/www/sparx-api/'
+                LOCAL_PATH: 'docker-compose.db.yml'
+
+      - step:
+          name: Deploy DB
+          script:
+            - ssh $SSH_USER@$SSH_SERVER 'cd /var/www/sparx-api/ && docker-compose -f docker-compose.db.yml up -d'
+
+      - step:
+          name: Deploy App to Registry
           services:
             - docker
           script:
