@@ -32,7 +32,7 @@ pipelines:
             - docker
           script:
             - export TAG=$BITBUCKET_COMMIT
-            - export IMAGE_NAME=sparx/production:$TAG
+            - export IMAGE_NAME=$DOCKER_HUB_USERNAME/sparx:$TAG
             - docker build --no-cache --build-arg NODE_ENV=production -t $IMAGE_NAME .
             - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
             - docker push $IMAGE_NAME
@@ -56,6 +56,7 @@ pipelines:
                 SERVER: $SSH_SERVER
                 COMMAND: |
                   sh -c '
+                  echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" >> /var/www/sparx-api/.env.prod
                   echo "TAG=$BITBUCKET_COMMIT" >> /var/www/sparx-api/.env.prod
                   '
 
