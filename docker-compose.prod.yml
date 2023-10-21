@@ -20,8 +20,6 @@ services:
       NODE_ENV: production
     ports:
       - '3000:3000'
-    depends_on:
-      - db
     volumes:
       - /var/log:/var/log
       - /etc/letsencrypt:/etc/letsencrypt
