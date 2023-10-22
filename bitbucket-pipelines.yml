@@ -56,8 +56,8 @@ pipelines:
                 SERVER: $SSH_SERVER
                 COMMAND: |
                   sh -c '
-                  echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" >> /var/www/sparx-api/.env.prod
-                  echo "TAG=$BITBUCKET_COMMIT" >> /var/www/sparx-api/.env.prod
+                  echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" >> /var/www/sparx-api/.env
+                  echo "TAG=$BITBUCKET_COMMIT" >> /var/www/sparx-api/.env
                   '
 
       - step:
