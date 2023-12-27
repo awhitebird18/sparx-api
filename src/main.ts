@@ -33,6 +33,8 @@ async function bootstrap() {
   const { httpAdapter } = app.get(HttpAdapterHost);
   app.useGlobalFilters(new SentryFilter(httpAdapter));
 
+  console.log('test');
+
   // Create a Swagger document
   const config = new DocumentBuilder()
     .setTitle('Your API Title')
