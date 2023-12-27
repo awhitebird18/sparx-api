@@ -10,8 +10,18 @@ services:
       dockerfile: Dockerfile
       args:
         - NODE_ENV=production
+    environment:
+      DB_TYPE: postgres
+      PG_USER: ${PG_USER}
+      PG_PASSWORD: ${PG_PASSWORD}
+      PG_DB: ${PG_DB}
+      PG_PORT: ${PG_PORT}
+      PG_HOST: db
+      NODE_ENV: production
     ports:
       - '3000:3000'
+    depends_on:
+      - db
     volumes:
       - /var/log:/var/log
       - /etc/letsencrypt:/etc/letsencrypt
