@@ -15,4 +15,3 @@ README.md
 docker-compose.prod.yml
 docker-compose.yml
 bitbucket-pipelines.yml
-Dockerfile
