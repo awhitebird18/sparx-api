@@ -27,6 +27,7 @@ logs/
 # Maven
 target/
 dist/
+coverage/
 
 # JetBrains IDE
 .idea/
