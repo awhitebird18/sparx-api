@@ -1,8 +1,33 @@
+image: node:18
+
 pipelines:
+  default:
+    - step:
+        name: Run Tests
+        script:
+          - export NODE_ENV=development
+          - npm install --no-production
+          - npm test
+
   branches:
     master:
       - step:
-          name: Deploy to Registry
+          name: Transfer DB docker-compose to droplet
+          script:
+            - pipe: atlassian/scp-deploy:0.3.11
+              variables:
+                USER: $SSH_USER
+                SERVER: $SSH_SERVER
+                REMOTE_PATH: '/var/www/sparx-api/'
+                LOCAL_PATH: 'docker-compose.db.yml'
+
+      - step:
+          name: Deploy DB
+          script:
+            - ssh $SSH_USER@$SSH_SERVER 'cd /var/www/sparx-api/ && docker-compose -f docker-compose.db.yml up -d'
+
+      - step:
+          name: Deploy App to Registry
           services:
             - docker
           script:
@@ -20,7 +45,7 @@ pipelines:
                 USER: $SSH_USER
                 SERVER: $SSH_SERVER
                 REMOTE_PATH: '/var/www/sparx-api/'
-                LOCAL_PATH: 'docker-compose.prod.yml .env.prod'
+                LOCAL_PATH: 'docker-compose.prod.yml'
 
       - step:
           name: Update .env on server
@@ -31,8 +56,6 @@ pipelines:
                 SERVER: $SSH_SERVER
                 COMMAND: |
                   sh -c '
-                  echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" >> /var/www/sparx-api/.env.prod
-                  echo "TAG=$BITBUCKET_COMMIT" >> /var/www/sparx-api/.env.prod
                   echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" >> /var/www/sparx-api/.env
                   echo "TAG=$BITBUCKET_COMMIT" >> /var/www/sparx-api/.env
                   '

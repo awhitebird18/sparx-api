@@ -16,9 +16,12 @@
     "start:dev": "nest start --tsc --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint \"{src}/**/*.ts\" --fix",
     "docker-rebuild": "bash ./scripts/rebuild.sh",
-    "docker": "docker-compose up"
+    "docker": "docker-compose up",
+    "test": "node_modules/.bin/jest",
+    "test:watch": "node_modules/.bin/jest --watch",
+    "test:cov": "node_modules/.bin/jest --coverage"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^1.9.1",
@@ -72,6 +75,7 @@
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.3.1",
+    "@types/nodemailer-mailgun-transport": "^1.4.5",
     "@types/passport-jwt": "^3.0.9",
     "@types/passport-local": "^1.0.35",
     "@types/supertest": "^2.0.12",

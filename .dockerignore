@@ -1,5 +1,16 @@
 node_modules
 dist
 .git
+.gitignore
 coverage
 logs
+scripts
+.vscode
+.env
+.env.prod
+README.md
+.eslintrc.js
+
+docker-compose.prod.yml
+docker-compose.yml
+bitbucket-pipelines.yml
