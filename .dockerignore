@@ -8,7 +8,6 @@ scripts
 .vscode
 .env
 .env.prod
-nest-cli.json
 README.md
 .eslintrc.js
 
