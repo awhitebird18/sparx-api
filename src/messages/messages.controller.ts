@@ -18,7 +18,6 @@ import { User } from 'src/users/entities/user.entity';
 import { MessageDto } from './dto/message.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
-import { Public } from 'src/common/decorators/is-public';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Messages')
@@ -26,7 +25,6 @@ import { Public } from 'src/common/decorators/is-public';
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
-  @Public()
   @Post()
   create(
     @GetUser() currentUser: User,

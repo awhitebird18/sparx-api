@@ -10,7 +10,7 @@ import { SentryFilter } from './common/filters/sentry.filter';
 
 async function bootstrap() {
   const isProduction = process.env.NODE_ENV === 'production';
-  const appOptions = { bufferLogs: true };
+  const appOptions = {};
   if (isProduction) {
     appOptions['httpsOptions'] = {
       key: readFileSync('/etc/letsencrypt/live/api.spa-rx.ca/privkey.pem'),
@@ -20,7 +20,7 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule, appOptions);
 
-  app.useLogger(app.get(Logger));
+  // app.useLogger(app.get(Logger));
 
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
@@ -32,8 +32,6 @@ async function bootstrap() {
   });
   const { httpAdapter } = app.get(HttpAdapterHost);
   app.useGlobalFilters(new SentryFilter(httpAdapter));
-
-  console.log('test');
 
   // Create a Swagger document
   const config = new DocumentBuilder()
