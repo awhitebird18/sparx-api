@@ -9,7 +9,7 @@ import {
   IsBoolean,
   IsEnum,
 } from 'class-validator';
-import { UserRoles } from 'src/users/enums/roles.enum';
+import { UserRole } from 'src/users/enums/roles.enum';
 // import { IsPasswordMatching } from '../validators/is-password-matching';
 
 export class RegisterDto {
@@ -26,6 +26,9 @@ export class RegisterDto {
   @IsNotEmpty({ message: 'Last name is required.' })
   @MaxLength(50, { message: 'Last name is too long.' })
   lastName: string;
+
+  @IsString()
+  workspaceId?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -48,7 +51,7 @@ export class RegisterDto {
   @IsOptional()
   profileImage?: string;
 
-  @IsEnum(UserRoles)
+  @IsEnum(UserRole)
   @IsOptional()
-  role?: UserRoles;
+  role?: UserRole;
 }

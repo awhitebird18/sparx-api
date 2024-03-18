@@ -8,12 +8,14 @@ import { Channel } from './entities/channel.entity';
 
 import { WebsocketsModule } from 'src/websockets/websockets.module';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
+import { WorkspacesModule } from 'src/workspaces/workspaces.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Channel]),
     WebsocketsModule,
     CloudinaryModule,
+    WorkspacesModule,
   ],
   controllers: [ChannelsController],
   providers: [ChannelsService, ChannelsRepository],

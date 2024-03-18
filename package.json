@@ -5,7 +5,7 @@
   "author": "",
   "engines": {
     "node": "18.x",
-    "npm": "9.x"
+    "npm": "10.x"
   },
   "private": true,
   "license": "UNLICENSED",
@@ -13,7 +13,8 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start -b swc --type-check",
-    "start:dev": "nest start --tsc --watch",
+    "seed": "ts-node -r tsconfig-paths/register ./src/seed",
+    "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src}/**/*.ts\" --fix",
@@ -66,6 +67,7 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
+    "@faker-js/faker": "^8.4.1",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
@@ -91,7 +93,7 @@
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.3",
-    "ts-node": "^10.9.1",
+    "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.1.3"
   },

@@ -2,9 +2,10 @@ version: '3.9'
 
 services:
   app:
+    container_name: api
     env_file:
       - .env
-    image: $DOCKER_HUB_USERNAME/sparx:$TAG
+    image: $DOCKER_HUB_USERNAME/navinotes:$TAG
     build:
       context: .
       dockerfile: Dockerfile
@@ -23,6 +24,8 @@ services:
     depends_on:
       - db
     volumes:
+      - .:/app
+      - /app/node_modules
       - /var/log:/var/log
       - /etc/letsencrypt:/etc/letsencrypt
 

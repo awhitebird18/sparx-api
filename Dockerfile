@@ -3,6 +3,7 @@ ARG NODE_ENV=development
 
 # Set default environment
 FROM node:18 as development
+ENV TZ=America/New_York
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
@@ -12,6 +13,7 @@ CMD [ "npm", "run", "start:dev" ]
 
 # Use the production base image
 FROM node:18-alpine as production
+ENV TZ=America/New_York
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --only=production

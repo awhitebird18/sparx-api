@@ -19,7 +19,7 @@ export class UsersRepository extends Repository<User> {
     return this.findOne({ where: { uuid } });
   }
 
-  findWorkspaceUsers(): Promise<User[]> {
+  findWorkspaceUsers(workspaceId: string): Promise<User[]> {
     return this.createQueryBuilder('user')
       .leftJoinAndSelect(
         'user.customStatuses',
@@ -27,6 +27,9 @@ export class UsersRepository extends Repository<User> {
         'customStatus.isActive = :isActive',
         { isActive: true },
       )
+      .leftJoinAndSelect('user.userWorkspaces', 'userWorkspaces')
+      .leftJoinAndSelect('userWorkspaces.workspace', 'workspace')
+      .where('workspace.uuid = :workspaceId', { workspaceId })
       .getMany();
   }
 

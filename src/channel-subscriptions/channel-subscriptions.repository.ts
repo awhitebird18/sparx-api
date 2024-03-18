@@ -2,6 +2,8 @@ import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 
 import { ChannelSubscription } from './entity/channel-subscription.entity';
+import { User } from 'src/users/entities/user.entity';
+import { Channel } from 'src/channels/entities/channel.entity';
 
 @Injectable()
 export class ChannelSubscriptionsRepository extends Repository<ChannelSubscription> {
@@ -22,7 +24,7 @@ export class ChannelSubscriptionsRepository extends Repository<ChannelSubscripti
   findByUserUuid(userUuid: string): Promise<ChannelSubscription[]> {
     return this.createQueryBuilder('channelSubscription')
       .leftJoinAndSelect('channelSubscription.section', 'section')
-      .leftJoinAndSelect('channelSubscription.channel', 'channel')
+      .innerJoinAndSelect('channelSubscription.channel', 'channel')
       .leftJoinAndSelect('channelSubscription.user', 'user')
       .select(['channelSubscription', 'section.uuid', 'channel'])
       .where('user.uuid = :uuid', { uuid: userUuid })
@@ -37,6 +39,13 @@ export class ChannelSubscriptionsRepository extends Repository<ChannelSubscripti
       where: { user: { id: userId }, isSubscribed: true },
       relations: ['channel', 'section'],
     });
+  }
+
+  updateUserRole(user: User, isAdmin: boolean, channel: Channel) {
+    return this.update(
+      { user: { id: user.id }, channel: { id: channel.id } },
+      { isAdmin },
+    );
   }
 
   getChannelUsersCount(channelId: number): Promise<number> {

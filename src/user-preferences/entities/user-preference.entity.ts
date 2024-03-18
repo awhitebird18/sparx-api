@@ -23,6 +23,6 @@ export class UserPreferences extends BaseEntity {
   user: User;
 
   @Exclude()
-  @Column()
+  @Column({ nullable: true })
   userId: number;
 }

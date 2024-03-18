@@ -33,18 +33,44 @@ export class ChannelsController {
   async createChannel(
     @Body() createChannelDto: CreateChannelDto,
   ): Promise<ChannelDto> {
-    return this.channelsService.createChannel(createChannelDto);
+    return this.channelsService.createChannel(
+      createChannelDto,
+      createChannelDto.workspaceId,
+    );
   }
 
-  @Get()
+  // @Get()
+  // findWorkspaceChannels(
+  //   @Query('page') page: number,
+  //   @Query('pageSize') pageSize: number,
+  // ): Promise<{
+  //   channels: ChannelDto[];
+  //   channelUserCounts: ChannelUserCount[];
+  // }> {
+  //   return this.channelsService.findWorkspaceChannels(page, pageSize);
+  // }
+  @Get('workspaceId')
   findWorkspaceChannels(
-    @Query('page') page: number,
-    @Query('pageSize') pageSize: number,
-  ): Promise<{
-    channels: ChannelDto[];
-    channelUserCounts: ChannelUserCount[];
-  }> {
-    return this.channelsService.findWorkspaceChannels(page, pageSize);
+    @GetUser() currentUser: User,
+    @Param('workspaceId') workspaceId: string,
+  ): Promise<
+    | any
+    | {
+        channels: ChannelDto[];
+        channelUserCounts: ChannelUserCount[];
+      }
+  > {
+    return this.channelsService.findWorkspaceChannels(
+      currentUser.id,
+      workspaceId,
+    );
+  }
+
+  @Get('user-count/:workspaceId')
+  findWorkspaceUserCounts(
+    @Param('workspaceId') workspaceId: string,
+  ): Promise<ChannelUserCount[]> {
+    return this.channelsService.findChannelUserCounts(workspaceId);
   }
 
   @Get('user-channels')
@@ -68,21 +94,33 @@ export class ChannelsController {
     return this.channelsService.findChannelUserIds(channelId);
   }
 
+  @Get(':channelId/channel-users')
+  findChannelUsers(@Param('channelId') channelId: string) {
+    return this.channelsService.findChannelUsers(channelId);
+  }
+
   @Patch(':channelUuid')
   updateChannel(
     @Param('channelUuid', new ParseUUIDPipe({ version: '4' }))
     channelUuid: string,
-    @Body() updateChannelDto: UpdateChannelDto,
+    @Body()
+    data: { updateChannelDto: UpdateChannelDto; workspaceId: string },
   ): Promise<ChannelDto> {
-    return this.channelsService.updateChannel(channelUuid, updateChannelDto);
+    return this.channelsService.updateChannel(
+      channelUuid,
+      data.updateChannelDto,
+      data.workspaceId,
+    );
   }
 
-  @Delete(':channelUuid')
+  @Delete(':channelId/:workspaceId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(
-    @Param('channelUuid', new ParseUUIDPipe({ version: '4' }))
-    channelUuid: string,
+  remove(
+    @Param('channelId', new ParseUUIDPipe({ version: '4' }))
+    channelId: string,
+    @Param('workspaceId', new ParseUUIDPipe({ version: '4' }))
+    workspaceId: string,
   ) {
-    return await this.channelsService.removeChannel(channelUuid);
+    return this.channelsService.removeChannel(channelId, workspaceId);
   }
 }

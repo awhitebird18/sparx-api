@@ -40,6 +40,9 @@ import { ChangePasswordDto } from './dto/change-password';
 import { UserStatusesService } from 'src/user-statuses/user-statuses.service';
 import { UserStatusDto } from 'src/user-statuses/dto/user-status.dto';
 import { Logger } from 'nestjs-pino';
+import { WorkspacesService } from 'src/workspaces/workspaces.service';
+import { Workspace } from 'src/workspaces/entities/workspace.entity';
+import { UserWorkspacesService } from 'src/user-workspaces/user-workspaces.service';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -52,6 +55,8 @@ export class AuthController {
     private channelSubscriptionsService: ChannelSubscriptionsService,
     private userPreferencesService: UserPreferencesService,
     private userStatusesService: UserStatusesService,
+    private workspaceService: WorkspacesService,
+    private userWorkspaceService: UserWorkspacesService,
     private readonly logger: Logger,
   ) {}
 
@@ -83,6 +88,7 @@ export class AuthController {
   @Post('refresh')
   async refreshToken(@Request() req, @Res() res: any) {
     const response = await this.authService.refresh(req.user, res);
+
     return res.send(response);
   }
 
@@ -109,15 +115,25 @@ export class AuthController {
   @Get('client-boot')
   async clientBoot(@GetUser() currentUser: User): Promise<{
     currentUser: UserDto;
-    users: UserDto[];
-    userPreferences: UserPreferencesDto;
-    sections: SectionDto[];
-    channels: ChannelDto[];
-    channelUnreads: ChannelUnreads[];
-    userStatuses: UserStatusDto[];
+    users?: UserDto[];
+    userPreferences?: UserPreferencesDto;
+    sections?: SectionDto[];
+    channels?: ChannelDto[];
+    channelUnreads?: ChannelUnreads[];
+    userStatuses?: UserStatusDto[];
+    workspaces?: Workspace[];
+    userWorkspaces?: any[];
   }> {
-    this.logger.debug(currentUser, 'Logging!');
-    const usersPromise = this.usersService.findWorkspaceUsers();
+    const lastViewedWorkspace =
+      await this.userWorkspaceService.findLastViewedWorkspace(currentUser.uuid);
+
+    if (!lastViewedWorkspace) {
+      return { currentUser };
+    }
+
+    const usersPromise = this.usersService.findWorkspaceUsers(
+      lastViewedWorkspace.uuid,
+    );
 
     const userPreferencesPromise =
       this.userPreferencesService.findUserPreferences(currentUser.id);
@@ -126,7 +142,10 @@ export class AuthController {
       currentUser.id,
     );
 
-    const channelsPromise = this.channelsService.findUserChannels(currentUser);
+    const channelsPromise = this.channelsService.findWorkspaceChannels(
+      currentUser.id,
+      lastViewedWorkspace.uuid,
+    );
 
     const channelUnreadsPromise =
       this.channelSubscriptionsService.getUserUnreadMessagesCount(
@@ -137,6 +156,14 @@ export class AuthController {
       currentUser.id,
     );
 
+    const workspacesPromise = this.workspaceService.findUserWorkspaces(
+      currentUser.id,
+    );
+
+    const userWorkspacesPromise = this.userWorkspaceService.findUserWorkspaces(
+      currentUser.uuid,
+    );
+
     const [
       users,
       userPreferences,
@@ -144,6 +171,8 @@ export class AuthController {
       channels,
       channelUnreads,
       userStatuses,
+      workspaces,
+      userWorkspaces,
     ] = await Promise.all([
       usersPromise,
       userPreferencesPromise,
@@ -151,9 +180,9 @@ export class AuthController {
       channelsPromise,
       channelUnreadsPromise,
       userStatusesPromise,
+      workspacesPromise,
+      userWorkspacesPromise,
     ]);
-
-    this.logger.debug('Logging 2!');
 
     return {
       currentUser,
@@ -163,6 +192,8 @@ export class AuthController {
       channels,
       channelUnreads,
       userStatuses,
+      workspaces,
+      userWorkspaces,
     };
   }
 

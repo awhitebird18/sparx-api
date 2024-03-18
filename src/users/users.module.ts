@@ -14,9 +14,15 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { jwtConstants } from 'src/auth/constants';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { CardTemplateModule } from 'src/card-template/card-template.module';
+import { CardFieldModule } from 'src/card-field/card-field.module';
+import { CardTypeModule } from 'src/card-type/card-type.module';
 
 @Module({
   imports: [
+    CardFieldModule,
+    CardTypeModule,
+    CardTemplateModule,
     TypeOrmModule.forFeature([User]),
     UserPreferencesModule,
     SectionsModule,

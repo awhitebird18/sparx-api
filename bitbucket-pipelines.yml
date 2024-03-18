@@ -18,13 +18,13 @@ pipelines:
               variables:
                 USER: $SSH_USER
                 SERVER: $SSH_SERVER
-                REMOTE_PATH: '/var/www/sparx-api/'
+                REMOTE_PATH: '/var/www/navinotes/'
                 LOCAL_PATH: 'docker-compose.db.yml'
 
       - step:
           name: Deploy DB
           script:
-            - ssh $SSH_USER@$SSH_SERVER 'cd /var/www/sparx-api/ && docker-compose -f docker-compose.db.yml up -d'
+            - ssh $SSH_USER@$SSH_SERVER 'cd /var/www/navinotes/ && docker-compose -f docker-compose.db.yml up -d'
 
       - step:
           name: Deploy App to Registry
@@ -32,7 +32,7 @@ pipelines:
             - docker
           script:
             - export TAG=$BITBUCKET_COMMIT
-            - export IMAGE_NAME=$DOCKER_HUB_USERNAME/sparx:$TAG
+            - export IMAGE_NAME=$DOCKER_HUB_USERNAME/navinotes:$TAG
             - docker build --no-cache --build-arg NODE_ENV=production -t $IMAGE_NAME .
             - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
             - docker push $IMAGE_NAME
@@ -44,7 +44,7 @@ pipelines:
               variables:
                 USER: $SSH_USER
                 SERVER: $SSH_SERVER
-                REMOTE_PATH: '/var/www/sparx-api/'
+                REMOTE_PATH: '/var/www/navinotes/'
                 LOCAL_PATH: 'docker-compose.prod.yml'
 
       - step:
@@ -56,8 +56,8 @@ pipelines:
                 SERVER: $SSH_SERVER
                 COMMAND: |
                   sh -c '
-                  echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" >> /var/www/sparx-api/.env
-                  echo "TAG=$BITBUCKET_COMMIT" >> /var/www/sparx-api/.env
+                  echo "DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME" >> /var/www/navinotes/.env
+                  echo "TAG=$BITBUCKET_COMMIT" >> /var/www/navinotes/.env
                   '
 
       - step:
@@ -69,7 +69,7 @@ pipelines:
                 SERVER: $SSH_SERVER
                 COMMAND: |
                   sh -c '
-                  cd /var/www/sparx-api/ && \
+                  cd /var/www/navinotes/ && \
                   (docker-compose -f docker-compose.prod.yml down || true) && \
                   docker-compose -f docker-compose.prod.yml pull && \
                   docker-compose -f docker-compose.prod.yml up -d && \

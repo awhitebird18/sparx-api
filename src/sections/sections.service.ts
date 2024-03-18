@@ -24,15 +24,15 @@ export class SectionsService {
   ) {}
 
   private readonly defaultSections = [
+    // {
+    //   name: 'Direct Messages',
+    //   type: ChannelType.DIRECT,
+    //   orderIndex: 0,
+    // },
     {
-      name: 'Direct Messages',
-      type: ChannelType.DIRECT,
-      orderIndex: 0,
-    },
-    {
-      name: 'Channels',
+      name: 'Favorites',
       type: ChannelType.CHANNEL,
-      orderIndex: 1,
+      orderIndex: 0,
     },
   ];
 

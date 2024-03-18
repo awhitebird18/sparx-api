@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Patch, Post } from '@nestjs/common';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 
 import { User } from 'src/users/entities/user.entity';
@@ -23,33 +23,41 @@ export class ChannelManagementController {
     {
       createChannel,
       sectionId,
-    }: { createChannel: CreateChannelDto; sectionId: string },
+      workspaceId,
+    }: {
+      createChannel: CreateChannelDto;
+      sectionId: string;
+      workspaceId: string;
+    },
   ): Promise<ChannelDto> {
     return this.channelManagementService.createChannelAndJoin(
       createChannel,
       currentUser,
       sectionId,
+      workspaceId,
     );
   }
 
   @Post('direct-channel')
   createDirectChannel(
-    @Body() data: { memberIds: string[] },
+    @Body() data: { memberIds: string[]; workspaceId: string },
   ): Promise<ChannelDto> {
     return this.channelManagementService.createDirectChannelAndJoin(
       data.memberIds,
+      data.workspaceId,
     );
   }
 
-  @Post('join')
-  joinChannel(
+  @Patch(':channelId/role')
+  updateUserRole(
+    @Param('channelId') channelId: string,
     @GetUser() user: User,
-    @Body() data: { channelId: string; sectionId: string },
-  ): Promise<ChannelDto> {
-    return this.channelManagementService.joinChannel(
-      user.uuid,
-      data.channelId,
-      data.sectionId,
+    @Body() data: { isAdmin: boolean },
+  ) {
+    return this.channelManagementService.updateUserRole(
+      user,
+      data.isAdmin,
+      channelId,
     );
   }
 

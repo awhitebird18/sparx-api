@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
 import { ChannelSubscription } from './entity/channel-subscription.entity';
 
@@ -10,12 +10,14 @@ import { CreateChannelSubscription } from './dto/create-channel-subscription.dto
 import { ChannelSubscriptionDto } from './dto/channel-subscription.dto';
 import { User } from 'src/users/entities/user.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ChannelsRepository } from 'src/channels/channels.repository';
 
 @Injectable()
 export class ChannelSubscriptionsService {
   constructor(
     private channelSubscriptionsRepository: ChannelSubscriptionsRepository,
     private sectionsRepository: SectionsRepository,
+    private channelsRepository: ChannelsRepository,
     private messagesRepository: MessagesRepository,
     private events: EventEmitter2,
   ) {}
@@ -26,12 +28,108 @@ export class ChannelSubscriptionsService {
     return this.channelSubscriptionsRepository.save({
       user: { id: createChannelSubscription.userId },
       channel: { id: createChannelSubscription.channelId },
-      section: { id: createChannelSubscription.sectionId },
+      section: { id: createChannelSubscription?.sectionId },
     });
+  }
+
+  async joinChannel(
+    user: User,
+    channelUuid: string,
+    sectionUuid: string,
+  ): Promise<any> {
+    try {
+      // Check if channel exists or is deleted
+      const channel = await this.channelsRepository.findOneOrFail({
+        where: {
+          uuid: channelUuid,
+        },
+      });
+
+      // Check if section exists
+      const section = await this.sectionsRepository.findOneOrFail({
+        where: {
+          uuid: sectionUuid,
+        },
+      });
+
+      // Check if channel subscription already exists
+      const existingChannelSubscription =
+        await this.channelSubscriptionsRepository.findOne({
+          where: {
+            user: { id: user.id },
+            channel: { id: channel.id },
+          },
+        });
+
+      if (existingChannelSubscription?.isSubscribed)
+        throw new HttpException(
+          'User is already subscribed to the channel',
+          HttpStatus.BAD_REQUEST,
+        );
+
+      if (existingChannelSubscription) {
+        // Update channel subscription
+        await this.channelSubscriptionsRepository.update(
+          existingChannelSubscription.id,
+          { isSubscribed: true },
+        );
+      } else {
+        // Create channelSubscription
+        // Todo: May want to create a service method that creates a channelSubscription and returns
+        // In the correct format so we do not need to
+        // Save channel subscription
+        const newChannelSubscription =
+          this.channelSubscriptionsRepository.create({
+            user,
+            channel: { id: channel.id },
+            section: { id: section.id },
+          });
+        await this.channelSubscriptionsRepository.save(newChannelSubscription);
+      }
+
+      // Todo: should have a listener setup to send out updated user counts
+      // Todo: Need to send correct channel name here for direct channels
+      const channelUserCount =
+        await this.channelSubscriptionsRepository.getChannelUsersCount(
+          channel.id,
+        );
+
+      // channel.name = await this.channelsService.findDirectChannelName(
+      //   channel.uuid,
+      //   userUuid,
+      // );
+
+      this.events.emit('websocket-event', 'updateChannelUserCount', {
+        channelUuid: channel.uuid,
+        userCount: channelUserCount,
+      });
+
+      const returnValue = await this.channelSubscriptionsRepository.findOne({
+        where: { channel: { id: channel.id }, user: { id: user.id } },
+        relations: ['channel'],
+      });
+
+      return returnValue;
+    } catch (err) {
+      console.error(err);
+    }
+
+    // Send over socket
+    // Todo: Should send over the users updated section channels separately
   }
 
   findOne(findProperties: any): Promise<ChannelSubscription> {
     return this.channelSubscriptionsRepository.findOne(findProperties);
+  }
+
+  findUserChannels(user: User, workspaceId: string) {
+    return this.channelSubscriptionsRepository.find({
+      where: {
+        user: { id: user.id },
+        channel: { workspace: { uuid: workspaceId } },
+      },
+      relations: ['channel'],
+    });
   }
 
   getUserChannelCount(channelId: number): Promise<number> {
@@ -66,6 +164,37 @@ export class ChannelSubscriptionsService {
 
     // Update channel subscription
     Object.assign(channelSubscription, updatedFields);
+
+    await this.channelSubscriptionsRepository.save(channelSubscription);
+
+    const returnChannel = await this.channelSubscriptionsRepository.findOne({
+      where: { user: { uuid: userUuid }, channel: { uuid: channelUuid } },
+      relations: ['channel'],
+    });
+
+    this.events.emit(
+      'websocket-event',
+      'updateChannelSubscription',
+      returnChannel,
+    );
+
+    return returnChannel;
+  }
+
+  async updateLastRead(
+    userUuid: string,
+    channelUuid: string,
+  ): Promise<ChannelSubscription> {
+    const channelSubscription =
+      await this.channelSubscriptionsRepository.findOneOrFail({
+        where: {
+          user: { uuid: userUuid },
+          channel: { uuid: channelUuid },
+        },
+      });
+
+    // Update channel subscription
+    Object.assign(channelSubscription, { lastRead: new Date() });
     const updatedChannelSubscription =
       await this.channelSubscriptionsRepository.save(channelSubscription);
 
@@ -143,6 +272,8 @@ export class ChannelSubscriptionsService {
           })),
     );
 
-    return await Promise.all(unreadCountsPromises);
+    const unreads = await Promise.all(unreadCountsPromises);
+
+    return unreads;
   }
 }

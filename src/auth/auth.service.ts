@@ -10,6 +10,7 @@ import { UserDto } from 'src/users/dto/user.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password';
 import { User } from 'src/users/entities/user.entity';
+import { WorkspacesRepository } from 'src/workspaces/workspaces.repository';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +18,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private mailerService: MailerService,
+    private workspaceRepository: WorkspacesRepository,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {

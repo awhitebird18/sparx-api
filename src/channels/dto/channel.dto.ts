@@ -20,6 +20,12 @@ export class ChannelDto extends BaseDto {
   @IsBoolean()
   isPrivate: boolean;
 
+  @IsBoolean()
+  isDefault?: boolean;
+
   @IsEnum(ChannelType)
   type: ChannelType;
+
+  @IsString()
+  status?: string;
 }

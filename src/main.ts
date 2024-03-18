@@ -4,7 +4,6 @@ import * as bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { readFileSync } from 'fs';
-import { Logger } from 'nestjs-pino';
 import * as Sentry from '@sentry/node';
 import { SentryFilter } from './common/filters/sentry.filter';
 
@@ -56,14 +55,10 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.enableCors({
-    origin: [
-      process.env.CLIENT_BASE_URL,
-      'https://awhitebird.ca',
-      'http://localhost:5173',
-    ],
+    origin: [process.env.CLIENT_BASE_URL, 'http://localhost:5173'],
     credentials: true,
   });
 
-  await app.listen(process.env.PORT || 3000, '0.0.0.0');
+  await app.listen(process.env.PORT || 3000);
 }
 bootstrap();

@@ -23,7 +23,6 @@ import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { User } from './entities/user.entity';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UserDto } from './dto/user.dto';
-import { InviteUserDto } from './dto/invite-user.dto';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiBearerAuth('access-token')
@@ -47,17 +46,16 @@ export class UsersController {
     return this.usersService.findOneByEmail(id);
   }
 
-  @Get()
-  finalWorkspaceUsers(): Promise<UserDto[]> {
-    return this.usersService.findWorkspaceUsers();
+  @Get('workspace/:workspaceId')
+  findWorkspaceUsers(
+    @Param('workspaceId') workspaceId: string,
+  ): Promise<UserDto[]> {
+    return this.usersService.findWorkspaceUsers(workspaceId);
   }
 
-  @Post('send-invite')
-  sendInvite(
-    @GetUser() currentUser: User,
-    @Body() inviteUser: InviteUserDto,
-  ): Promise<void> {
-    return this.usersService.sendInvite(currentUser, inviteUser);
+  @Post('default-template')
+  createDefaultTemplate(@GetUser() user: User) {
+    return this.usersService.seedUserDefaultTemplate(user);
   }
 
   @Patch('self/image-upload')
@@ -71,12 +69,21 @@ export class UsersController {
     );
   }
 
+  // These two update methods are very similar
   @Patch('self')
   update(
     @GetUser() currentUser: User,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserDto> {
-    return this.usersService.update(currentUser.id, updateUserDto);
+    return this.usersService.update(currentUser.uuid, updateUserDto);
+  }
+
+  @Patch(':userId')
+  updateUser(
+    @Param('userId') userId: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<UserDto> {
+    return this.usersService.update(userId, updateUserDto);
   }
 
   @UseGuards(RolesGuard)

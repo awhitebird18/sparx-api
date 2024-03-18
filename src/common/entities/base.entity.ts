@@ -1,4 +1,5 @@
 import { Exclude } from 'class-transformer';
+import { User } from 'src/users/entities/user.entity';
 import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
@@ -19,6 +20,8 @@ export class BaseEntity {
 
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
+
+  createdBy?: User;
 
   @Column({ type: 'timestamptz', nullable: true })
   updatedAt: Date;

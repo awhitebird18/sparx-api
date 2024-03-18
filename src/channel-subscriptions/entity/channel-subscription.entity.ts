@@ -3,6 +3,7 @@ import { BaseEntity } from '../../common/entities/base.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Channel } from 'src/channels/entities/channel.entity';
 import { Section } from 'src/sections/entities/section.entity';
+import { CompletionStatus } from '../enum/completion-status.enum';
 
 @Entity()
 export class ChannelSubscription extends BaseEntity {
@@ -12,7 +13,17 @@ export class ChannelSubscription extends BaseEntity {
   @Column({ default: true })
   isSubscribed: boolean;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ default: false })
+  isAdmin: boolean;
+
+  @Column({
+    type: 'enum',
+    enum: CompletionStatus,
+    default: CompletionStatus.InProgress,
+  })
+  status: CompletionStatus;
+
+  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   lastRead: Date;
 
   @ManyToOne(() => User, (user) => user.channelSubscriptions)

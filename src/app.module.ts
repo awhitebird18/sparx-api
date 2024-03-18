@@ -29,6 +29,20 @@ import { LoggerModule } from 'nestjs-pino';
 import { pinoConfig } from './config/pino-config';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { NotesModule } from './notes/notes.module';
+import { CardTemplateModule } from './card-template/card-template.module';
+import { CardFieldModule } from './card-field/card-field.module';
+import { CardTypeModule } from './card-type/card-type.module';
+import { CardModule } from './card/card.module';
+import { ReviewHistoryModule } from './review-history/review-history.module';
+import { CardNoteModule } from './card-note/card-note.module';
+import { CardFieldValueModule } from './card-field-value/card-field-value.module';
+import { ChannelConnectorsModule } from './channel-connectors/channel-connectors.module';
+import { UserWorkspacesModule } from './user-workspaces/user-workspaces.module';
+import { NodemapSettingsModule } from './nodemap-settings/nodemap-settings.module';
+import { TasksModule } from './tasks/tasks.module';
+import { ExperienceModule } from './experience/experience.module';
+import { ActivityModule } from './activity/activity.module';
 
 @Module({
   imports: [
@@ -36,15 +50,24 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }),
     MailerModule.forRootAsync({
       useFactory: () => ({
-        transport: Mailgun({
+        transport: {
+          host: 'smtp.mailgun.org',
+          port: 587,
           auth: {
-            api_key: '9b6217337067cd5b0c598fdb833cf73e-28e9457d-0b492e37',
-            domain: 'sandboxf7ca4edf7c754e0ea531e2a5a5417899.mailgun.org',
+            user: 'postmaster@sandboxf7ca4edf7c754e0ea531e2a5a5417899.mailgun.org',
+            pass: '511ff2898d357ba2a8418f62a8557332-28e9457d-9e4da868',
           },
-        }),
+        },
+        // Todo: Mailgun is not working
+        // transport: Mailgun({
+        //   auth: {
+        //     api_key: '9b6217337067cd5b0c598fdb833cf73e-28e9457d-0b492e37',
+        //     domain: 'sandboxf7ca4edf7c754e0ea531e2a5a5417899.mailgun.org',
+        //   },
+        // }),
         preview: true,
         defaults: {
-          from: '"Sparx" <no-reply@sparx.com>',
+          from: '"Navinotes" <no-reply@sparx.com>',
         },
         template: {
           dir: path.join(__dirname, '/templates'),
@@ -52,6 +75,19 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
         },
       }),
     }),
+    // MailerModule.forRootAsync({
+    //   useFactory: () => ({
+    //     transport: {
+    //       host: 'smtp.mailgun.org',
+    //       port: 587,
+    //       auth: {
+    //         user: 'postmaster@sandboxXXX.mailgun.org',
+    //         pass: 'your-mailgun-password',
+    //       },
+    //     },
+    //     // rest of the configuration remains the same
+    //   }),
+    // }),
     EventEmitterModule.forRoot(),
     TypeOrmModule.forRoot(config),
     ChannelsModule,
@@ -66,6 +102,20 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     WorkspacesModule,
     UserStatusesModule,
     CloudinaryModule,
+    NotesModule,
+    CardTemplateModule,
+    CardFieldModule,
+    CardTypeModule,
+    CardModule,
+    ReviewHistoryModule,
+    CardNoteModule,
+    CardFieldValueModule,
+    ChannelConnectorsModule,
+    UserWorkspacesModule,
+    NodemapSettingsModule,
+    TasksModule,
+    ExperienceModule,
+    ActivityModule,
   ],
   controllers: [AppController],
   providers: [

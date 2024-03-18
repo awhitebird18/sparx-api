@@ -33,17 +33,21 @@ export const channelHandlers = {
   },
   updateChannel: (server: Server) => {
     return (channel: Channel, workspaceId?: string) => {
-      server
-        .to(workspaceId || 'tempWorkspaceId')
-        .emit('update-channel', channel);
+      server.to(workspaceId).emit('update-channel', channel);
     };
   },
-
+  removeChannel: (server: Server) => {
+    return (channelId: string, workspaceId?: string) => {
+      server.to(workspaceId).emit('remove-channel', { channelId });
+    };
+  },
   leaveChannel: (server: Server) => {
-    return (channelId: string, userId: string) => {
+    return (iSubscribed: boolean, userId: string, channelId: string) => {
       const websocketMessage = new WebSocketMessage(MessageType.LeaveChannel, {
-        channelId,
+        uuid: channelId,
+        iSubscribed,
       });
+
       server.to(userId).emit('leave-channel', websocketMessage);
     };
   },

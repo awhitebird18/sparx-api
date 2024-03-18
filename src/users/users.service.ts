@@ -12,12 +12,14 @@ import { UserPreferencesService } from 'src/user-preferences/user-preferences.se
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RegisterDto } from 'src/auth/dto/register.dto';
 import { User } from './entities/user.entity';
-import { InviteUserDto } from './dto/invite-user.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
 import { UserDto } from './dto/user.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CardFieldRepository } from 'src/card-field/card-field.repository';
+import { CardTypeRepository } from 'src/card-type/card-type.repository';
+import { CardTemplateRepository } from 'src/card-template/card-template.repository';
 
 @Injectable()
 export class UsersService {
@@ -29,6 +31,9 @@ export class UsersService {
     private jwtService: JwtService,
     private cloudinaryService: CloudinaryService,
     private events: EventEmitter2,
+    private cardTemplateRepository: CardTemplateRepository,
+    private cardFieldRepository: CardFieldRepository,
+    private cardTypeRepository: CardTypeRepository,
   ) {}
 
   async create(registerDto: RegisterDto): Promise<User> {
@@ -45,6 +50,7 @@ export class UsersService {
 
     // Creating user section and userPreferences
     await Promise.all([
+      this.seedUserDefaultTemplate(user),
       this.sectionsService.seedUserDefaultSections(user.id),
       this.userPreferencesService.createUserPreferences({
         userId: user.id,
@@ -52,6 +58,45 @@ export class UsersService {
     ]);
 
     return user;
+  }
+
+  async seedUserDefaultTemplate(user: User) {
+    const defaultExists = await this.cardTemplateRepository.find({
+      where: { user: { id: user.id }, isDefault: true },
+    });
+    if (defaultExists) return;
+    // Create template
+    const newTemplate = this.cardTemplateRepository.create({
+      user,
+      title: 'Default',
+      isDefault: true,
+    });
+
+    const template = await this.cardTemplateRepository.save(newTemplate);
+
+    // Create card fields
+    const frontField = await this.cardFieldRepository.create({
+      template,
+      title: 'Front side',
+    });
+    const backField = await this.cardFieldRepository.create({
+      template,
+      title: 'Back side',
+    });
+
+    await Promise.all([
+      this.cardFieldRepository.save(frontField),
+      this.cardFieldRepository.save(backField),
+    ]);
+
+    // Create card type
+    const cardType = await this.cardTypeRepository.create({
+      template,
+      title: 'Card 1: Front side > Back side',
+      frontFields: [frontField],
+      backFields: [backField],
+    });
+    await this.cardTypeRepository.save(cardType);
   }
 
   async createBot(): Promise<User> {
@@ -93,62 +138,12 @@ export class UsersService {
     return this.usersRepository.findOneBy(searchProperties);
   }
 
-  async sendInvite(user: User, inviteUser: InviteUserDto): Promise<void> {
-    const { email } = inviteUser;
-
-    // Todo: once workspaces are implemented, need to find the users workspace to
-    // to be able to add workspace name and details in the email.
-
-    const userWithEmailExists = await this.usersRepository.findOne({
-      where: { email },
-    });
-    if (userWithEmailExists)
-      throw new ConflictException(
-        'This email is already registered as part of this workspace',
-      );
-
-    // Format name of user who is sending the invite
-    const username = `${user.firstName[0].toUpperCase()}${user.firstName
-      .substring(1)
-      .toLowerCase()} ${user.lastName[0].toUpperCase()}${user.lastName
-      .substring(1)
-      .toLowerCase()}`;
-
-    // Format name of workspace
-    const workspaceName = 'Bananas!';
-
-    // Generate payload for token
-    const userInvitePayload = {
-      userId: user.uuid,
-      type: 'userInvite',
-    };
-
-    // Generate a password reset token
-    const passwordResetToken = this.jwtService.sign(userInvitePayload, {
-      expiresIn: '1d',
-    });
-
-    const url = `${process.env.CLIENT_BASE_URL}/register?token=${passwordResetToken}`;
-
-    // Email user informing of the password change
-    await this.mailerService.sendMail({
-      to: email,
-      subject: `Sparx - Invitation to join ${workspaceName}`,
-      template: 'invitation',
-      context: {
-        username,
-        workspaceName,
-        url,
-      },
-    });
-  }
-
   async findOneByEmail(email: string): Promise<User> {
     return this.usersRepository.findOne({ where: { email, isVerified: true } });
   }
 
-  async findWorkspaceUsers(): Promise<UserDto[]> {
-    const users = await this.usersRepository.findWorkspaceUsers();
+  async findWorkspaceUsers(workspaceId: string): Promise<UserDto[]> {
+    const users = await this.usersRepository.findWorkspaceUsers(workspaceId);
 
     const result = users.map((u: any) => {
       if (u.customStatuses.length) {
@@ -173,10 +168,10 @@ export class UsersService {
     return updatedUser;
   }
 
-  async update(userId: number, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
     // Check for existing user
     const user = await this.usersRepository.findOneOrFail({
-      where: { id: userId },
+      where: { uuid: userId },
     });
 
     // Update user

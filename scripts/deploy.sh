@@ -2,7 +2,7 @@
 
 # Variables
 SERVER_IP="165.227.44.99"
-SERVER_PATH="/var/www/sparx-api"
+SERVER_PATH="/var/www/navinotes"
 
 # Create tar archive, excluding unnecessary files
 tar -czvf project.tar.gz --exclude=node_modules --exclude=.git --exclude=pgdata --exclude=dist .

@@ -1,1 +1,5 @@
-export class CreateWorkspaceDto {}
+export class CreateWorkspaceDto {
+  name: string;
+  allowInvites?: boolean;
+  isPrivate?: boolean;
+}

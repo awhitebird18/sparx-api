@@ -1,9 +1,4 @@
-import {
-  ConflictException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 
 import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
 import { ChannelsService } from 'src/channels/channels.service';
@@ -36,23 +31,41 @@ export class ChannelManagementService {
     createChannelDto: CreateChannelDto,
     currentUser: User,
     sectionUuid: string,
+    workspaceUuid: string,
   ): Promise<Channel> {
     // Create channel
-    const channel = await this.channelsService.createChannel(createChannelDto);
+
+    const channel = await this.channelsService.createChannel(
+      createChannelDto,
+      workspaceUuid,
+      currentUser,
+    );
 
     const section = await this.sectionsRepository.findSectionByUuid(
       sectionUuid,
     );
 
     // Add user to channel
-    await this.joinChannel(currentUser.uuid, channel.uuid, section.uuid);
+    // await this.joinChannel(currentUser.uuid, channel.uuid, section.uuid);
 
     this.sendUserChannelSocket(currentUser.uuid, channel, section.uuid);
 
     return channel;
   }
 
-  async createDirectChannelAndJoin(userUuids: string[]): Promise<Channel> {
+  async updateUserRole(user: User, isAdmin: boolean, channelId: string) {
+    const channel = await this.channelsRepository.findByUuid(channelId);
+    return await this.channelSubscriptionRepository.updateUserRole(
+      user,
+      isAdmin,
+      channel,
+    );
+  }
+
+  async createDirectChannelAndJoin(
+    userUuids: string[],
+    workspaceUuid: string,
+  ): Promise<Channel> {
     // Check if direct channel with both members already exists
     const channel = await this.channelsService.findDirectChannelByUserUuids(
       userUuids,
@@ -67,10 +80,13 @@ export class ChannelManagementService {
     }
 
     // Create new direct message channel
-    const newChannel = await this.channelsService.createChannel({
-      type: ChannelType.DIRECT,
-      name: userUuids.join(''),
-    });
+    const newChannel = await this.channelsService.createChannel(
+      {
+        type: ChannelType.DIRECT,
+        name: userUuids.join(''),
+      },
+      workspaceUuid,
+    );
 
     // Add members to the channel
     const memberPromises = userUuids.map(async (userUuid: string) => {
@@ -81,7 +97,8 @@ export class ChannelManagementService {
         ChannelType.DIRECT,
         user.id,
       );
-      return this.joinChannel(userUuid, newChannel.uuid, section.uuid);
+      // Fix this
+      // return this.joinChannel(userUuid, newChannel.uuid, section.uuid);
     });
 
     await Promise.all(memberPromises);
@@ -123,83 +140,10 @@ export class ChannelManagementService {
     );
   }
 
-  async joinChannel(
-    userUuid: string,
-    channelUuid: string,
-    sectionUuid: string,
-  ): Promise<Channel> {
+  async leaveChannel(userUuid: string, channelUuid: string): Promise<void> {
     const user = await this.usersRepository.findOneOrFail({
       where: { uuid: userUuid },
     });
-    // Check if channel exists or is deleted
-    const channel = await this.channelsRepository.findOneOrFail({
-      where: {
-        uuid: channelUuid,
-      },
-    });
-
-    // Check if section exists
-    const section = await this.sectionsRepository.findOneOrFail({
-      where: {
-        uuid: sectionUuid,
-      },
-    });
-
-    // Check if channel subscription already exists
-    const existingChannelSubscription =
-      await this.channelSubscriptionRepository.findOne({
-        where: {
-          user: { id: user.id },
-          channel: { id: channel.id },
-        },
-      });
-
-    if (existingChannelSubscription?.isSubscribed)
-      throw new HttpException(
-        'User is already subscribed to the channel',
-        HttpStatus.BAD_REQUEST,
-      );
-
-    if (existingChannelSubscription) {
-      // Update channel subscription
-      await this.channelSubscriptionRepository.update(
-        existingChannelSubscription.id,
-        { isSubscribed: true },
-      );
-    } else {
-      // Create channelSubscription
-      // Todo: May want to create a service method that creates a channelSubscription and returns
-      // In the correct format so we do not need to
-      // Save channel subscription
-      const newChannelSubscription = this.channelSubscriptionRepository.create({
-        user,
-        channel: { id: channel.id },
-        section: { id: section.id },
-      });
-      await this.channelSubscriptionRepository.save(newChannelSubscription);
-    }
-
-    // Todo: Need to send correct channel name here for direct channels
-    const channelUserCount =
-      await this.channelSubscriptionRepository.getChannelUsersCount(channel.id);
-
-    // channel.name = await this.channelsService.findDirectChannelName(
-    //   channel.uuid,
-    //   userUuid,
-    // );
-
-    this.events.emit('websocket-event', 'updateChannel', {
-      channelUuid: channel.uuid,
-      userCount: channelUserCount,
-    });
-
-    // Send over socket
-    // Todo: Should send over the users updated section channels separately
-
-    return channel;
-  }
-
-  async leaveChannel(userUuid: string, channelUuid: string): Promise<void> {
     // Check if channel exists or is deleted
     const channel = await this.channelsRepository.findOneOrFail({
       where: {
@@ -243,12 +187,23 @@ export class ChannelManagementService {
 
     // Send over socket
 
-    this.events.emit('websocket-event', 'leaveChannel', channelUuid, userUuid);
+    this.events.emit(
+      'websocket-event',
+      'leaveChannel',
+      false,
+      user.uuid,
+      channel.uuid,
+    );
+    // this.events.emit('websocket-event', 'update-channel', {
+    //   isSubscribed: false,
+    // });
 
-    this.events.emit('websocket-event', 'updateChannel', {
+    this.events.emit('websocket-event', 'updateChannelUserCount', {
       channelUuid: channelUuid,
       userCount: channelUserCount,
     });
+
+    return this.channelsRepository.findWorkspaceChannel(user.id, channel.uuid);
   }
 
   async removeUserFromChannel(
@@ -288,11 +243,12 @@ export class ChannelManagementService {
             SectionType.CHANNEL,
             user.id,
           );
-        await this.joinChannel(
-          userIds[i],
-          channelUuid,
-          defaultUserSection.uuid,
-        );
+        // Todo: fix this
+        // await this.joinChannel(
+        //   userIds[i],
+        //   channelUuid,
+        //   defaultUserSection.uuid,
+        // );
       } catch (err) {
         console.error(err);
       }

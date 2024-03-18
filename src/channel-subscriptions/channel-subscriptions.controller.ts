@@ -1,20 +1,35 @@
-import { Controller, Param, Patch, Body } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Param, Patch, Body, Get, Post } from '@nestjs/common';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
-
 import { ChannelSubscriptionsService } from './channel-subscriptions.service';
-
 import { User } from 'src/users/entities/user.entity';
-
 import { ChannelSubscriptionDto } from './dto/channel-subscription.dto';
 import { plainToInstance } from 'class-transformer';
 
-@ApiBearerAuth('access-token')
 @Controller('channel-subscriptions')
 export class ChannelSubscriptionsController {
   constructor(
     private readonly channelSubscriptionsService: ChannelSubscriptionsService,
   ) {}
+
+  @Post('join')
+  joinChannel(
+    @GetUser() user: User,
+    @Body() data: { channelId: string; sectionId?: string },
+  ): Promise<any> {
+    return this.channelSubscriptionsService.joinChannel(
+      user,
+      data.channelId,
+      data.sectionId,
+    );
+  }
+
+  @Get('workspace/:workspaceId')
+  findWorkspaceUserCounts(
+    @GetUser() user: User,
+    @Param('workspaceId') workspaceId: string,
+  ): Promise<any[]> {
+    return this.channelSubscriptionsService.findUserChannels(user, workspaceId);
+  }
 
   @Patch(':channelId')
   async updateUserChannel(
@@ -27,6 +42,19 @@ export class ChannelSubscriptionsController {
         user.uuid,
         channelId,
         updateUserChannel,
+      );
+
+    return plainToInstance(ChannelSubscriptionDto, channelSubscription);
+  }
+  @Patch('last-read/:channelId')
+  async updateLastRead(
+    @GetUser() user: User,
+    @Param('channelId') channelId: string,
+  ): Promise<ChannelSubscriptionDto> {
+    const channelSubscription =
+      await this.channelSubscriptionsService.updateLastRead(
+        user.uuid,
+        channelId,
       );
 
     return plainToInstance(ChannelSubscriptionDto, channelSubscription);

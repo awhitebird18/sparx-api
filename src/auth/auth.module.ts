@@ -17,6 +17,8 @@ import { UsersModule } from 'src/users/users.module';
 import { SectionsModule } from 'src/sections/sections.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { UserStatusesModule } from 'src/user-statuses/user-statuses.module';
+import { WorkspacesModule } from 'src/workspaces/workspaces.module';
+import { UserWorkspacesModule } from 'src/user-workspaces/user-workspaces.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { UserStatusesModule } from 'src/user-statuses/user-statuses.module';
     UserPreferencesModule,
     MailerModule,
     UserStatusesModule,
+    WorkspacesModule,
+    UserWorkspacesModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy, RefreshJWTStrategy],

@@ -4,7 +4,7 @@ services:
   app:
     env_file:
       - .env
-    image: $DOCKER_HUB_USERNAME/sparx:$TAG
+    image: $DOCKER_HUB_USERNAME/navinotes:$TAG
     build:
       context: .
       dockerfile: Dockerfile

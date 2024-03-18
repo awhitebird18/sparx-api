@@ -4,6 +4,7 @@ export enum MessageType {
   RemoveUser = 'REMOVE_USER',
   JoinChannel = 'JOIN_CHANNEL',
   LeaveChannel = 'LEAVE_CHANNEL',
+  RemoveChannel = 'REMOVE_CHANNEL',
   UpdateSection = 'UPDATE_SECTION',
   RemoveSection = 'REMOVE_SECTION',
   AddChannelToSection = 'ADD_CHANNEL_TO_SECTION',
@@ -13,4 +14,7 @@ export enum MessageType {
   AddUserStatus = 'ADD_USER_STATUS',
   UpdateUserStatus = 'UPDATE_USER_STATUS',
   RemoveUserStatus = 'REMOVE_USER_STATUS',
+  UpdateChannelCount = 'UPDATE_CHANNE_COUNT',
+  CreateChannelConnector = 'CREATE_CHANNEL_CONNECTOR',
+  RemovehannelConnector = 'REMOVE_CHANNEL_CONNECTOR',
 }
