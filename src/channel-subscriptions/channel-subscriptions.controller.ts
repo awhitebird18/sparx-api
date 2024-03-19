@@ -1,4 +1,12 @@
-import { Controller, Param, Patch, Body, Get, Post } from '@nestjs/common';
+import {
+  Controller,
+  Param,
+  Patch,
+  Body,
+  Get,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { ChannelSubscriptionsService } from './channel-subscriptions.service';
 import { User } from 'src/users/entities/user.entity';
@@ -20,6 +28,17 @@ export class ChannelSubscriptionsController {
       user,
       data.channelId,
       data.sectionId,
+    );
+  }
+
+  @Post('join/defaults')
+  joinDefaultWorkspaceChannel(
+    @GetUser() user: User,
+    @Query() workspaceId: string,
+  ): Promise<any> {
+    return this.channelSubscriptionsService.joinDefaultWorkspaceChannel(
+      user,
+      workspaceId,
     );
   }
 

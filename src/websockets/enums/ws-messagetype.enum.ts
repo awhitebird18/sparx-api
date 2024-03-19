@@ -17,4 +17,5 @@ export enum MessageType {
   UpdateChannelCount = 'UPDATE_CHANNE_COUNT',
   CreateChannelConnector = 'CREATE_CHANNEL_CONNECTOR',
   RemovehannelConnector = 'REMOVE_CHANNEL_CONNECTOR',
+  Verified = 'USER_VERIFIED',
 }

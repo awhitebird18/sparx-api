@@ -29,4 +29,15 @@ export const userHandlers = {
         .emit('remove-user', websocketMessage);
     };
   },
+
+  verified: (server: Server) => {
+    return (email: string): void => {
+      console.log('verified');
+      const websocketMessage = new WebSocketMessage(MessageType.Verified, {
+        email,
+      });
+
+      server.emit('verified', websocketMessage);
+    };
+  },
 };

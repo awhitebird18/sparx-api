@@ -10,7 +10,7 @@ import { UserDto } from 'src/users/dto/user.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password';
 import { User } from 'src/users/entities/user.entity';
-import { WorkspacesRepository } from 'src/workspaces/workspaces.repository';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +18,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private mailerService: MailerService,
-    private workspaceRepository: WorkspacesRepository,
+    private events: EventEmitter2,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
@@ -272,7 +272,7 @@ export class AuthService {
       return user;
     } catch (error) {
       // Handle expired or invalid tokens
-      return 'Invalid or expired verification link';
+      throw new Error('Invalid or expired verification link');
     }
   }
 }

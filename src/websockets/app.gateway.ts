@@ -9,6 +9,7 @@ import { OnModuleInit } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Server, Socket } from 'socket.io';
 import handlers from './handlers';
+import { Public } from 'src/common/decorators/is-public';
 
 type UserStatus = 'online' | 'away' | 'busy';
 type UserData = {
@@ -46,6 +47,7 @@ export class AppGateway
   // Initial connection to gateway
   handleConnection(client: Socket) {
     const userId = client.handshake.query.userId;
+    console.log('user', userId);
 
     if (!userId) {
       client.disconnect();
@@ -63,6 +65,13 @@ export class AppGateway
     const userId = client.handshake.query.userId;
     this.users.delete(userId as string);
     this.broadcastUpdatedUsers();
+  }
+
+  @SubscribeMessage('waitingForVerification')
+  handleWaitingForVerification(client: Socket, payload: { userId: string }) {
+    console.log('email!!', payload.userId);
+    // This adds the client to a room named after their email.
+    client.join(payload.userId);
   }
 
   // Join/ leave rooms

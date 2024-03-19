@@ -43,6 +43,7 @@ import { Logger } from 'nestjs-pino';
 import { WorkspacesService } from 'src/workspaces/workspaces.service';
 import { Workspace } from 'src/workspaces/entities/workspace.entity';
 import { UserWorkspacesService } from 'src/user-workspaces/user-workspaces.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -58,6 +59,7 @@ export class AuthController {
     private workspaceService: WorkspacesService,
     private userWorkspaceService: UserWorkspacesService,
     private readonly logger: Logger,
+    private events: EventEmitter2,
   ) {}
 
   @Public()
@@ -204,6 +206,6 @@ export class AuthController {
 
     await this.authService.login(user, res);
 
-    res.redirect(`${process.env.CLIENT_BASE_URL}/app`);
+    res.redirect(`${process.env.CLIENT_BASE_URL}/verified`);
   }
 }

@@ -10,7 +10,7 @@ import { Exclude } from 'class-transformer';
 
 @Entity()
 export class UserPreferences extends BaseEntity {
-  @Column({ default: Theme.LIGHT })
+  @Column({ default: Theme.DARK })
   theme: Theme;
 
   @Column({ default: PrimaryColor.BLUE })

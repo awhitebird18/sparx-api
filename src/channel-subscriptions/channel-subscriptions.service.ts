@@ -11,6 +11,7 @@ import { ChannelSubscriptionDto } from './dto/channel-subscription.dto';
 import { User } from 'src/users/entities/user.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChannelsRepository } from 'src/channels/channels.repository';
+import { ChannelType } from 'src/channels/enums/channel-type.enum';
 
 @Injectable()
 export class ChannelSubscriptionsService {
@@ -32,10 +33,33 @@ export class ChannelSubscriptionsService {
     });
   }
 
+  async joinDefaultWorkspaceChannel(user: User, workspaceId: string) {
+    try {
+      const defaultChannel = await this.channelsRepository.findOne({
+        where: { workspace: { uuid: workspaceId }, isDefault: true },
+      });
+
+      const defaultSection = await this.sectionsRepository.findDefaultSection(
+        ChannelType.CHANNEL,
+        user.id,
+      );
+
+      const subscription = await this.joinChannel(
+        user,
+        defaultChannel.uuid,
+        defaultSection.uuid,
+      );
+
+      return subscription;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   async joinChannel(
     user: User,
     channelUuid: string,
-    sectionUuid: string,
+    sectionUuid?: string,
   ): Promise<any> {
     try {
       // Check if channel exists or is deleted
