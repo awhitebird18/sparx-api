@@ -18,6 +18,7 @@ export async function seedUserPreferences(AppDataSource) {
     userPreferences.theme = Theme.LIGHT; // Assuming Theme.LIGHT is a valid enum or value
     userPreferences.primaryColor = PrimaryColor.BLUE; // Same for PrimaryColor.BLUE
     userPreferences.notificationType = NotificationType.ALL; // Same for NotificationType.ALL
+    userPreferences.userId = user.id;
     return userPreferences;
   });
 

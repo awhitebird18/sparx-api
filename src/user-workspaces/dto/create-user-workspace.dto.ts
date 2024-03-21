@@ -8,4 +8,6 @@ export class CreateUserWorkspaceDto {
   goal?: string;
 
   websiteUrl?: string;
+
+  isFirstLogin?: boolean;
 }

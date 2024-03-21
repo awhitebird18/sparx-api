@@ -1,24 +1,29 @@
-import { faker } from '@faker-js/faker';
 import { Channel } from '../channels/entities/channel.entity';
 import { Workspace } from 'src/workspaces/entities/workspace.entity';
+import * as channelData from './output.json';
 
 export async function seedChannels(AppDataSource) {
   const channelsRepository = AppDataSource.getRepository(Channel);
 
   const workspacesRepository = AppDataSource.getRepository(Workspace);
 
-  const workspaces = await workspacesRepository.find();
-  const workspacesCount = workspaces.length - 1;
+  const workspace = await workspacesRepository.findOne({
+    where: { name: 'Full Stack Development' },
+  });
 
   const channels = [];
 
-  for (let i = 0; i < 200; i++) {
+  const channelDataParsed = JSON.parse(JSON.stringify(channelData)).default;
+
+  for (let i = 0; i < channelDataParsed.length; i++) {
     const newChannel = new Channel();
 
-    newChannel.name = faker.word.noun();
-
-    const randomIndex = Math.floor(Math.random() * workspacesCount);
-    newChannel.workspace = workspaces[randomIndex];
+    newChannel.name = channelDataParsed[i].name;
+    newChannel.x = Number(channelDataParsed[i].x);
+    newChannel.y = Number(channelDataParsed[i].y);
+    newChannel.isDefault =
+      channelDataParsed[i].isDefault.toLowerCase() === 'true';
+    newChannel.workspace = workspace;
 
     channels.push(newChannel);
   }

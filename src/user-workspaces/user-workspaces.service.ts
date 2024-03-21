@@ -199,6 +199,7 @@ export class UserWorkspacesService {
       ...userWorkspace,
       ...updateUserWorkspaceDto,
     });
+
     return userWorkspaceToReturn;
   }
 

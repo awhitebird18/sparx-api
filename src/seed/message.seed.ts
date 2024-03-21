@@ -21,7 +21,7 @@ export async function seedMessages(AppDataSource: DataSource) {
     });
     const channelUserCount = channelUsers.length - 1;
 
-    const randomChannelMessageCount = Math.floor(Math.random() * 100);
+    const randomChannelMessageCount = Math.floor(Math.random() * 6);
 
     for (let i = 0; i < randomChannelMessageCount; i++) {
       const message = new Message();

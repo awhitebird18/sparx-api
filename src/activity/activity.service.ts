@@ -39,7 +39,6 @@ export class ActivityService {
   }
 
   async createLog({ userId, workspaceId, type, text }: LogActivity) {
-    console.log('derp');
     const user = await this.userRepository.findUserByUuid(userId);
     const workspace = await this.workspaceRepository.findWorkspaceByUuid(
       workspaceId,

@@ -32,7 +32,6 @@ export const userHandlers = {
 
   verified: (server: Server) => {
     return (email: string): void => {
-      console.log('verified');
       const websocketMessage = new WebSocketMessage(MessageType.Verified, {
         email,
       });

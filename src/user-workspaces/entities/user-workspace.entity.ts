@@ -14,7 +14,7 @@ export class UserWorkspace extends BaseEntity {
   @Column({ default: false })
   isAdmin: boolean;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   lastViewed: Date;
 
   @Column({ default: 0 })
@@ -31,4 +31,7 @@ export class UserWorkspace extends BaseEntity {
 
   @Column({ nullable: true })
   bio: string;
+
+  @Column({ default: true })
+  isFirstLogin: boolean;
 }

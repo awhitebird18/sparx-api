@@ -6,9 +6,11 @@ import { seedUserPreferences } from './user-preferences.seed';
 import { seedWorkspaces } from './workspace.seed';
 import { seedChannels } from './channel.seed';
 import { seedSections } from './sections.seed';
-import { seedChannelSubscriptions } from './channel-subscriptions.seed';
-import { seedWorkspaceUsers } from './workspace-users.seed';
-import { seedMessages } from './message.seed';
+import { seedChannelSubscriptions } from './channel-subscriptions2.seed';
+import { seedWorkspaceUsers } from './add-users-to-workspace.seed';
+import { seedChannelConnectors } from './channel-connectors.seed';
+import { seedActivity } from './activity.seed';
+// import { seedMessages } from './message.seed';
 
 // Create TypeORM DataSource
 
@@ -23,6 +25,9 @@ import { seedMessages } from './message.seed';
   await seedWorkspaceUsers(AppDataSource);
   await seedSections(AppDataSource);
   await seedChannels(AppDataSource);
+  await seedChannelConnectors(AppDataSource);
   await seedChannelSubscriptions(AppDataSource);
-  await seedMessages(AppDataSource);
+  await seedActivity(AppDataSource);
+
+  // await seedMessages(AppDataSource);
 })();

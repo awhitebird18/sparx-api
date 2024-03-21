@@ -53,8 +53,6 @@ export class ChannelsService {
       workspace,
     );
 
-    console.log('Sending log');
-
     this.events.emit(
       'log.created',
       new LogActivity(
