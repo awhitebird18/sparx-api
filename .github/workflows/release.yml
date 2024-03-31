@@ -32,11 +32,11 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /var/www/sparx/ && \
+            cd /var/www/sparx-api/ && \
             echo "DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}" >> .env && \
             echo "TAG=${{ github.sha }}" >> .env && \
             (docker-compose -f docker-compose.db.yml up -d || true) && \
-            scp docker-compose.db.yml docker-compose.prod.yml ${{ secrets.SSH_USER }}@${{ secrets.SSH_SERVER }}:/var/www/sparx/ && \
+            scp docker-compose.db.yml docker-compose.prod.yml ${{ secrets.SSH_USER }}@${{ secrets.SSH_SERVER }}:/var/www/sparx-api/ && \
             (docker-compose -f docker-compose.prod.yml down || true) && \
             docker-compose -f docker-compose.prod.yml pull && \
             docker-compose -f docker-compose.prod.yml up -d && \
