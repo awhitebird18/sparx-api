@@ -39,6 +39,10 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
 
+      - name: Verify SSH Key File Existence and Permissions
+        run: |
+          ls -la ssh_key
+
       - name: Deploy to server
         run: |
           echo "${{ secrets.SSH_KEY }}" > ssh_key
