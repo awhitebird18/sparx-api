@@ -41,6 +41,8 @@ jobs:
 
       - name: Deploy to server
         run: |
+          echo "${{ secrets.SSH_KEY }}" > ssh_key
+          chmod 600 ssh_key
           ssh -i ssh_key -o StrictHostKeyChecking=accept-new root@${{ secrets.SSH_SERVER }} 'cd /var/www/sparx-api/ && \
           echo "DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}" >> .env && \
           echo "TAG=${{ github.sha }}" >> .env && \
