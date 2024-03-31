@@ -6,5 +6,11 @@ jobs:
   test-ssh:
     runs-on: ubuntu-latest
     steps:
+      - name: Setup SSH Key
+        run: |
+          echo "${{ secrets.SSH_KEY }}" > ssh_key
+          chmod 600 ssh_key
+
       - name: Test SSH
-        run: ssh -vvv -i ${{ secrets.SSH_KEY }} -o StrictHostKeyChecking=accept-new root@165.227.44.99 'echo "SSH connection successful"'
+        run: ssh -vvv -i ssh_key -o StrictHostKeyChecking=accept-new root@165.227.44.99 'echo "SSH connection successful"'
+        shell: bash
