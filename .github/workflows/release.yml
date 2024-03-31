@@ -23,6 +23,8 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
       - name: Build and push Docker image
+        env:
+          NODE_ENV: ${{ secrets.NODE_ENV }}
         run: |
           export TAG=${{ github.sha }}
           export IMAGE_NAME=${{ secrets.DOCKER_HUB_USERNAME }}/sparx:$TAG
@@ -43,12 +45,14 @@ jobs:
         run: |
           echo "${{ secrets.SSH_KEY }}" > ssh_key
           chmod 600 ssh_key
-          scp -i ssh_key -o StrictHostKeyChecking=no docker-compose.db.yml docker-compose.prod.yml root@165.227.44.99:/var/www/sparx-api/
-          ssh -i ssh_key -o StrictHostKeyChecking=accept-new root@165.227.44.99 'cd /var/www/sparx-api/ && \
+          scp -i ssh_key -o StrictHostKeyChecking=no docker-compose.prod.yml root@${{ secrets.SSH_SERVER }}:/var/www/sparx-api/
+          ssh -i ssh_key -o StrictHostKeyChecking=accept-new root@${{ secrets.SSH_SERVER }} 'cd /var/www/sparx-api/ && \
+          echo "${{ secrets.ENV_FILE_CONTENT }}" > .env && \
           echo "DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}" >> .env && \
           echo "TAG=${{ github.sha }}" >> .env && \
-          docker-compose -f docker-compose.db.yml up -d && \
-          docker-compose -f docker-compose.prod.yml down || true && \
+          docker-compose -f docker-compose.prod.yml down -v || true && \
           docker-compose -f docker-compose.prod.yml pull && \
           docker-compose -f docker-compose.prod.yml up -d && \
-          docker image prune -f'
+          docker image prune -af && \
+          docker container prune -f && \
+          docker network prune -f'

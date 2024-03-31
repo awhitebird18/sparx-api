@@ -15,19 +15,28 @@ import { seedActivity } from './activity.seed';
 // Create TypeORM DataSource
 
 (async function () {
+  console.log('1: Database connection options:', options);
   const AppDataSource = new DataSource(options);
+
   await AppDataSource.initialize();
+  console.log('2: Database Initialized');
 
   await seedUsers(AppDataSource);
+  console.log('3');
   await seedUserNodemapSettings(AppDataSource);
+  console.log('4');
   await seedUserPreferences(AppDataSource);
+  console.log('5');
   await seedWorkspaces(AppDataSource);
+  console.log('6');
   await seedWorkspaceUsers(AppDataSource);
   await seedSections(AppDataSource);
   await seedChannels(AppDataSource);
   await seedChannelConnectors(AppDataSource);
   await seedChannelSubscriptions(AppDataSource);
   await seedActivity(AppDataSource);
+
+  console.log('complete');
 
   // await seedMessages(AppDataSource);
 })();
