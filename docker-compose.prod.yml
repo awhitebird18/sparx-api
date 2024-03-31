@@ -13,9 +13,5 @@ services:
     ports:
       - '3000:3000'
     volumes:
-      - logs:/var/log
-      - certs:/etc/letsencrypt
-
-volumes:
-  logs:
-  certs:
+      - /var/log:/var/log
+      - /etc/letsencrypt:/etc/letsencrypt
