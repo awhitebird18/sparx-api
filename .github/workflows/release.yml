@@ -34,20 +34,11 @@ jobs:
           echo "${{ secrets.SSH_KEY }}" > ssh_key
           chmod 600 ssh_key
 
-      - name: Add SSH server to known hosts
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
-
-      - name: Verify SSH Key File Existence and Permissions
-        run: |
-          ls -la ssh_key
-
       - name: Deploy to server
         run: |
           echo "${{ secrets.SSH_KEY }}" > ssh_key
           chmod 600 ssh_key
-          ssh -i ssh_key -o StrictHostKeyChecking=accept-new root@${{ secrets.SSH_SERVER }} 'cd /var/www/sparx-api/ && \
+          ssh -vvv ssh_key -o StrictHostKeyChecking=accept-new root@165.227.44.99 'cd /var/www/sparx-api/ && \
           echo "DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}" >> .env && \
           echo "TAG=${{ github.sha }}" >> .env && \
           (docker-compose -f docker-compose.db.yml up -d || true) && \
