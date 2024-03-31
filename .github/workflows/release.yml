@@ -22,7 +22,7 @@ jobs:
       - name: Build and push Docker image # This line and below were indented one level too deep
         run: |
           export TAG=${{ github.sha }}
-          export IMAGE_NAME=${{ secrets.DOCKER_HUB_USERNAME }}/navinotes:$TAG
+          export IMAGE_NAME=${{ secrets.DOCKER_HUB_USERNAME }}/sparx:$TAG
           docker build --no-cache --build-arg NODE_ENV=production -t $IMAGE_NAME .
           docker push $IMAGE_NAME
       - name: Deploy to server
@@ -32,11 +32,11 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /var/www/navinotes/ && \
+            cd /var/www/sparx/ && \
             echo "DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}" >> .env && \
             echo "TAG=${{ github.sha }}" >> .env && \
             (docker-compose -f docker-compose.db.yml up -d || true) && \
-            scp docker-compose.db.yml docker-compose.prod.yml ${{ secrets.SSH_USER }}@${{ secrets.SSH_SERVER }}:/var/www/navinotes/ && \
+            scp docker-compose.db.yml docker-compose.prod.yml ${{ secrets.SSH_USER }}@${{ secrets.SSH_SERVER }}:/var/www/sparx/ && \
             (docker-compose -f docker-compose.prod.yml down || true) && \
             docker-compose -f docker-compose.prod.yml pull && \
             docker-compose -f docker-compose.prod.yml up -d && \

@@ -67,7 +67,7 @@ import { ActivityModule } from './activity/activity.module';
         // }),
         preview: true,
         defaults: {
-          from: '"Navinotes" <no-reply@sparx.com>',
+          from: '"Sparx" <no-reply@sparx.com>',
         },
         template: {
           dir: path.join(__dirname, '/templates'),

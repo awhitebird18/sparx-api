@@ -118,7 +118,7 @@ export class UserWorkspacesService {
     // Email user informing of the password change
     await this.mailerService.sendMail({
       to: email,
-      subject: `Navinotes - Invitation to join ${workspaceName}`,
+      subject: `Sparx - Invitation to join ${workspaceName}`,
       template: 'invitation',
       context: {
         username,
