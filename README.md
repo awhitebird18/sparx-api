@@ -24,6 +24,6 @@ Welcome to `Sparx` – a unique platform designed to revolutionize the way indiv
 <br />
 
 ## Usage
-<p>To get started with Sparx, the hosted version of the product can be used. You can get started immediately at spa-rx.ca. To demo the application, click the "Sign in Anonymously" button. The website provides an overview of the application and a guided tour.
-</p>
+To get started with Sparx, the hosted version of the product can be used. You can get started immediately at [spa-rx.ca](https://spa-rx.ca). To demo the application, click the `Sign in Anonymously` button. The website provides an overview of the application and a guided tour.
+
 <img src="./.github/assets/Login.png" width="100%" />
