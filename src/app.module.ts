@@ -48,46 +48,24 @@ import { ActivityModule } from './activity/activity.module';
   imports: [
     LoggerModule.forRoot(pinoConfig),
     ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }),
-    MailerModule.forRootAsync({
-      useFactory: () => ({
-        transport: {
-          host: 'smtp.mailgun.org',
-          port: 587,
-          auth: {
-            user: 'postmaster@sandboxf7ca4edf7c754e0ea531e2a5a5417899.mailgun.org',
-            pass: '511ff2898d357ba2a8418f62a8557332-28e9457d-9e4da868',
-          },
+    MailerModule.forRoot({
+      transport: {
+        host: 'in-v3.mailjet.com', // Mailjet SMTP server
+        port: 587, // SMTP port (TLS)
+        auth: {
+          user: process.env.EMAIL_USER, // Replace with your Mailjet API Key
+          pass: process.env.EMAIL_PASSWORD, // Replace with your Mailjet Secret Key
         },
-        // Todo: Mailgun is not working
-        // transport: Mailgun({
-        //   auth: {
-        //     api_key: '9b6217337067cd5b0c598fdb833cf73e-28e9457d-0b492e37',
-        //     domain: 'sandboxf7ca4edf7c754e0ea531e2a5a5417899.mailgun.org',
-        //   },
-        // }),
-        preview: true,
-        defaults: {
-          from: '"Sparx" <no-reply@sparx.com>',
-        },
-        template: {
-          dir: path.join(__dirname, '/templates'),
-          adapter: new HandlebarsAdapter(undefined, { inlineCssEnabled: true }),
-        },
-      }),
+      },
+      preview: true,
+      defaults: {
+        from: '"Sparx" <no-reply@sparx.com>',
+      },
+      template: {
+        dir: path.join(__dirname, '/templates'),
+        adapter: new HandlebarsAdapter(undefined, { inlineCssEnabled: true }),
+      },
     }),
-    // MailerModule.forRootAsync({
-    //   useFactory: () => ({
-    //     transport: {
-    //       host: 'smtp.mailgun.org',
-    //       port: 587,
-    //       auth: {
-    //         user: 'postmaster@sandboxXXX.mailgun.org',
-    //         pass: 'your-mailgun-password',
-    //       },
-    //     },
-    //     // rest of the configuration remains the same
-    //   }),
-    // }),
     EventEmitterModule.forRoot(),
     TypeOrmModule.forRoot(config),
     ChannelsModule,

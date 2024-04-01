@@ -32,8 +32,6 @@ export async function seedChannelConnectors(AppDataSource) {
       (channel) => channel.id === +parentChannelId,
     );
 
-    console.log(childChannel);
-
     const newChannelConnector = channelConnectorsRepository.create({
       childSide,
       parentSide,
