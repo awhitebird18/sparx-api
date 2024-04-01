@@ -12,14 +12,10 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start -b swc --type-check",
     "seed": "ts-node -r tsconfig-paths/register ./src/seed",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
+    "start:dev": "bash ./scripts/rebuild.sh",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src}/**/*.ts\" --fix",
-    "docker-rebuild": "bash ./scripts/rebuild.sh",
-    "docker": "docker-compose up",
     "test": "node_modules/.bin/jest",
     "test:watch": "node_modules/.bin/jest --watch",
     "test:cov": "node_modules/.bin/jest --coverage"
