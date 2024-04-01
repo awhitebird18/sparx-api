@@ -8,8 +8,7 @@ Welcome to `Sparx` – a unique platform designed to revolutionize the way indiv
 
 <br />
 
-#### Features
-
+## Features
 <p align="center">
     <img src="./.github/assets/SparxMembers.png" width="49%" />
 &nbsp;
@@ -21,6 +20,16 @@ Welcome to `Sparx` – a unique platform designed to revolutionize the way indiv
 &nbsp;
     <img src="./.github/assets/SparxProgress.png" width="49%" /> 
 </p>
+
+<br />
+
+## Tech Stack
+Here is a breif high-level overview of the tech stack used by the Sparx api:
+
+- Built with `Nest js` for it's streamlined development experience and structure.
+
+- For persist data storage, `PostgreSql` is used alongside `TypeORM` for its tight integration with Nest js.
+
 <br />
 
 ## Usage
