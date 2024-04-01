@@ -2,8 +2,6 @@
   <a href="http://spa-rx.ca" target="_blank"><img src="./.github/assets/SparxBannerApi.png" width="100%" /></a>
 </p>
 
-<p>Transforming solo and collaborative learning with customizable roadmaps, interactive resources, and community-driven knowledge sharing.</p>
-
 ## Introduction
 <p>Welcome to Sparx – a unique platform designed to revolutionize the way individuals and groups engage with self-directed learning. At the heart of the mission is the belief that learning should be personalized, collaborative, and simple to engage with. Whether you're diving into a new topic, mastering a skill, or building a comprehensive study plan, Sparx offers the tools and community support to make your learning journey as effective and enjoyable as possible.
 </p>
