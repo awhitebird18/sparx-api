@@ -10,10 +10,22 @@
 
 <h3>Features</h3>
 
+<p align="center">
 <img src="./.github/assets/SparxMembers.png" width="49%" />
-<img src="./.github/assets/SparxMembers.png" width="49%" />
-<img src="./.github/assets/SparxMembers.png" width="49%" />
-<img src="./.github/assets/SparxMembers.png" width="49%" />
+   
+&nbsp;
+<img src="./.github/assets/SparxRoadmap.png" width="49%" />
+   
+</p>
+<p align="center">
+<img src="./.github/assets/SparxResources.png" width="49%" />
+   
+&nbsp;
+<img src="./.github/assets/SparxProgress.png" width="49%" />
+   
+</p>
+
+
 
 <h3>Usage</h3>
 <p>To get started with Sparx, the hosted version of the product can be used. You can get started immediately at spa-rx.ca. To demo the application, click the "Sign in Anonymously" button. The website provides an overview of the application and a guided tour.
