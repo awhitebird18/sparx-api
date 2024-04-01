@@ -8,7 +8,7 @@
 <p>Welcome to Sparx – a unique platform designed to revolutionize the way individuals and groups engage with self-directed learning. At the heart of the mission is the belief that learning should be personalized, collaborative, and simple to engage with. Whether you're diving into a new topic, mastering a skill, or building a comprehensive study plan, Sparx offers the tools and community support to make your learning journey as effective and enjoyable as possible.
 </p>
 
-## Features
+### Features
 
 <p align="center">
     <img src="./.github/assets/SparxMembers.png" width="49%" />
