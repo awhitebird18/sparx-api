@@ -11,18 +11,15 @@
 <h3>Features</h3>
 
 <p align="center">
-<img src="./.github/assets/SparxMembers.png" width="49%" />
-   
+    <img src="./.github/assets/SparxMembers.png" width="49%" />
 &nbsp;
-<img src="./.github/assets/SparxRoadmap.png" width="49%" />
-   
+    <img src="./.github/assets/SparxRoadmap.png" width="49%" /> 
 </p>
+
 <p align="center">
-<img src="./.github/assets/SparxResources.png" width="49%" />
-   
+    <img src="./.github/assets/SparxResources.png" width="49%" />
 &nbsp;
-<img src="./.github/assets/SparxProgress.png" width="49%" />
-   
+    <img src="./.github/assets/SparxProgress.png" width="49%" /> 
 </p>
 
 
