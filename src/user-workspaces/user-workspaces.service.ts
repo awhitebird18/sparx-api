@@ -24,10 +24,19 @@ export class UserWorkspacesService {
     private userRepository: UsersRepository,
   ) {}
 
-  async joinWorkspace(user: User, workspaceId: string, isAdmin: boolean) {
+  async joinWorkspace(user: User, workspaceId: string) {
     const workspace = await this.workspaceRepository.findOneOrFail({
       where: { uuid: workspaceId },
     });
+
+    const workspaceUsers = await this.userWorkspaceRepository.find({
+      where: { workspace: { id: workspace.id } },
+    });
+
+    console.log(workspaceUsers);
+
+    const isAdmin = workspaceUsers.length === 0;
+    console.log(isAdmin);
 
     const userWorkspaceRecord =
       await this.userWorkspaceRepository.joinWorkspace(
@@ -84,7 +93,7 @@ export class UserWorkspacesService {
           'This email is already registered as part of this workspace',
         );
       } else {
-        await this.joinWorkspace(invitedUser, workspace.uuid, false);
+        await this.joinWorkspace(invitedUser, workspace.uuid);
         return {
           message: `${user.firstName} has been invited to ${workspace.name}.`,
         };

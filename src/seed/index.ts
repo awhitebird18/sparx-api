@@ -16,13 +16,10 @@ import { seedActivity } from './activity.seed';
 
 (async function () {
   const AppDataSource = new DataSource(getOptions());
-  console.log(`Connection options: ${getOptions()}`);
   console.log('1: Seed starting...');
 
   await AppDataSource.initialize();
   console.log('2: Database Initialized');
-
-  console.log(AppDataSource);
 
   await seedUsers(AppDataSource);
   console.log('3: Users Seeded');

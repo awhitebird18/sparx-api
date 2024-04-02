@@ -130,22 +130,22 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
     // Create user
-    const user = await this.usersService.create({
+    const newUser = await this.usersService.create({
       ...registerDto,
       password: hashedPassword,
     });
+    const user = await this.usersService.markAsVerified(newUser.email);
 
     // Generate a verification token
-    const verificationPayload = {
-      email: user.email,
-      type: 'email-verification',
-    };
-    const verificationToken = this.jwtService.sign(verificationPayload, {
-      expiresIn: '1d',
-    });
+    // const verificationPayload = {
+    //   email: user.email,
+    //   type: 'email-verification',
+    // };
+    // const verificationToken = this.jwtService.sign(verificationPayload, {
+    //   expiresIn: '1d',
+    // });
 
-    // Send the verification email
-    await this.sendVerificationEmail(user.email, user, verificationToken);
+    // await this.sendVerificationEmail(user.email, user, verificationToken);
 
     return user;
   }

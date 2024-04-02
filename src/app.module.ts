@@ -3,7 +3,6 @@ import { APP_GUARD } from '@nestjs/core';
 import { config } from './typeorm';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import * as path from 'path';
-import Mailgun from 'nodemailer-mailgun-transport';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';

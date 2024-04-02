@@ -3,7 +3,7 @@ import { DataSourceOptions, DefaultNamingStrategy } from 'typeorm';
 export const getOptions = (isProd?: boolean) =>
   <DataSourceOptions>{
     type: 'postgres',
-    host: isProd ? '165.227.44.99' : 'localhost', // Use 'db' here
+    host: isProd ? '165.227.44.99' : 'localhost',
     port: 5432,
     username: 'postgres',
     password: 'postgres',
