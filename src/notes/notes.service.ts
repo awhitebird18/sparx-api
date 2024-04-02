@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateNoteDto } from './dto/update-note.dto';
 import { NotesRepository } from './notes.repository';
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { User } from 'src/users/entities/user.entity';
+import { Note } from './entities/note.entity';
 
 @Injectable()
 export class NotesService {
@@ -17,7 +18,22 @@ export class NotesService {
       createNoteDto.channelId,
     );
 
-    return this.notesRepository.createNote(createNoteDto, channel, user);
+    const note = await this.notesRepository.createNote(
+      createNoteDto,
+      channel,
+      user,
+    );
+
+    return {
+      title: note.title,
+      isPrivate: note.isPrivate,
+      uuid: note.uuid,
+      createdAt: note.createdAt,
+      content: note.content,
+      lastAccessed: note.updatedAt,
+      // Assuming createdBy is a User entity with firstName and lastName
+      createdBy: note.createdBy.uuid,
+    };
   }
 
   async findAllUserNotesByChannel(channelUuid: string, user: User) {
@@ -56,19 +72,20 @@ export class NotesService {
     };
   }
 
-  async updateNote(uuid: string, updateNoteDto: UpdateNoteDto) {
-    const note = await this.notesRepository.updateNote(uuid, updateNoteDto);
+  async updateNote(uuid: string, updateNoteDto: UpdateNoteDto): Promise<Note> {
+    const note = await this.notesRepository.findOne({ where: { uuid } });
 
-    // Transform the data to the desired format
-    return {
-      title: note.title,
-      isPrivate: note.isPrivate,
-      uuid: note.uuid,
-      createdAt: note.createdAt,
-      content: note.content,
-      // Assuming createdBy is a User entity with firstName and lastName
-      createdBy: note.createdBy.uuid,
-    };
+    if (!note) {
+      throw new NotFoundException(`Message with UUID ${uuid} not found`);
+    }
+
+    // Map the updated fields onto the note entity
+    Object.assign(note, updateNoteDto);
+
+    // The save() method will trigger the @BeforeUpdate hook
+    await this.notesRepository.save(note);
+
+    return note;
   }
 
   async moveNote(uuid: string, channelId: string) {
