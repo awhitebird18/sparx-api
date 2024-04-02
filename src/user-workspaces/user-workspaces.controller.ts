@@ -21,13 +21,8 @@ export class UserWorkspacesController {
   joinWorkspace(
     @GetUser() user: User,
     @Param('workspaceId') workspaceId: string,
-    @Body() body: { isAdmin?: boolean },
   ) {
-    return this.userWorkspacesService.joinWorkspace(
-      user,
-      workspaceId,
-      body.isAdmin,
-    );
+    return this.userWorkspacesService.joinWorkspace(user, workspaceId);
   }
 
   @Get()

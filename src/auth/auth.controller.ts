@@ -81,8 +81,12 @@ export class AuthController {
   @Public()
   @ApiBody({ type: RegisterDto })
   @Post('register')
-  register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  async register(@Body() registerDto: RegisterDto, @Res() res: Response) {
+    const user = await this.authService.register(registerDto);
+
+    const message = await this.authService.login(user, res);
+
+    res.send(message);
   }
 
   @Public()
