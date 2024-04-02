@@ -66,7 +66,7 @@ export async function seedUsers(AppDataSource: DataSource) {
 
   const defaultUsers = [shanu];
 
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 10; i++) {
     const newUser = new User();
 
     const firstName = faker.person.firstName('male');

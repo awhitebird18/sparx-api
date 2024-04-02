@@ -1,3 +1,4 @@
+import { performance } from 'perf_hooks';
 import { DataSource } from 'typeorm';
 import { getOptions } from './typeorm-config';
 import { seedUsers } from './user.seed';
@@ -6,50 +7,39 @@ import { seedUserPreferences } from './user-preferences.seed';
 import { seedWorkspaces } from './workspace.seed';
 import { seedChannels } from './channel.seed';
 import { seedSections } from './sections.seed';
-import { seedChannelSubscriptions } from './channel-subscriptions2.seed';
+import { seedChannelSubscriptions } from './channel-subscriptions.seed';
 import { seedWorkspaceUsers } from './add-users-to-workspace.seed';
 import { seedChannelConnectors } from './channel-connectors.seed';
 import { seedActivity } from './activity.seed';
-// import { seedMessages } from './message.seed';
-
-// Create TypeORM DataSource
 
 (async function () {
+  console.log('Seed starting');
+
   const AppDataSource = new DataSource(getOptions());
-  console.log('1: Seed starting...');
 
   await AppDataSource.initialize();
-  console.log('2: Database Initialized');
+  console.log('Database Initialized');
 
-  await seedUsers(AppDataSource);
-  console.log('3: Users Seeded');
+  const seedOperations = [
+    { name: 'Users', function: seedUsers },
+    { name: 'Nodemap Settings', function: seedUserNodemapSettings },
+    { name: 'User Preferences', function: seedUserPreferences },
+    { name: 'Workspaces', function: seedWorkspaces },
+    { name: 'Workspace Users', function: seedWorkspaceUsers },
+    { name: 'Sections', function: seedSections },
+    { name: 'Channels', function: seedChannels },
+    { name: 'Channel Connectors', function: seedChannelConnectors },
+    { name: 'Channel Subscriptions', function: seedChannelSubscriptions },
+    { name: 'Workspace Activity', function: seedActivity },
+  ];
 
-  await seedUserNodemapSettings(AppDataSource);
-  console.log('4: Nodemap settings seeded');
+  for (const operation of seedOperations) {
+    const startTime = performance.now();
+    await operation.function(AppDataSource);
+    const endTime = performance.now();
+    const timeTaken = (endTime - startTime).toFixed(2);
+    console.log(`${operation.name} seeded in ${timeTaken}ms`);
+  }
 
-  await seedUserPreferences(AppDataSource);
-  console.log('5: User preferences seeded');
-
-  await seedWorkspaces(AppDataSource);
-  console.log('6: Workspaces seeded');
-
-  await seedWorkspaceUsers(AppDataSource);
-  console.log('7: User Workspace data seeded');
-
-  await seedSections(AppDataSource);
-  console.log('8: Sections seeded');
-
-  await seedChannels(AppDataSource);
-  console.log('9: Channels seeded');
-
-  await seedChannelConnectors(AppDataSource);
-  console.log('10: Channel Connectors seeded');
-
-  await seedChannelSubscriptions(AppDataSource);
-  console.log('11: Channel Subscriptions seeded');
-
-  await seedActivity(AppDataSource);
-  console.log('12: Workspace Activity seeded');
-
-  console.log('13: Seed Complete!');
+  console.log(`Seed Complete!`);
 })();
