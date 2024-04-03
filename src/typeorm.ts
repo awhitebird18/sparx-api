@@ -12,5 +12,3 @@ export const config: PostgresConnectionOptions = {
   synchronize: true,
   namingStrategy: new DefaultNamingStrategy(),
 };
-
-console.log(process.env.PG_HOST);

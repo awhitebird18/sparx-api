@@ -44,15 +44,15 @@ export async function seedUsers(AppDataSource: DataSource) {
 
   const hashedPassword = await bcrypt.hash('Password1', 10);
 
-  // const aaron = new User();
-  // Object.assign(aaron, {
-  //   firstName: 'Aaron',
-  //   lastName: 'Whitebird',
-  //   isAdmin: true,
-  //   email: 'aaron.whitebird@gmail.com',
-  //   password: hashedPassword,
-  //   isVerified: true,
-  // });
+  const aaron = new User();
+  Object.assign(aaron, {
+    firstName: 'Aaron',
+    lastName: 'Whitebird',
+    isAdmin: true,
+    email: 'aaron.whitebird@gmail.com',
+    password: hashedPassword,
+    isVerified: true,
+  });
 
   const shanu = new User();
   Object.assign(shanu, {
@@ -64,7 +64,7 @@ export async function seedUsers(AppDataSource: DataSource) {
     isVerified: true,
   });
 
-  const defaultUsers = [shanu];
+  const defaultUsers = [aaron, shanu];
 
   for (let i = 0; i < 10; i++) {
     const newUser = new User();

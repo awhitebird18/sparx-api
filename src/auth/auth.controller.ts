@@ -9,6 +9,7 @@ import {
   Res,
   UseInterceptors,
   ClassSerializerInterceptor,
+  UseFilters,
 } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -72,6 +73,7 @@ export class AuthController {
     return res.send(response);
   }
 
+  @Public()
   @Post('logout')
   async logout(@Res() res: Response) {
     await this.authService.logout(res);
@@ -92,10 +94,21 @@ export class AuthController {
   @Public()
   @UseGuards(RefreshJwtAuthGuard)
   @Post('refresh')
-  async refreshToken(@Request() req, @Res() res: any) {
-    const response = await this.authService.refresh(req.user, res);
+  async refreshToken(@Request() req, @Res() res: Response) {
+    try {
+      const response = await this.authService.refresh(req.user, res);
 
-    return res.send(response);
+      return res.send(response);
+    } catch (err) {
+      // On failure, clear the 'access_token' and 'refresh_token' cookies
+      res.clearCookie('access_token', { httpOnly: true, path: '/' });
+      res.clearCookie('refresh_token', { httpOnly: true, path: '/' });
+
+      // Optionally, you can return an appropriate response here, e.g., an error message or status code
+      return res
+        .status(401)
+        .json({ message: 'Refresh token failed, cookies cleared' });
+    }
   }
 
   @Public()

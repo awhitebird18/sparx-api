@@ -27,4 +27,6 @@ export class UserDto extends BaseDto {
   isAdmin: boolean;
 
   status?: UserStatus;
+
+  userPreferences?: any;
 }

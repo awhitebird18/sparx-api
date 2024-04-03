@@ -33,10 +33,7 @@ export class UserWorkspacesService {
       where: { workspace: { id: workspace.id } },
     });
 
-    console.log(workspaceUsers);
-
     const isAdmin = workspaceUsers.length === 0;
-    console.log(isAdmin);
 
     const userWorkspaceRecord =
       await this.userWorkspaceRepository.joinWorkspace(

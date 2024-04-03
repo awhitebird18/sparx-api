@@ -27,6 +27,7 @@ export class UsersRepository extends Repository<User> {
         'customStatus.isActive = :isActive',
         { isActive: true },
       )
+      .leftJoinAndSelect('user.preferences', 'preferences')
       .leftJoinAndSelect('user.userWorkspaces', 'userWorkspaces')
       .leftJoinAndSelect('userWorkspaces.workspace', 'workspace')
       .where('workspace.uuid = :workspaceId', { workspaceId })

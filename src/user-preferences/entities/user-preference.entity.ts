@@ -1,4 +1,4 @@
-import { Column, Entity, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 
 import { User } from 'src/users/entities/user.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
@@ -20,6 +20,7 @@ export class UserPreferences extends BaseEntity {
   notificationType: NotificationType;
 
   @OneToOne(() => User, (user) => user.preferences)
+  @JoinColumn()
   user: User;
 
   @Exclude()

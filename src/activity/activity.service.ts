@@ -17,7 +17,6 @@ export class ActivityService {
   @OnEvent('log.created')
   handleNodeCompletedEvent(event: LogActivity) {
     // Logic to handle the completed node event, e.g., logging to database
-    console.log('Log Received!', event);
 
     this.createLog(event);
   }

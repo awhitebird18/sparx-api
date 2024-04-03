@@ -13,12 +13,12 @@ import { seedChannelConnectors } from './channel-connectors.seed';
 import { seedActivity } from './activity.seed';
 
 (async function () {
-  console.log('Seed starting');
+  console.info('Seed starting');
 
   const AppDataSource = new DataSource(getOptions());
 
   await AppDataSource.initialize();
-  console.log('Database Initialized');
+  console.info('Database Initialized');
 
   const seedOperations = [
     { name: 'Users', function: seedUsers },
@@ -38,8 +38,8 @@ import { seedActivity } from './activity.seed';
     await operation.function(AppDataSource);
     const endTime = performance.now();
     const timeTaken = (endTime - startTime).toFixed(2);
-    console.log(`${operation.name} seeded in ${timeTaken}ms`);
+    console.info(`${operation.name} seeded in ${timeTaken}ms`);
   }
 
-  console.log(`Seed Complete!`);
+  console.info(`Seed Complete!`);
 })();
