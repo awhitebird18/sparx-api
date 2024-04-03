@@ -21,19 +21,38 @@ export class ActivityService {
     this.createLog(event);
   }
 
-  async getRecentWorkspaceActivity(workspaceId: string): Promise<any> {
+  async getRecentWorkspaceActivity(
+    workspaceId: string,
+    page: string,
+  ): Promise<any> {
+    const take = 10; // Number of items per page
+    const currentPage = parseInt(page) || 1; // Convert page string to number, defaulting to 1 if parsing fails
+    const skip = (currentPage - 1) * take; // Calculate the number of items to skip
+
     return this.activityRepository.find({
       where: { workspace: { uuid: workspaceId } },
       relations: ['user'],
       order: { createdAt: 'DESC' },
+      take: take, // Number of items to fetch
+      skip: skip, // Number of items to skip
     });
   }
 
-  async getUserActivity(userId: string, workspaceId: string): Promise<any> {
+  async getUserActivity(
+    userId: string,
+    workspaceId: string,
+    page: string,
+  ): Promise<any> {
+    const take = 10; // Number of items per page
+    const currentPage = parseInt(page) || 1; // Convert page string to number, defaulting to 1 if parsing fails
+    const skip = (currentPage - 1) * take; // Calculate the number of items to skip
+
     return this.activityRepository.find({
       where: { user: { uuid: userId }, workspace: { uuid: workspaceId } },
       relations: ['user'],
       order: { createdAt: 'DESC' },
+      take: take, // Number of items to fetch
+      skip: skip, // Number of items to skip
     });
   }
 

@@ -69,9 +69,7 @@ export class TasksService {
   }
 
   async getTasksByUser(userId: string, workspaceId: string): Promise<Task[]> {
-    return this.taskRepository.find({
-      where: { user: { uuid: userId }, workspace: { uuid: workspaceId } },
-    });
+    return this.taskRepository.getTasksByUser(userId, workspaceId);
   }
 
   async getTasksByWorkspace(workspaceId: string): Promise<Task[]> {

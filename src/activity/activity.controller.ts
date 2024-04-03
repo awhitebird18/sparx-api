@@ -6,15 +6,19 @@ export class ActivityController {
   constructor(private readonly activityService: ActivityService) {}
 
   @Get('workspace/:workspaceId')
-  async getWorkspaceActivity(@Param('workspaceId') workspaceId: string) {
-    return this.activityService.getRecentWorkspaceActivity(workspaceId);
+  async getWorkspaceActivity(
+    @Query('page') page: string,
+    @Param('workspaceId') workspaceId: string,
+  ) {
+    return this.activityService.getRecentWorkspaceActivity(workspaceId, page);
   }
 
-  @Get('user')
+  @Get('user/:workspaceId/:userId')
   async getUserActivity(
-    @Query('userId') userId: string,
-    @Query('workspaceId') workspaceId: string,
+    @Query('page') page: string,
+    @Param('userId') userId: string,
+    @Param('workspaceId') workspaceId: string,
   ) {
-    return this.activityService.getUserActivity(userId, workspaceId);
+    return this.activityService.getUserActivity(userId, workspaceId, page);
   }
 }
