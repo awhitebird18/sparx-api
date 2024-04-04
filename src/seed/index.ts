@@ -7,10 +7,12 @@ import { seedUserPreferences } from './user-preferences.seed';
 import { seedWorkspaces } from './workspace.seed';
 import { seedChannels } from './channel.seed';
 import { seedSections } from './sections.seed';
-import { seedChannelSubscriptions } from './channel-subscriptions.seed';
-import { seedWorkspaceUsers } from './add-users-to-workspace.seed';
+import { seedChannelSubscriptions } from './channel-subscriptions-2.seed';
+import { seedWorkspaceUsers } from './workspace-users.seed';
 import { seedChannelConnectors } from './channel-connectors.seed';
+import { seedMessages } from './message.seed';
 import { seedActivity } from './activity.seed';
+import { seedFlashcardTemplate } from './flashcard-template.seed';
 
 (async function () {
   console.info('Seed starting');
@@ -29,8 +31,10 @@ import { seedActivity } from './activity.seed';
     { name: 'Sections', function: seedSections },
     { name: 'Channels', function: seedChannels },
     { name: 'Channel Connectors', function: seedChannelConnectors },
-    { name: 'Channel Subscriptions', function: seedChannelSubscriptions },
     { name: 'Workspace Activity', function: seedActivity },
+    { name: 'Channel Subscriptions', function: seedChannelSubscriptions },
+    { name: 'Messages', function: seedMessages },
+    { name: 'Flashcard Templates', function: seedFlashcardTemplate },
   ];
 
   for (const operation of seedOperations) {

@@ -60,18 +60,6 @@
     "parentChannelId": "2"
   },
   {
-    "id": "6",
-    "uuid": "9a444a63-e733-4b2b-8810-fd3eb34e63b2",
-    "createdAt": "2024-03-21 02:13:05.00079+00",
-    "updatedAt": "NULL",
-    "deletedAt": "2024-03-21 02:13:32.44576+00",
-    "childSide": "bottom",
-    "parentSide": "right",
-    "workspaceId": "1",
-    "childChannelId": "7",
-    "parentChannelId": "1"
-  },
-  {
     "id": "7",
     "uuid": "0ff838c2-5273-4995-ab0c-429e0ba1c210",
     "createdAt": "2024-03-21 02:13:07.873493+00",

@@ -19,13 +19,22 @@ export class ChannelConnectorsService {
     const channelConnectorExists =
       await this.channelConnectorsRepository.findOne({
         where: {
-          parentChannel: { uuid: dto.parentChannelId },
           childChannel: { uuid: dto.childChannelId },
         },
       });
 
+    const reverseExists = await this.channelConnectorsRepository.findOne({
+      where: {
+        childChannel: { uuid: dto.parentChannelId },
+        parentChannel: { uuid: dto.childChannelId },
+      },
+    });
+
     if (channelConnectorExists) {
       await this.remove(channelConnectorExists.uuid, workspaceId);
+    }
+    if (reverseExists) {
+      await this.remove(reverseExists.uuid, workspaceId);
     }
 
     const channelConnector =
