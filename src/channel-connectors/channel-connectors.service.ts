@@ -30,8 +30,6 @@ export class ChannelConnectorsService {
       },
     });
 
-    console.log(channelConnectorExists, dto.childChannelId);
-
     if (channelConnectorExists) {
       await this.remove(channelConnectorExists.uuid, workspaceId);
     }
