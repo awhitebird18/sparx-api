@@ -12,6 +12,7 @@ import { seedWorkspaceUsers } from './workspace-users.seed';
 import { seedChannelConnectors } from './channel-connectors.seed';
 import { seedMessages } from './message.seed';
 import { seedActivity } from './activity.seed';
+import { seedFlashcardTemplate } from './flashcard-template.seed';
 
 (async function () {
   console.info('Seed starting');
@@ -33,6 +34,7 @@ import { seedActivity } from './activity.seed';
     { name: 'Workspace Activity', function: seedActivity },
     { name: 'Channel Subscriptions', function: seedChannelSubscriptions },
     { name: 'Messages', function: seedMessages },
+    { name: 'Flashcard Templates', function: seedFlashcardTemplate },
   ];
 
   for (const operation of seedOperations) {
