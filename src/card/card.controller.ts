@@ -56,6 +56,14 @@ export class CardController {
     return this.cardService.findAllByUser(user, channelId);
   }
 
+  @Get('due-today/:workspaceId')
+  getDueToday(
+    @GetUser() user: User,
+    @Param('workspaceId') workspaceId: string,
+  ) {
+    return this.cardService.getCardsDueForWorkspace(user, workspaceId);
+  }
+
   @Get('due-next-30-days')
   getDueFlashcardsNext30Days(@GetUser() user: User) {
     return this.cardService.getDueFlashcardsNext30Days(user);

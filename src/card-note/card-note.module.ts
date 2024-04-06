@@ -7,10 +7,12 @@ import { CardTemplateModule } from 'src/card-template/card-template.module';
 import { CardNoteRepository } from './card-note.repository';
 import { CardModule } from 'src/card/card.module';
 import { ChannelsModule } from 'src/channels/channels.module';
+import { WorkspacesModule } from 'src/workspaces/workspaces.module';
 
 @Module({
   imports: [
     ChannelsModule,
+    WorkspacesModule,
     CardFieldModule,
     CardFieldValueModule,
     CardTemplateModule,

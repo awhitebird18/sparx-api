@@ -43,6 +43,34 @@ export class CardRepository extends Repository<Flashcard> {
     return count;
   }
 
+  async getCardsDueForWorkspace(
+    user: User,
+    workspaceId: string,
+  ): Promise<{ channelId: string; count: number }[]> {
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    // Build the query to count flashcards per channel
+    const counts = await this.createQueryBuilder('card')
+      .leftJoin('card.channel', 'channel') // Use leftJoin when you don't need to select properties from the joined entity
+      .leftJoin('card.workspace', 'workspace') // Ensure you join with workspace as well
+      .select('channel.uuid', 'channelId') // Select the channel id for grouping and output
+      .addSelect('COUNT(card.id)', 'count') // Count the cards grouped by channel
+      .where('card.user = :userId', { userId: user.id })
+      .andWhere('workspace.uuid = :workspaceId', { workspaceId: workspaceId }) // Make sure to match the workspace.id, not workspace.uuid based on your entity description
+      .andWhere('card.nextReviewDate <= :today', {
+        today: today.toISOString().split('T')[0],
+      })
+      .groupBy('channel.uuid') // Group the results by channel id to get counts per channel
+      .getRawMany(); // Use getRawMany to execute the query and get raw results
+
+    // Transform the results to match the desired output format
+    return counts.map((item) => ({
+      channelId: item.channelId,
+      count: parseInt(item.count, 10), // Ensure count is returned as a number
+    }));
+  }
+
   async reviewMultipleFlashcards(reviews: FlashcardReviewDTO[], user: User) {
     const results = [];
 

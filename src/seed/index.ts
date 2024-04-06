@@ -17,7 +17,7 @@ import { seedFlashcardTemplate } from './flashcard-template.seed';
 (async function () {
   console.info('Seed starting');
 
-  const AppDataSource = new DataSource(getOptions());
+  const AppDataSource = new DataSource(getOptions(true));
 
   await AppDataSource.initialize();
   console.info('Database Initialized');

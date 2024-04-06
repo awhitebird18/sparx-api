@@ -5,6 +5,7 @@ import { Entity, ManyToOne, Column, OneToMany } from 'typeorm';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { CardNote } from 'src/card-note/entities/card-note.entity';
 import { Channel } from 'src/channels/entities/channel.entity';
+import { Workspace } from 'src/workspaces/entities/workspace.entity';
 
 @Entity()
 export class Flashcard extends BaseEntity {
@@ -34,4 +35,7 @@ export class Flashcard extends BaseEntity {
 
   @ManyToOne(() => Channel, (channel) => channel.flashcards)
   channel: Channel;
+
+  @ManyToOne(() => Workspace, (workspace) => workspace.flashcards)
+  workspace: Workspace;
 }

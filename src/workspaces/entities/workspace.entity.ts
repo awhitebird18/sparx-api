@@ -1,4 +1,5 @@
 import { Activity } from 'src/activity/entities/activity.entity';
+import { Flashcard } from 'src/card/entities/card.entity';
 import { ChannelConnector } from 'src/channel-connectors/entities/channel-connector.entity';
 import { Channel } from 'src/channels/entities/channel.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
@@ -56,4 +57,7 @@ export class Workspace extends BaseEntity {
 
   @OneToMany(() => Activity, (activity) => activity.workspace)
   activity: Activity;
+
+  @OneToMany(() => Flashcard, (flashcard) => flashcard.workspace)
+  flashcards: Flashcard;
 }

@@ -7,16 +7,18 @@ import { CardFieldRepository } from 'src/card-field/card-field.repository';
 import { CardRepository } from 'src/card/card.repository';
 import { User } from 'src/users/entities/user.entity';
 import { ChannelsRepository } from 'src/channels/channels.repository';
+import { WorkspacesRepository } from 'src/workspaces/workspaces.repository';
 
 @Injectable()
 export class CardNoteService {
   constructor(
     private channelRepository: ChannelsRepository,
+    private workspaceRepository: WorkspacesRepository,
     private cardRepository: CardRepository,
     private cardNoteRepository: CardNoteRepository,
     private cardFieldValueRepository: CardFieldValueRepository,
     private cardFieldRepository: CardFieldRepository,
-    private cardTemplateRepository: CardTemplateRepository, // Include any other repositories you might need
+    private cardTemplateRepository: CardTemplateRepository,
   ) {}
 
   async create(createNoteDto: CreateCardNoteDto, user: User) {
@@ -28,6 +30,9 @@ export class CardNoteService {
 
     const channel = await this.channelRepository.findByUuid(
       createNoteDto.channelId,
+    );
+    const workspace = await this.workspaceRepository.findWorkspaceByUuid(
+      createNoteDto.workspaceId,
     );
 
     // Create a new CardNote entity
@@ -65,7 +70,7 @@ export class CardNoteService {
           note: savedCardNote,
           user,
           channel,
-          // ... set any other required fields ...
+          workspace,
         });
 
         // Save the flashcard

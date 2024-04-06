@@ -85,6 +85,10 @@ export class CardService {
     return this.cardRepository.reviewMultipleFlashcards(reviews, user);
   }
 
+  getCardsDueForWorkspace(user: User, workspaceId: string) {
+    return this.cardRepository.getCardsDueForWorkspace(user, workspaceId);
+  }
+
   getDueFlashcardsNext30Days(user: User) {
     return this.cardRepository.getDueFlashcardsCategorizedNext30Days(user);
   }

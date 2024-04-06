@@ -7,4 +7,5 @@ export class CreateCardNoteDto {
   templateId: string;
   fieldValues: FieldValueDto[];
   channelId: string;
+  workspaceId: string;
 }
