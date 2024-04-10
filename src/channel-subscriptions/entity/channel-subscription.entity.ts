@@ -29,7 +29,9 @@ export class ChannelSubscription extends BaseEntity {
   @ManyToOne(() => User, (user) => user.channelSubscriptions)
   user: User;
 
-  @ManyToOne(() => Channel, (channel) => channel.channelSubscriptions)
+  @ManyToOne(() => Channel, (channel) => channel.channelSubscriptions, {
+    cascade: ['soft-remove'],
+  })
   channel: Channel;
 
   @ManyToOne(() => Section, (section) => section.channels)

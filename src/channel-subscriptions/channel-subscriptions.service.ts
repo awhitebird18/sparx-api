@@ -287,11 +287,11 @@ export class ChannelSubscriptionsService {
       (channelSubscription) =>
         this.messagesRepository
           .getUnreadMessageCount(
-            channelSubscription.channel.uuid,
+            channelSubscription.channel?.uuid,
             channelSubscription.lastRead,
           )
           .then((unreadCount) => ({
-            channelId: channelSubscription.channel.uuid,
+            channelId: channelSubscription.channel?.uuid,
             unreadCount,
           })),
     );

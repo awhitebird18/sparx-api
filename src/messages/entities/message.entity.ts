@@ -34,7 +34,9 @@ export class Message extends BaseEntity {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => Channel, (channel) => channel.messages)
+  @ManyToOne(() => Channel, (channel) => channel.messages, {
+    cascade: ['soft-remove'],
+  })
   @JoinColumn({ name: 'channelId' })
   channel: Channel;
 

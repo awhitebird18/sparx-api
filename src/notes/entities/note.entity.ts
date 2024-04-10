@@ -18,7 +18,9 @@ export class Note extends BaseEntity {
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @ManyToOne(() => Channel, (channel) => channel.notes)
+  @ManyToOne(() => Channel, (channel) => channel.notes, {
+    cascade: ['soft-remove'],
+  })
   channel: Channel;
 
   @ManyToOne(() => User, (user) => user.notes, { nullable: true })

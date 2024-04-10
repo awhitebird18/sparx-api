@@ -45,7 +45,7 @@ export class SectionsRepository extends Repository<Section> {
 
     for (const section of userSections as any) {
       //TODO: Need  to get only users channels
-      section.channelIds = section.channels.map((sub) => sub.channel.uuid);
+      section.channelIds = section.channels.map((sub) => sub.channel?.uuid);
       delete section.channels; // Optionally, remove the full channel subscriptions if you only want the IDs
     }
 

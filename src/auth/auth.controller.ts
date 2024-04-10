@@ -9,8 +9,8 @@ import {
   Res,
   UseInterceptors,
   ClassSerializerInterceptor,
-  UseFilters,
 } from '@nestjs/common';
+import { OpenAI } from 'openai';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
@@ -45,6 +45,12 @@ import { WorkspacesService } from 'src/workspaces/workspaces.service';
 import { Workspace } from 'src/workspaces/entities/workspace.entity';
 import { UserWorkspacesService } from 'src/user-workspaces/user-workspaces.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CreateChannelConnectorDto } from 'src/channel-connectors/dto/create-channel-connector.dto';
+import { ChannelType } from 'src/channels/enums/channel-type.enum';
+import { ConnectionSide } from 'src/channel-connectors/enums/connectionSide.enum';
+import { ChannelConnectorsService } from 'src/channel-connectors/channel-connectors.service';
+
+const subTopicYCoords = [0, 0, 105, 105, -105, -105];
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -55,6 +61,7 @@ export class AuthController {
     private sectionsService: SectionsService,
     private channelsService: ChannelsService,
     private channelSubscriptionsService: ChannelSubscriptionsService,
+    private channelConnectorService: ChannelConnectorsService,
     private userPreferencesService: UserPreferencesService,
     private userStatusesService: UserStatusesService,
     private workspaceService: WorkspacesService,
@@ -78,6 +85,131 @@ export class AuthController {
   async logout(@Res() res: Response) {
     await this.authService.logout(res);
     return res.send({ message: 'Logged out successfully' });
+  }
+
+  @Post('generate-roadmap')
+  async generateRoadmap(
+    @Body() body: { topic: string; workspaceId: string },
+    @GetUser() user: User,
+  ) {
+    try {
+      const openAIClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const chatCompletion = await openAIClient.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            content: `Please generate a roadmap of major topics for learning ${body.topic}. For example, if I am learning Frontend Development a roadmap map look like [{topic: "Internet", subtopics: ["How does the internet work?", "What is HTTP?". "What is domain name?", "What is hosting?", "DNS and how it works?", "Browsers and how they work?"]}, {topic: "HTML", subtopics: ["Learn the basics", "Writing semantic HTML", "Forms and Validations", "Accessibility", "SEO Basics"]}, {topic: "CSS", subtopics: ["Learn the basics", "Making Layouts", "Responsive Design"]}...]. Please generate this format and keep the titles short. Please provide an array of objects and in json format.`,
+            role: 'user',
+          },
+        ],
+      });
+
+      const clearNodemap = async (workspaceId: string) => {
+        await this.channelConnectorService.removeChannelConnectorsByWorkspace(
+          workspaceId,
+        );
+        await this.channelsService.removeChannelsByWorkspace(workspaceId);
+      };
+
+      const createNodemap = async (
+        data: { topic: string; subtopics: string[] }[],
+      ) => {
+        let previousMainChannel;
+
+        for (let i = 0; i < data.length; i++) {
+          const entry = data[i];
+          // Main topic
+          const mainTopic = {
+            name: entry.topic,
+            type: ChannelType.CHANNEL,
+            x: 2000,
+            y: 500 * (i + 2),
+            workspaceId: body.workspaceId,
+            isDefault: i === 0,
+          };
+
+          const newMainChannel = await this.channelsService.createChannel(
+            mainTopic,
+            body.workspaceId,
+          );
+
+          if (i === 0) {
+            await this.channelSubscriptionsService.joinChannel(
+              user,
+              newMainChannel.uuid,
+            );
+          }
+
+          // Create Main Channel Connector
+          // Channel Connectors
+
+          if (i < data.length) {
+            if (previousMainChannel) {
+              const channelConnector: CreateChannelConnectorDto = {
+                parentChannelId: previousMainChannel.uuid,
+                childChannelId: newMainChannel.uuid,
+                parentSide: ConnectionSide.BOTTOM,
+                childSide: ConnectionSide.TOP,
+              };
+
+              await this.channelConnectorService.createConnection(
+                channelConnector,
+                body.workspaceId,
+              );
+            }
+
+            previousMainChannel = newMainChannel;
+          }
+
+          // Secondary topics
+          const subtopics = entry.subtopics;
+
+          for (let j = 0; j < subtopics.length; j++) {
+            const subTopic = subtopics[j];
+
+            const odd = j % 2 === 0 ? -1 : 1;
+
+            const topic = {
+              name: subTopic,
+              type: ChannelType.CHANNEL,
+              x: 2000 + odd * 500,
+              y: 500 * (i + 2) + subTopicYCoords[j],
+            };
+            const newSubChannel = await this.channelsService.createChannel(
+              topic,
+              body.workspaceId,
+            );
+
+            // Channel Connectors
+            const channelConnector: CreateChannelConnectorDto = {
+              parentChannelId: newMainChannel.uuid,
+              childChannelId: newSubChannel.uuid,
+              parentSide:
+                odd === -1 ? ConnectionSide.LEFT : ConnectionSide.RIGHT,
+              childSide:
+                odd === -1 ? ConnectionSide.RIGHT : ConnectionSide.LEFT,
+            };
+
+            await this.channelConnectorService.createConnection(
+              channelConnector,
+              body.workspaceId,
+            );
+          }
+        }
+      };
+
+      const parsedData = JSON.parse(chatCompletion.choices[0].message.content);
+
+      await clearNodemap(body.workspaceId);
+      await createNodemap(parsedData);
+
+      return await this.channelsService.findWorkspaceChannels(
+        user.id,
+        body.workspaceId,
+      );
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   @Public()

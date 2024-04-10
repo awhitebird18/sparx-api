@@ -19,6 +19,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { UserStatusesModule } from 'src/user-statuses/user-statuses.module';
 import { WorkspacesModule } from 'src/workspaces/workspaces.module';
 import { UserWorkspacesModule } from 'src/user-workspaces/user-workspaces.module';
+import { ChannelConnectorsModule } from 'src/channel-connectors/channel-connectors.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { UserWorkspacesModule } from 'src/user-workspaces/user-workspaces.module
     UserStatusesModule,
     WorkspacesModule,
     UserWorkspacesModule,
+    ChannelConnectorsModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy, RefreshJWTStrategy],

@@ -44,8 +44,8 @@ export class ChannelsService {
       },
     });
 
-    if (existingChannel && existingChannel.type === ChannelType.CHANNEL)
-      throw new ConflictException('A channel with this name already exists.');
+    // if (existingChannel && existingChannel.type === ChannelType.CHANNEL)
+    //   throw new ConflictException('A channel with this name already exists.');
 
     // Create database entry
     const newChannel = await this.channelsRepository.createChannel(
@@ -53,15 +53,17 @@ export class ChannelsService {
       workspace,
     );
 
-    this.events.emit(
-      'log.created',
-      new LogActivity(
-        user.uuid,
-        workspace.uuid,
-        'Node Completed',
-        `created a new module for ${newChannel.name}`,
-      ),
-    );
+    if (user) {
+      this.events.emit(
+        'log.created',
+        new LogActivity(
+          user.uuid,
+          workspace.uuid,
+          'Node Completed',
+          `created a new module for ${newChannel.name}`,
+        ),
+      );
+    }
 
     return newChannel;
   }
@@ -213,5 +215,13 @@ export class ChannelsService {
 
     // Send websocket
     this.events.emit('websocket-event', 'removeChannel', uuid, workspaceId);
+  }
+
+  async removeChannelsByWorkspace(workspaceId: string) {
+    const workspaceChannels = await this.channelsRepository.find({
+      where: { workspace: { uuid: workspaceId } },
+    });
+
+    await this.channelsRepository.softRemove(workspaceChannels);
   }
 }

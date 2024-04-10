@@ -53,6 +53,14 @@ export class ChannelConnectorsService {
     return channelConnectorToReturn;
   }
 
+  async removeChannelConnectorsByWorkspace(workspaceId: string) {
+    const channelConnectors = await this.channelConnectorsRepository.find({
+      where: { workspace: { uuid: workspaceId } },
+    });
+
+    await this.channelConnectorsRepository.remove(channelConnectors);
+  }
+
   async findAll(): Promise<any[]> {
     const connectors = await this.channelConnectorsRepository.findAll();
 
