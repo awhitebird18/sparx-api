@@ -5,17 +5,15 @@ import { UserWorkspace } from 'src/user-workspaces/entities/user-workspace.entit
 import { Workspace } from 'src/workspaces/entities/workspace.entity';
 import { DataSource } from 'typeorm';
 
-export async function seedChannelSubscriptions(AppDataSource: DataSource) {
-  const workspaceRepository = AppDataSource.getRepository(Workspace);
+export async function seedChannelSubscriptions(
+  AppDataSource: DataSource,
+  workspace: Workspace,
+) {
   const channelsRepository = AppDataSource.getRepository(Channel);
   const activityRepository = AppDataSource.getRepository(Activity);
   const userWorkspacesRepository = AppDataSource.getRepository(UserWorkspace);
   const channelSubscriptionRepository =
     AppDataSource.getRepository(ChannelSubscription);
-
-  const workspace = await workspaceRepository.findOne({
-    where: { name: 'Full Stack Development' },
-  });
 
   if (!workspace) {
     console.error("Workspace 'Full Stack Development' not found");

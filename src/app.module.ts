@@ -42,6 +42,7 @@ import { NodemapSettingsModule } from './nodemap-settings/nodemap-settings.modul
 import { TasksModule } from './tasks/tasks.module';
 import { ExperienceModule } from './experience/experience.module';
 import { ActivityModule } from './activity/activity.module';
+import { AssistantModule } from './assistant/assistant.module';
 
 @Module({
   imports: [
@@ -93,6 +94,7 @@ import { ActivityModule } from './activity/activity.module';
     TasksModule,
     ExperienceModule,
     ActivityModule,
+    AssistantModule,
   ],
   controllers: [AppController],
   providers: [

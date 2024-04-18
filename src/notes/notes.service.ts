@@ -79,6 +79,8 @@ export class NotesService {
       throw new NotFoundException(`Message with UUID ${uuid} not found`);
     }
 
+    console.log(updateNoteDto.content);
+
     // Map the updated fields onto the note entity
     Object.assign(note, updateNoteDto);
 

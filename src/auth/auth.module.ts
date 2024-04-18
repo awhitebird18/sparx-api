@@ -19,6 +19,10 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { UserStatusesModule } from 'src/user-statuses/user-statuses.module';
 import { WorkspacesModule } from 'src/workspaces/workspaces.module';
 import { UserWorkspacesModule } from 'src/user-workspaces/user-workspaces.module';
+import { ChannelConnectorsModule } from 'src/channel-connectors/channel-connectors.module';
+import { CardTemplateModule } from 'src/card-template/card-template.module';
+import { CardFieldModule } from 'src/card-field/card-field.module';
+import { CardTypeModule } from 'src/card-type/card-type.module';
 
 @Module({
   imports: [
@@ -36,6 +40,10 @@ import { UserWorkspacesModule } from 'src/user-workspaces/user-workspaces.module
     UserStatusesModule,
     WorkspacesModule,
     UserWorkspacesModule,
+    ChannelConnectorsModule,
+    CardTemplateModule,
+    CardFieldModule,
+    CardTypeModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy, RefreshJWTStrategy],

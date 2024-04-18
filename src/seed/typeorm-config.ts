@@ -11,5 +11,5 @@ export const getOptions = (isProd?: boolean) =>
     database: 'postgres',
     synchronize: true,
     namingStrategy: new DefaultNamingStrategy(),
-    dropSchema: true,
+    // dropSchema: true,
   };

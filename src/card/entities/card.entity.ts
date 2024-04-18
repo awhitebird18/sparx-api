@@ -33,9 +33,13 @@ export class Flashcard extends BaseEntity {
   @OneToMany(() => ReviewHistory, (reviewHistory) => reviewHistory.flashcard)
   reviewHistories: ReviewHistory[];
 
-  @ManyToOne(() => Channel, (channel) => channel.flashcards)
+  @ManyToOne(() => Channel, (channel) => channel.flashcards, {
+    cascade: ['soft-remove'],
+  })
   channel: Channel;
 
-  @ManyToOne(() => Workspace, (workspace) => workspace.flashcards)
+  @ManyToOne(() => Workspace, (workspace) => workspace.flashcards, {
+    cascade: ['soft-remove'],
+  })
   workspace: Workspace;
 }

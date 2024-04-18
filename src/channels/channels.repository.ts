@@ -12,6 +12,7 @@ import { Channel } from './entities/channel.entity';
 import { ChannelType } from './enums/channel-type.enum';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { Workspace } from 'src/workspaces/entities/workspace.entity';
+import { Public } from 'src/common/decorators/is-public';
 
 @Injectable()
 export class ChannelsRepository extends Repository<Channel> {

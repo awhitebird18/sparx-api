@@ -106,7 +106,7 @@ export class ChannelSubscriptionsService {
           this.channelSubscriptionsRepository.create({
             user,
             channel: { id: channel.id },
-            section: { id: section.id },
+            section: { id: section?.id },
           });
         await this.channelSubscriptionsRepository.save(newChannelSubscription);
       }
@@ -287,11 +287,11 @@ export class ChannelSubscriptionsService {
       (channelSubscription) =>
         this.messagesRepository
           .getUnreadMessageCount(
-            channelSubscription.channel.uuid,
+            channelSubscription.channel?.uuid,
             channelSubscription.lastRead,
           )
           .then((unreadCount) => ({
-            channelId: channelSubscription.channel.uuid,
+            channelId: channelSubscription.channel?.uuid,
             unreadCount,
           })),
     );

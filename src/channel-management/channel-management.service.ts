@@ -48,7 +48,9 @@ export class ChannelManagementService {
     // Add user to channel
     // await this.joinChannel(currentUser.uuid, channel.uuid, section.uuid);
 
-    this.sendUserChannelSocket(currentUser.uuid, channel, section.uuid);
+    console.log(channel, section);
+
+    this.sendUserChannelSocket(currentUser.uuid, channel, section?.uuid);
 
     return channel;
   }

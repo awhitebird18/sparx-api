@@ -14,36 +14,55 @@ import { seedMessages } from './message.seed';
 import { seedActivity } from './activity.seed';
 import { seedFlashcardTemplate } from './flashcard-template.seed';
 
-(async function () {
-  console.info('Seed starting');
+// (async function () {
+//   console.info('Seed starting');
 
-  const AppDataSource = new DataSource(getOptions(true));
+//   const AppDataSource = new DataSource(getOptions());
 
-  await AppDataSource.initialize();
-  console.info('Database Initialized');
+//   await AppDataSource.initialize();
+//   console.info('Database Initialized');
 
-  const seedOperations = [
-    { name: 'Users', function: seedUsers },
-    { name: 'Nodemap Settings', function: seedUserNodemapSettings },
-    { name: 'User Preferences', function: seedUserPreferences },
-    { name: 'Workspaces', function: seedWorkspaces },
-    { name: 'Workspace Users', function: seedWorkspaceUsers },
-    { name: 'Sections', function: seedSections },
-    { name: 'Channels', function: seedChannels },
-    { name: 'Channel Connectors', function: seedChannelConnectors },
-    { name: 'Workspace Activity', function: seedActivity },
-    { name: 'Channel Subscriptions', function: seedChannelSubscriptions },
-    { name: 'Messages', function: seedMessages },
-    { name: 'Flashcard Templates', function: seedFlashcardTemplate },
-  ];
+//   const seedOperations = [
+//     { name: 'Users', function: () => seedUsers(AppDataSource) },
+//     {
+//       name: 'Nodemap Settings',
+//       function: () => seedUserNodemapSettings(AppDataSource),
+//     },
+//     {
+//       name: 'User Preferences',
+//       function: () => seedUserPreferences(AppDataSource),
+//     },
+//     { name: 'Workspaces', function: () => seedWorkspaces(AppDataSource) },
+//     {
+//       name: 'Workspace Users',
 
-  for (const operation of seedOperations) {
-    const startTime = performance.now();
-    await operation.function(AppDataSource);
-    const endTime = performance.now();
-    const timeTaken = (endTime - startTime).toFixed(2);
-    console.info(`${operation.name} seeded in ${timeTaken}ms`);
-  }
+//       function: () => seedWorkspaceUsers(AppDataSource, ''),
+//     },
+//     { name: 'Sections', function: () => seedSections(AppDataSource) },
+//     { name: 'Channels', function: () => seedChannels(AppDataSource) },
+//     {
+//       name: 'Channel Connectors',
+//       function: () => seedChannelConnectors(AppDataSource),
+//     },
+//     { name: 'Workspace Activity', function: () => seedActivity(AppDataSource) },
+//     {
+//       name: 'Channel Subscriptions',
+//       function: () => seedChannelSubscriptions(AppDataSource),
+//     },
+//     { name: 'Messages', function: () => seedMessages(AppDataSource) },
+//     {
+//       name: 'Flashcard Templates',
+//       function: () => seedFlashcardTemplate(AppDataSource),
+//     },
+//   ];
 
-  console.info(`Seed Complete!`);
-})();
+//   for (const operation of seedOperations) {
+//     const startTime = performance.now();
+//     await operation.function();
+//     const endTime = performance.now();
+//     const timeTaken = (endTime - startTime).toFixed(2);
+//     console.info(`${operation.name} seeded in ${timeTaken}ms`);
+//   }
+
+//   console.info(`Seed Complete!`);
+// })();

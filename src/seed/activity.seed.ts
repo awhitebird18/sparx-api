@@ -3,22 +3,22 @@ import { Workspace } from 'src/workspaces/entities/workspace.entity';
 import { Activity } from 'src/activity/entities/activity.entity';
 import { User } from 'src/users/entities/user.entity';
 
-export async function seedActivity(AppDataSource) {
+export async function seedActivity(
+  AppDataSource,
+  workspace: Workspace,
+  userId: string,
+) {
   const channelsRepository = AppDataSource.getRepository(Channel);
   const activityRepository = AppDataSource.getRepository(Activity);
   const userRepository = AppDataSource.getRepository(User);
 
-  const workspacesRepository = AppDataSource.getRepository(Workspace);
-
-  const workspace = await workspacesRepository.findOne({
-    where: { name: 'Full Stack Development' },
-  });
-
   const user = await userRepository.findOne({
-    where: { email: 'aaron.whitebird@gmail.com' },
+    where: { uuid: userId },
   });
 
-  const channels = await channelsRepository.find();
+  const channels = await channelsRepository.find({
+    where: { workspace: { uuid: workspace.uuid } },
+  });
 
   const activityEntries = [];
 
