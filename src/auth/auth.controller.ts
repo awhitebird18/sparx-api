@@ -49,8 +49,15 @@ import { CreateChannelConnectorDto } from 'src/channel-connectors/dto/create-cha
 import { ChannelType } from 'src/channels/enums/channel-type.enum';
 import { ConnectionSide } from 'src/channel-connectors/enums/connectionSide.enum';
 import { ChannelConnectorsService } from 'src/channel-connectors/channel-connectors.service';
+import { faker } from '@faker-js/faker';
+import * as bcrypt from 'bcrypt';
+import { UsersRepository } from 'src/users/users.repository';
+import { seedWorkspace } from 'src/seed/seedAnonymousWorkspace';
+import { CardTemplateRepository } from 'src/card-template/card-template.repository';
+import { CardFieldRepository } from 'src/card-field/card-field.repository';
+import { CardTypeRepository } from 'src/card-type/card-type.repository';
 
-const subTopicYCoords = [0, 0, 105, 105, -105, -105];
+const subTopicYCoords = [0, 0, 120, 120, -120, -120, 240, 240, -240, -240];
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -58,6 +65,10 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     private usersService: UsersService,
+    private userRepository: UsersRepository,
+    private cardTemplateRepository: CardTemplateRepository,
+    private cardFieldRepository: CardFieldRepository,
+    private cardTypeRepository: CardTypeRepository,
     private sectionsService: SectionsService,
     private channelsService: ChannelsService,
     private channelSubscriptionsService: ChannelSubscriptionsService,
@@ -122,7 +133,7 @@ export class AuthController {
           const mainTopic = {
             name: entry.topic,
             type: ChannelType.CHANNEL,
-            x: 2000,
+            x: 4000,
             y: 500 * (i + 2),
             workspaceId: body.workspaceId,
             isDefault: i === 0,
@@ -167,12 +178,12 @@ export class AuthController {
           for (let j = 0; j < subtopics.length; j++) {
             const subTopic = subtopics[j];
 
-            const odd = j % 2 === 0 ? -1 : 1;
+            const isEven = j % 2 === 0;
 
             const topic = {
               name: subTopic,
               type: ChannelType.CHANNEL,
-              x: 2000 + odd * 500,
+              x: 4000 + (isEven ? -1 : 1) * 480,
               y: 500 * (i + 2) + subTopicYCoords[j],
             };
             const newSubChannel = await this.channelsService.createChannel(
@@ -184,10 +195,8 @@ export class AuthController {
             const channelConnector: CreateChannelConnectorDto = {
               parentChannelId: newMainChannel.uuid,
               childChannelId: newSubChannel.uuid,
-              parentSide:
-                odd === -1 ? ConnectionSide.LEFT : ConnectionSide.RIGHT,
-              childSide:
-                odd === -1 ? ConnectionSide.RIGHT : ConnectionSide.LEFT,
+              parentSide: isEven ? ConnectionSide.LEFT : ConnectionSide.RIGHT,
+              childSide: isEven ? ConnectionSide.RIGHT : ConnectionSide.LEFT,
             };
 
             await this.channelConnectorService.createConnection(
@@ -202,6 +211,8 @@ export class AuthController {
 
       await clearNodemap(body.workspaceId);
       await createNodemap(parsedData);
+
+      await seedWorkspace(body.workspaceId, user.uuid);
 
       return await this.channelsService.findWorkspaceChannels(
         user.id,
@@ -221,6 +232,71 @@ export class AuthController {
     const message = await this.authService.login(user, res);
 
     res.send(message);
+  }
+
+  @Public()
+  @Post('register-anonymous')
+  async registerAnonymous(@Res() res: Response) {
+    const hashedPassword = await bcrypt.hash('Password1', 10);
+
+    const email = faker.internet.email();
+
+    const anonymousUser = this.userRepository.create({
+      firstName: 'Anonymous',
+      lastName: 'User',
+      email,
+      isAdmin: true,
+      password: hashedPassword,
+      isVerified: true,
+    });
+
+    const user = await this.userRepository.save(anonymousUser);
+
+    // Seed preferences
+    await this.userPreferencesService.createUserPreferences({
+      userId: user.id,
+    });
+
+    await this.sectionsService.seedUserDefaultSections(user.id);
+
+    //   Seed flashcard template
+    const cardTemplate = this.cardTemplateRepository.create({
+      isDefault: true,
+      user,
+      title: 'Basic',
+    });
+
+    const savedTemplate = await this.cardTemplateRepository.save(cardTemplate);
+
+    //   Fields
+    const frontField = this.cardFieldRepository.create({
+      title: 'Front',
+      template: savedTemplate,
+    });
+
+    const backField = this.cardFieldRepository.create({
+      title: 'Back',
+      template: savedTemplate,
+    });
+
+    const savedFields = await this.cardFieldRepository.insert([
+      frontField,
+      backField,
+    ]);
+
+    //   Variant
+    const cardType = this.cardTypeRepository.create({
+      title: 'Front > Back',
+      template: savedTemplate,
+      frontFields: [savedFields[0]],
+      backFields: [savedFields[1]],
+    });
+
+    await this.cardTypeRepository.save(cardType);
+
+    const data = await this.authService.login(user, res);
+
+    return res.send(data);
   }
 
   @Public()

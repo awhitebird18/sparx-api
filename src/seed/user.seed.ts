@@ -44,27 +44,27 @@ export async function seedUsers(AppDataSource: DataSource) {
 
   const hashedPassword = await bcrypt.hash('Password1', 10);
 
-  const aaron = new User();
-  Object.assign(aaron, {
-    firstName: 'Aaron',
-    lastName: 'Whitebird',
-    isAdmin: true,
-    email: 'aaron.whitebird@gmail.com',
-    password: hashedPassword,
-    isVerified: true,
-  });
+  // const aaron = new User();
+  // Object.assign(aaron, {
+  //   firstName: 'Aaron',
+  //   lastName: 'Whitebird',
+  //   isAdmin: true,
+  //   email: 'aaron.whitebird@gmail.com',
+  //   password: hashedPassword,
+  //   isVerified: true,
+  // });
 
-  const shanu = new User();
-  Object.assign(shanu, {
-    firstName: 'Shanu',
-    lastName: 'Shanu',
-    isAdmin: true,
-    email: 'awhitebirdtestingthings@gmail.com',
-    password: hashedPassword,
-    isVerified: true,
-  });
+  // const shanu = new User();
+  // Object.assign(shanu, {
+  //   firstName: 'Shanu',
+  //   lastName: 'Shanu',
+  //   isAdmin: true,
+  //   email: 'awhitebirdtestingthings@gmail.com',
+  //   password: hashedPassword,
+  //   isVerified: true,
+  // });
 
-  const defaultUsers = [aaron, shanu];
+  // const defaultUsers = [aaron, shanu];
 
   for (let i = 0; i < 10; i++) {
     const newUser = new User();
@@ -81,8 +81,8 @@ export async function seedUsers(AppDataSource: DataSource) {
     users.push(newUser);
   }
 
-  users.push(...defaultUsers);
+  // users.push(...defaultUsers);
 
   // Set other properties as needed
-  await userRepository.save(users);
+  return await userRepository.save(users);
 }

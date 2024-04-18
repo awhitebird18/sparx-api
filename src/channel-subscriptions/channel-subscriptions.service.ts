@@ -106,7 +106,7 @@ export class ChannelSubscriptionsService {
           this.channelSubscriptionsRepository.create({
             user,
             channel: { id: channel.id },
-            section: { id: section.id },
+            section: { id: section?.id },
           });
         await this.channelSubscriptionsRepository.save(newChannelSubscription);
       }

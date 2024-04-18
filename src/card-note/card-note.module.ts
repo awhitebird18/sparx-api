@@ -20,6 +20,6 @@ import { WorkspacesModule } from 'src/workspaces/workspaces.module';
   ],
   controllers: [CardNoteController],
   providers: [CardNoteService, CardNoteRepository],
-  exports: [CardNoteRepository],
+  exports: [CardNoteRepository, CardNoteService],
 })
 export class CardNoteModule {}

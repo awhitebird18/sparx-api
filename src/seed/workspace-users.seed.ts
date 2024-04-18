@@ -3,18 +3,19 @@ import { User } from 'src/users/entities/user.entity';
 import { Workspace } from 'src/workspaces/entities/workspace.entity';
 import { DataSource } from 'typeorm';
 
-export async function seedWorkspaceUsers(AppDataSource: DataSource) {
-  const workspacesRepository = AppDataSource.getRepository(Workspace);
-  const usersRepository = AppDataSource.getRepository(User);
+export async function seedWorkspaceUsers(
+  AppDataSource: DataSource,
+  workspace: Workspace,
+  users: User[],
+  userId: string,
+) {
   const userWorkspaceRepository = AppDataSource.getRepository(UserWorkspace);
 
-  const [workspaces, users] = await Promise.all([
-    workspacesRepository.find(),
-    usersRepository.find(),
-  ]);
+  console.log(`User count: ${users.length}`);
 
-  for (const workspace of workspaces) {
-    const workspaceUsersData = users.map((user) => {
+  const workspaceUsersData = users
+    .filter((user) => user.uuid !== userId)
+    .map((user) => {
       const workspaceUser = new UserWorkspace();
 
       workspaceUser.user = user;
@@ -24,6 +25,5 @@ export async function seedWorkspaceUsers(AppDataSource: DataSource) {
       return workspaceUser;
     });
 
-    await userWorkspaceRepository.save(workspaceUsersData);
-  }
+  await userWorkspaceRepository.insert(workspaceUsersData);
 }

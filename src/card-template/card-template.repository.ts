@@ -32,8 +32,8 @@ export class CardTemplateRepository extends Repository<Template> {
 
   findAllByUser(user: User): Promise<Template[]> {
     return this.createQueryBuilder('template')
-      .innerJoinAndSelect('template.user', 'user')
-      .where('user.uuid = :uuid', { uuid: user.uuid })
+      .leftJoinAndSelect('template.fields', 'fields')
+      .where('template.userId = :uuid', { uuid: user.id })
       .getMany();
   }
 

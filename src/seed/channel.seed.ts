@@ -2,13 +2,13 @@ import { Channel } from '../channels/entities/channel.entity';
 import { Workspace } from 'src/workspaces/entities/workspace.entity';
 import * as channelData from './output.json';
 
-export async function seedChannels(AppDataSource) {
+export async function seedChannels(AppDataSource, workspaceId: string) {
   const channelsRepository = AppDataSource.getRepository(Channel);
 
   const workspacesRepository = AppDataSource.getRepository(Workspace);
 
   const workspace = await workspacesRepository.findOne({
-    where: { name: 'Full Stack Development' },
+    where: { uuid: workspaceId },
   });
 
   const channels = [];
