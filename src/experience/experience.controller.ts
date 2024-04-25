@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { ExperienceService } from './experience.service';
-import { Experience } from './entities/experience.entity';
+import { ExperienceDto } from './dto/experience.dto';
 
 @Controller('experience')
 export class ExperienceController {
@@ -9,7 +9,7 @@ export class ExperienceController {
   @Post()
   addExperience(
     @Body() body: { userId: string; workspaceId: string; points: number },
-  ): Promise<Experience> {
+  ): Promise<ExperienceDto> {
     return this.experienceService.addExperience(
       body.userId,
       body.workspaceId,
@@ -21,7 +21,7 @@ export class ExperienceController {
   getUsersExperienceByWorkspace(
     @Param('userId') userId: string,
     @Param('workspaceId') workspaceId: string,
-  ): Promise<Experience[]> {
+  ): Promise<ExperienceDto[]> {
     return this.experienceService.getUsersExperienceByWorkspace(
       userId,
       workspaceId,

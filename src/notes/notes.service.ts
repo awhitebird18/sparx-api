@@ -4,6 +4,10 @@ import { UpdateNoteDto } from './dto/update-note.dto';
 import { NotesRepository } from './notes.repository';
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { User } from 'src/users/entities/user.entity';
+import { NoteDto } from './dto/note.dto';
+import { AssistantService } from 'src/assistant/assistant.service';
+import { convertStringToFlashcardContentFormat } from 'src/card/utils/convertStringToFlashcardContentFormat';
+import { plainToInstance } from 'class-transformer';
 import { Note } from './entities/note.entity';
 
 @Injectable()
@@ -11,9 +15,22 @@ export class NotesService {
   constructor(
     private notesRepository: NotesRepository,
     private channelsRepository: ChannelsRepository,
+    private assistantService: AssistantService,
   ) {}
 
-  async createNote(createNoteDto: CreateNoteDto, user: User) {
+  private convertToNoteDto(note: Note): NoteDto {
+    return plainToInstance(NoteDto, {
+      title: note.title,
+      isPrivate: note.isPrivate,
+      uuid: note.uuid,
+      createdAt: note.createdAt,
+      content: note.content,
+      createdBy: note.createdBy.uuid,
+      updatedAt: note.updatedAt,
+    });
+  }
+
+  async createNote(createNoteDto: CreateNoteDto, user: User): Promise<NoteDto> {
     const channel = await this.channelsRepository.findByUuid(
       createNoteDto.channelId,
     );
@@ -24,90 +41,114 @@ export class NotesService {
       user,
     );
 
-    return {
-      title: note.title,
-      isPrivate: note.isPrivate,
-      uuid: note.uuid,
-      createdAt: note.createdAt,
-      content: note.content,
-      lastAccessed: note.updatedAt,
-      // Assuming createdBy is a User entity with firstName and lastName
-      createdBy: note.createdBy.uuid,
-    };
+    return this.convertToNoteDto(note);
   }
 
-  async findAllUserNotesByChannel(channelUuid: string, user: User) {
+  async generateNote({
+    channelId,
+    title,
+    user,
+  }: {
+    channelId: string;
+    title: string;
+    user: User;
+  }): Promise<NoteDto> {
+    const channel = await this.channelsRepository.findOne({
+      where: { uuid: channelId },
+      relations: ['workspace'],
+    });
+
+    const workspace = channel.workspace;
+
+    const noteIdea = await this.assistantService.generateNote(workspace, title);
+
+    const noteContent = convertStringToFlashcardContentFormat(noteIdea.content);
+
+    const noteDto = await this.createNote(
+      {
+        channelId: channel.uuid,
+        workspaceId: workspace.uuid,
+        content: noteContent,
+        title: noteIdea.title,
+      },
+      user,
+    );
+
+    return noteDto;
+  }
+
+  async summarizeArticle({
+    channelId,
+    article,
+    user,
+  }: {
+    channelId: string;
+    article: string;
+    user: User;
+  }): Promise<NoteDto> {
+    const channel = await this.channelsRepository.findOne({
+      where: { uuid: channelId },
+      relations: ['workspace'],
+    });
+
+    const workspace = channel.workspace;
+
+    const noteIdea = await this.assistantService.summarizeArticle(
+      channel,
+      article,
+    );
+
+    const noteContent = convertStringToFlashcardContentFormat(noteIdea.content);
+
+    const noteDto = await this.createNote(
+      {
+        channelId: channel.uuid,
+        workspaceId: workspace.uuid,
+        content: noteContent,
+        title: noteIdea.title,
+      },
+      user,
+    );
+
+    return noteDto;
+  }
+
+  async findAllUserNotesByChannel(
+    channelUuid: string,
+    user: User,
+  ): Promise<NoteDto[]> {
     const notes = await this.notesRepository.findAllUserNotesByChannel(
       channelUuid,
       user,
     );
 
-    // Transform the data to the desired format
-    return notes.map((note) => ({
-      title: note.title,
-      isPrivate: note.isPrivate,
-      uuid: note.uuid,
-      createdAt: note.createdAt,
-      // Assuming createdBy is a User entity with firstName and lastName
-      createdBy: note.createdBy.uuid,
-    }));
+    return notes.map((note) => this.convertToNoteDto(note));
   }
 
-  findAllByWorkspace(workspaceUuid: string) {
-    return this.notesRepository.findAllByWorkspace(workspaceUuid);
-  }
-
-  async findNote(uuid: string) {
+  async findNote(uuid: string): Promise<NoteDto> {
     const note = await this.notesRepository.findByUuid(uuid);
 
-    // Transform the data to the desired format
-    return {
-      title: note.title,
-      isPrivate: note.isPrivate,
-      uuid: note.uuid,
-      createdAt: note.createdAt,
-      content: note.content,
-      // Assuming createdBy is a User entity with firstName and lastName
-      createdBy: note.createdBy.uuid,
-    };
+    return this.convertToNoteDto(note);
   }
 
-  async updateNote(uuid: string, updateNoteDto: UpdateNoteDto): Promise<Note> {
-    const note = await this.notesRepository.findOne({ where: { uuid } });
+  async updateNote(
+    uuid: string,
+    updateNoteDto: UpdateNoteDto,
+  ): Promise<NoteDto> {
+    const noteFound = await this.notesRepository.findOne({ where: { uuid } });
 
-    if (!note) {
+    if (!noteFound) {
       throw new NotFoundException(`Message with UUID ${uuid} not found`);
     }
 
-    console.log(updateNoteDto.content);
+    Object.assign(noteFound, updateNoteDto);
 
-    // Map the updated fields onto the note entity
-    Object.assign(note, updateNoteDto);
+    const note = await this.notesRepository.save(noteFound);
 
-    // The save() method will trigger the @BeforeUpdate hook
-    await this.notesRepository.save(note);
-
-    return note;
+    return this.convertToNoteDto(note);
   }
 
-  async moveNote(uuid: string, channelId: string) {
-    const channel = await this.channelsRepository.findByUuid(channelId);
-    const note = await this.notesRepository.updateNote(uuid, { channel });
-
-    // Transform the data to the desired format
-    return {
-      title: note.title,
-      isPrivate: note.isPrivate,
-      uuid: note.uuid,
-      createdAt: note.createdAt,
-      content: note.content,
-      channelId: note.channel.uuid,
-      // Assuming createdBy is a User entity with firstName and lastName
-      createdBy: note.createdBy.uuid,
-    };
-  }
-
-  removeNote(uuid: string) {
-    return this.notesRepository.removeNote(uuid);
+  removeNote(uuid: string): void {
+    this.notesRepository.removeNote(uuid);
   }
 }

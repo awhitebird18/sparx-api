@@ -1,12 +1,4 @@
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  OneToMany,
-  OneToOne,
-  JoinColumn,
-} from 'typeorm';
-
+import { Entity, Column, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Section } from 'src/sections/entities/section.entity';
 import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
@@ -16,7 +8,7 @@ import { UserRole } from '../enums/roles.enum';
 import { UserStatus } from 'src/user-statuses/entities/user-status.entity';
 import { Note } from 'src/notes/entities/note.entity';
 import { Template } from 'src/card-template/entities/card-template.entity';
-import { Flashcard } from 'src/card/entities/card.entity';
+import { Card } from 'src/card/entities/card.entity';
 import { ReviewHistory } from 'src/review-history/entities/review-history.entity';
 import { UserWorkspace } from 'src/user-workspaces/entities/user-workspace.entity';
 import { NodemapSettings } from 'src/nodemap-settings/entities/nodemap-setting.entity';
@@ -92,8 +84,8 @@ export class User extends BaseEntity {
   @OneToMany(() => Template, (template) => template.user)
   templates: Template[];
 
-  @OneToMany(() => Flashcard, (flashcard) => flashcard.user)
-  flashcards: Flashcard[];
+  @OneToMany(() => Card, (flashcard) => flashcard.user)
+  flashcards: Card[];
 
   @OneToMany(() => ReviewHistory, (reviewHistory) => reviewHistory.user)
   reviewHistories: ReviewHistory[];

@@ -31,7 +31,7 @@ export async function seedMessages(AppDataSource: DataSource) {
       const message = new Message();
       const randomUserIndex = Math.floor(Math.random() * channelUserCount);
 
-      const user = channelUsers[randomUserIndex].user;
+      const user = channelUsers[randomUserIndex - 1].user;
       const messageData = channel.name === 'Internet' ? internet : http;
 
       const jsonString = `{

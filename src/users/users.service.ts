@@ -3,22 +3,17 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import * as path from 'path';
-
 import { UsersRepository } from './users.repository';
 import { SectionsService } from 'src/sections/sections.service';
 import { UserPreferencesService } from 'src/user-preferences/user-preferences.service';
-
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RegisterDto } from 'src/auth/dto/register.dto';
 import { User } from './entities/user.entity';
-import { MailerService } from '@nestjs-modules/mailer';
-import { JwtService } from '@nestjs/jwt';
 import { UserDto } from './dto/user.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CardFieldRepository } from 'src/card-field/card-field.repository';
-import { CardTypeRepository } from 'src/card-type/card-type.repository';
+import { CardVariantRepository } from 'src/card-variant/card-variant.repository';
 import { CardTemplateRepository } from 'src/card-template/card-template.repository';
 
 @Injectable()
@@ -27,13 +22,11 @@ export class UsersService {
     private usersRepository: UsersRepository,
     private sectionsService: SectionsService,
     private userPreferencesService: UserPreferencesService,
-    private mailerService: MailerService,
-    private jwtService: JwtService,
     private cloudinaryService: CloudinaryService,
     private events: EventEmitter2,
     private cardTemplateRepository: CardTemplateRepository,
     private cardFieldRepository: CardFieldRepository,
-    private cardTypeRepository: CardTypeRepository,
+    private cardTypeRepository: CardVariantRepository,
   ) {}
 
   async create(registerDto: RegisterDto): Promise<User> {
@@ -45,27 +38,23 @@ export class UsersService {
     if (existingUser)
       throw new ConflictException('Email is already registered');
 
-    // Creating new user
     const user = await this.usersRepository.createUser(registerDto);
 
-    // Creating user section and userPreferences
     await Promise.all([
       this.seedUserDefaultTemplate(user),
-      this.sectionsService.seedUserDefaultSections(user.id),
-      this.userPreferencesService.createUserPreferences({
-        userId: user.id,
-      }),
+      this.sectionsService.seedUserDefaultSections(user),
+      this.userPreferencesService.createUserPreferences(user),
     ]);
 
     return user;
   }
 
-  async seedUserDefaultTemplate(user: User) {
+  async seedUserDefaultTemplate(user: User): Promise<any> {
     const defaultExists = await this.cardTemplateRepository.find({
       where: { user: { id: user.id }, isDefault: true },
     });
     if (defaultExists) return;
-    // Create template
+
     const newTemplate = this.cardTemplateRepository.create({
       user,
       title: 'Default',
@@ -74,7 +63,6 @@ export class UsersService {
 
     const template = await this.cardTemplateRepository.save(newTemplate);
 
-    // Create card fields
     const frontField = await this.cardFieldRepository.create({
       template,
       title: 'Front side',
@@ -89,42 +77,19 @@ export class UsersService {
       this.cardFieldRepository.save(backField),
     ]);
 
-    // Create card type
-    const cardType = await this.cardTypeRepository.create({
+    const cardVariant = await this.cardTypeRepository.create({
       template,
       title: 'Card 1: Front side > Back side',
       frontFields: [frontField],
       backFields: [backField],
     });
-    await this.cardTypeRepository.save(cardType);
+    await this.cardTypeRepository.save(cardVariant);
   }
 
-  async createBot(): Promise<User> {
-    // Check if bot exists
-    const existingBot = await this.usersRepository.findOne({
-      where: { isBot: true },
-    });
-
-    if (existingBot) throw new ConflictException('Bot already exists!');
-
-    // Find default bot image
-    const botImagePath = path.join(__dirname, 'static', 'bot.png');
-
-    // Create bot user
-    const newBotUser = await this.usersRepository.createUser({
-      firstName: 'Sparx',
-      lastName: 'Bot',
-      email: 'bot@sparx.com',
-      password: 'password1',
-      confirmPassword: 'password1',
-      isBot: true,
-      profileImage: `/static/${botImagePath}`,
-    });
-
-    return newBotUser;
-  }
-
-  async updateUserPassword(userId: number, hashedPassword: string) {
+  async updateUserPassword(
+    userId: number,
+    hashedPassword: string,
+  ): Promise<any> {
     const res = await this.usersRepository.update(userId, {
       password: hashedPassword,
     });
@@ -158,10 +123,8 @@ export class UsersService {
   }
 
   async markAsVerified(email: string): Promise<User> {
-    // Find User
     const user = await this.usersRepository.findOneOrFail({ where: { email } });
 
-    // Update User
     Object.assign(user, { isVerified: true });
     const updatedUser = await this.usersRepository.save(user);
 
@@ -169,16 +132,13 @@ export class UsersService {
   }
 
   async update(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
-    // Check for existing user
     const user = await this.usersRepository.findOneOrFail({
       where: { uuid: userId },
     });
 
-    // Update user
     Object.assign(user, updateUserDto);
     const updatedUser = await this.usersRepository.save(user);
 
-    // Send updated user over socket
     this.events.emit('websocket-event', 'updateUser', updatedUser);
 
     return updatedUser;
@@ -198,13 +158,10 @@ export class UsersService {
       user.uuid,
     );
 
-    // Update user with image path
     user.profileImage = uploadedImageUrl;
 
-    // Update User
     const updatedUser = await this.usersRepository.save(user);
 
-    // Send updated user over socket
     this.events.emit('websocket-event', 'updateUser', updatedUser);
 
     return updatedUser;

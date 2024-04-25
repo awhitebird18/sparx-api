@@ -1,6 +1,5 @@
 import { Activity } from 'src/activity/entities/activity.entity';
-import { Flashcard } from 'src/card/entities/card.entity';
-import { ChannelConnector } from 'src/channel-connectors/entities/channel-connector.entity';
+import { Card } from 'src/card/entities/card.entity';
 import { Channel } from 'src/channels/entities/channel.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Experience } from 'src/experience/entities/experience.entity';
@@ -38,12 +37,6 @@ export class Workspace extends BaseEntity {
   userWorkspaces: UserWorkspace[];
 
   @OneToMany(
-    () => ChannelConnector,
-    (channelConnector) => channelConnector.workspace,
-  )
-  channelConnectors: ChannelConnector[];
-
-  @OneToMany(
     () => NodemapSettings,
     (nodemapSettings) => nodemapSettings.workspace,
   )
@@ -58,6 +51,6 @@ export class Workspace extends BaseEntity {
   @OneToMany(() => Activity, (activity) => activity.workspace)
   activity: Activity;
 
-  @OneToMany(() => Flashcard, (flashcard) => flashcard.workspace)
-  flashcards: Flashcard;
+  @OneToMany(() => Card, (flashcard) => flashcard.workspace)
+  flashcards: Card;
 }

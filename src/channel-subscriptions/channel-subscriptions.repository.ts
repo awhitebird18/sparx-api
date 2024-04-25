@@ -1,6 +1,5 @@
 import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-
 import { ChannelSubscription } from './entity/channel-subscription.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Channel } from 'src/channels/entities/channel.entity';

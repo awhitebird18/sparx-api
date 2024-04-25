@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { ExperienceRepository } from './experience.repository';
-import { Experience } from './entities/experience.entity';
 import { UsersRepository } from 'src/users/users.repository';
 import { WorkspacesRepository } from 'src/workspaces/workspaces.repository';
-import { TaskCompletedEvent } from 'src/tasks/task-completed';
+import { TaskCompletedEvent } from 'src/tasks/utils/task-completed';
 import { OnEvent } from '@nestjs/event-emitter';
+import { ExperienceDto } from './dto/experience.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class ExperienceService {
@@ -16,16 +17,14 @@ export class ExperienceService {
 
   @OnEvent('task.completed')
   handleTaskCompletedEvent(event: TaskCompletedEvent) {
-    // Call the method to add experience points
     this.addExperience(event.userId, event.workspaceId, event.points);
   }
 
-  // May be best to create separate class for this
   async addExperience(
     userId: string,
     workspaceId: string,
     points: number,
-  ): Promise<Experience> {
+  ): Promise<ExperienceDto> {
     const user = await this.userRepository.findUserByUuid(userId);
 
     const workspace = await this.workspaceRepository.findWorkspaceByUuid(
@@ -46,14 +45,14 @@ export class ExperienceService {
       date: new Date(),
     });
 
-    await this.experienceRepository.save(experience);
-    return experience;
+    const newExperienceEntry = await this.experienceRepository.save(experience);
+    return plainToInstance(ExperienceDto, newExperienceEntry);
   }
 
   async getUsersExperienceByWorkspace(
     userId: string,
     workspaceId: string,
-  ): Promise<Experience[]> {
+  ): Promise<ExperienceDto[]> {
     const user = await this.userRepository.findUserByUuid(userId);
 
     const workspace = await this.workspaceRepository.findWorkspaceByUuid(
@@ -67,8 +66,10 @@ export class ExperienceService {
       throw new Error('Workspace not found');
     }
 
-    return this.experienceRepository.find({
+    const experience = await this.experienceRepository.find({
       where: { user: { id: user.id }, workspace: { id: workspace.id } },
     });
+
+    return plainToInstance(ExperienceDto, experience);
   }
 }

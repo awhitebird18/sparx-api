@@ -1,11 +1,4 @@
-import {
-  IsBoolean,
-  IsDecimal,
-  IsEnum,
-  IsNotEmpty,
-  IsString,
-} from 'class-validator';
-import { ChannelType } from '../enums/channel-type.enum';
+import { IsBoolean, IsDecimal, IsString } from 'class-validator';
 
 export class CreateChannelDto {
   @IsString()
@@ -19,10 +12,6 @@ export class CreateChannelDto {
 
   @IsDecimal()
   y?: number;
-
-  @IsNotEmpty()
-  @IsEnum(ChannelType)
-  type: ChannelType;
 
   @IsBoolean()
   isPrivate?: boolean;

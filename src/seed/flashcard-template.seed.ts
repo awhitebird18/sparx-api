@@ -1,4 +1,4 @@
-import { CardType } from 'src/card-type/entities/card-type.entity';
+import { CardVariant } from 'src/card-variant/entities/card-variant.entity';
 import { User } from '../users/entities/user.entity';
 import { Template } from 'src/card-template/entities/card-template.entity';
 import { Field } from 'src/card-field/entities/card-field.entity';
@@ -6,7 +6,7 @@ import { Field } from 'src/card-field/entities/card-field.entity';
 export async function seedFlashcardTemplate(AppDataSource) {
   const userRepository = AppDataSource.getRepository(User);
   const cardTemplateRepository = AppDataSource.getRepository(Template);
-  const cardTypeRepository = AppDataSource.getRepository(CardType);
+  const cardTypeRepository = AppDataSource.getRepository(CardVariant);
   const cardFieldRepository = AppDataSource.getRepository(Field);
 
   const user = await userRepository.findOne({
@@ -33,11 +33,11 @@ export async function seedFlashcardTemplate(AppDataSource) {
   const savedFields = await cardFieldRepository.insert([frontField, backField]);
 
   //   Variant
-  const cardType = new CardType();
-  cardType.title = 'Front > Back';
-  cardType.template = savedTemplate;
-  cardType.frontFields = [savedFields[0]];
-  cardType.backFields = [savedFields[1]];
+  const cardVariant = new CardVariant();
+  cardVariant.title = 'Front > Back';
+  cardVariant.template = savedTemplate;
+  cardVariant.frontFields = [savedFields[0]];
+  cardVariant.backFields = [savedFields[1]];
 
-  await cardTypeRepository.save(cardType);
+  await cardTypeRepository.save(cardVariant);
 }

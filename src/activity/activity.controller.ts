@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ActivityService } from './activity.service';
+import { ActivityDto } from './dto/activity.dto';
 
 @Controller('activity')
 export class ActivityController {
@@ -9,7 +10,7 @@ export class ActivityController {
   async getWorkspaceActivity(
     @Query('page') page: string,
     @Param('workspaceId') workspaceId: string,
-  ) {
+  ): Promise<ActivityDto[]> {
     return this.activityService.getRecentWorkspaceActivity(workspaceId, page);
   }
 
@@ -18,7 +19,7 @@ export class ActivityController {
     @Query('page') page: string,
     @Param('userId') userId: string,
     @Param('workspaceId') workspaceId: string,
-  ) {
+  ): Promise<ActivityDto[]> {
     return this.activityService.getUserActivity(userId, workspaceId, page);
   }
 }

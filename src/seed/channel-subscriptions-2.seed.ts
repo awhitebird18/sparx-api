@@ -30,24 +30,19 @@ export async function seedChannelSubscriptions(
     order: { user: { lastName: 'DESC' } },
   });
 
-  // Assuming you want the first channel to have all users and the last channel to have the least.
   const totalUsers = workspaceUsers.length;
   const totalChannels = workspaceChannels.length;
 
-  // Determine the decrement step for users in each channel
-  // For simplicity, this example evenly spreads users, adjust logic as needed for a different pattern
   const decrementStep = Math.ceil(totalUsers / totalChannels);
 
   let currentUserCount = totalUsers;
 
   for (const [, workspaceChannel] of workspaceChannels.entries()) {
-    // Calculate the number of users for this channel
     const usersToSubscribe = workspaceUsers.slice(
       0,
       Math.max(currentUserCount, 0),
     );
 
-    // Create subscriptions for the selected users
     for (const { user } of usersToSubscribe) {
       const channelSubscription = new ChannelSubscription();
       channelSubscription.channel = workspaceChannel;
@@ -64,7 +59,6 @@ export async function seedChannelSubscriptions(
       await activityRepository.save(newActivity);
     }
 
-    // Decrease the count for the next channel
     currentUserCount -= decrementStep;
   }
 }

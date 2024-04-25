@@ -1,6 +1,5 @@
 import { DataSource, Repository, UpdateResult } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-
 import { UserStatus } from './entities/user-status.entity';
 import { CreateUserStatusDto } from './dto/create-user-status.dto';
 

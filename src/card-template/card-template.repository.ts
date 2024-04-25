@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-
 import { DataSource, Repository } from 'typeorm';
 import { Template } from './entities/card-template.entity';
 import { UpdateCardTemplateDto } from './dto/update-card-template.dto';
@@ -58,7 +57,7 @@ export class CardTemplateRepository extends Repository<Template> {
     return await this.findByUuid(uuid);
   }
 
-  async removeCardTemplate(uuid: string) {
+  async removeCardTemplate(uuid: string): Promise<Template> {
     const cardTemplate = await this.findByUuid(uuid);
     if (cardTemplate) {
       return await this.softRemove(cardTemplate);

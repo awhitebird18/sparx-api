@@ -1,10 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
-
+import { DataSource, Repository } from 'typeorm';
 import { UserPreferences } from './entities/user-preference.entity';
-
 import { UpdateUserPreferencesDto } from './dto/update-user-preferences';
 import { CreateUserPreferences } from './dto/create-user-preferences.dto';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class UserPreferencessRepository extends Repository<UserPreferences> {
@@ -12,27 +11,22 @@ export class UserPreferencessRepository extends Repository<UserPreferences> {
     super(UserPreferences, dataSource.createEntityManager());
   }
   async createUserPreferences(
-    createUserPreferences: CreateUserPreferences,
+    user: User,
+    createUserPreferences?: CreateUserPreferences,
   ): Promise<UserPreferences> {
     const userPreferences = this.create(createUserPreferences);
+
+    userPreferences.user = user;
     return this.save(userPreferences);
   }
 
-  saveUserPreferences(userPreferences: UserPreferences) {
+  saveUserPreferences(
+    userPreferences: UserPreferences,
+  ): Promise<UserPreferences> {
     return this.save(userPreferences);
   }
 
-  async findOneByProperties(
-    searchFields: FindOptionsWhere<UserPreferences>,
-    relations?: string[],
-  ) {
-    return await this.findOne({
-      where: searchFields,
-      relations,
-    });
-  }
-
-  findUserPreferences(userId: number) {
+  findUserPreferences(userId: number): Promise<UserPreferences> {
     return this.findOneOrFail({ where: { userId } });
   }
 

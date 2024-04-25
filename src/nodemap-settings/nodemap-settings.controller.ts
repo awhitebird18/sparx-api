@@ -12,6 +12,7 @@ import { CreateNodemapSettingDto } from './dto/create-nodemap-setting.dto';
 import { UpdateNodemapSettingDto } from './dto/update-nodemap-setting.dto';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { User } from 'src/users/entities/user.entity';
+import { NodemapSettingsDto } from './dto/nodemap-settings.dto';
 
 @Controller('nodemap-settings')
 export class NodemapSettingsController {
@@ -24,7 +25,7 @@ export class NodemapSettingsController {
     @Param('workspaceId') workspaceId: string,
     @GetUser() user: User,
     @Body() createNodemapSettingDto: CreateNodemapSettingDto,
-  ) {
+  ): Promise<NodemapSettingsDto> {
     return this.nodemapSettingsService.create(
       user.id,
       workspaceId,
@@ -32,16 +33,11 @@ export class NodemapSettingsController {
     );
   }
 
-  @Get()
-  findAll() {
-    return this.nodemapSettingsService.findAll();
-  }
-
   @Get(':workspaceId')
   findUserSettings(
     @Param('workspaceId') workspaceId: string,
     @GetUser() user: User,
-  ) {
+  ): Promise<NodemapSettingsDto> {
     return this.nodemapSettingsService.findUserSettings(user.uuid, workspaceId);
   }
 
@@ -50,7 +46,7 @@ export class NodemapSettingsController {
     @Param('uuid') uuid: string,
     @GetUser() user: User,
     @Body() updateNodemapSettingDto: UpdateNodemapSettingDto,
-  ) {
+  ): Promise<NodemapSettingsDto> {
     return this.nodemapSettingsService.update(uuid, updateNodemapSettingDto);
   }
 

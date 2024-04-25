@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-
 import { DataSource, Repository } from 'typeorm';
 import { CardNote } from './entities/card-note.entity';
 

@@ -12,20 +12,20 @@ export class NodemapSettings extends BaseEntity {
   workspace: Workspace;
 
   @Column({ default: true })
-  userCountVisible: boolean; // Indicates if user count is visible
+  userCountVisible: boolean;
 
   @Column({ default: true })
-  flashcardsDueVisible: boolean; // Indicates if flashcards due count is visible
+  flashcardsDueVisible: boolean;
 
   @Column({ default: true })
-  unreadMessageCountVisible: boolean; // Indicates if user discussion count is visible
+  unreadMessageCountVisible: boolean;
 
   @Column({ type: 'double precision', default: 4000 })
-  xPosition: number; // X position of the nodemap viewport or a specific element
+  xPosition: number;
 
   @Column({ type: 'double precision', default: 4000 })
-  yPosition: number; // Y position of the nodemap viewport or a specific element
+  yPosition: number;
 
   @Column({ type: 'double precision', default: 1 })
-  zoomLevel: number; // Zoom level of the nodemap
+  zoomLevel: number;
 }

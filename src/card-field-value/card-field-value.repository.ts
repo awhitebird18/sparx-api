@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-
 import { DataSource, Repository } from 'typeorm';
 import { FieldValue } from './entities/card-field-value.entity';
 

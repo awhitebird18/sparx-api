@@ -12,6 +12,7 @@ import { UpdateUserWorkspaceDto } from './dto/update-user-workspace.dto';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { User } from 'src/users/entities/user.entity';
 import { InviteUserDto } from 'src/users/dto/invite-user.dto';
+import { UserWorkspaceDto } from './dto/user-workspace.dto';
 
 @Controller('user-workspaces')
 export class UserWorkspacesController {
@@ -21,17 +22,19 @@ export class UserWorkspacesController {
   joinWorkspace(
     @GetUser() user: User,
     @Param('workspaceId') workspaceId: string,
-  ) {
+  ): Promise<UserWorkspaceDto> {
     return this.userWorkspacesService.joinWorkspace(user, workspaceId);
   }
 
   @Get()
-  findUserWorkspaces(@GetUser() user: User) {
+  findUserWorkspaces(@GetUser() user: User): Promise<UserWorkspaceDto[]> {
     return this.userWorkspacesService.findUserWorkspaces(user.uuid);
   }
 
   @Get(':workspaceId')
-  findAll(@Param('workspaceId') workspaceId: string) {
+  findAll(
+    @Param('workspaceId') workspaceId: string,
+  ): Promise<UserWorkspaceDto[]> {
     return this.userWorkspacesService.findWorkspaceUsers(workspaceId);
   }
 
@@ -47,7 +50,7 @@ export class UserWorkspacesController {
   updateWorkspaceUser(
     @Param('workspaceId') workspaceId: string,
     @Body() updateUserWorkspaceDto: UpdateUserWorkspaceDto,
-  ) {
+  ): Promise<UserWorkspaceDto> {
     return this.userWorkspacesService.updateWorkspaceUser(
       workspaceId,
       updateUserWorkspaceDto,
@@ -58,7 +61,7 @@ export class UserWorkspacesController {
   updateRole(
     @Param('workspaceId') workspaceId: string,
     @Body() updateUserWorkspaceDto: UpdateUserWorkspaceDto,
-  ) {
+  ): Promise<UserWorkspaceDto> {
     return this.userWorkspacesService.updateRole(
       workspaceId,
       updateUserWorkspaceDto.isAdmin,
@@ -69,7 +72,7 @@ export class UserWorkspacesController {
   updateLastViewed(
     @GetUser() user: User,
     @Param('workspaceId') workspaceId: string,
-  ) {
+  ): Promise<UserWorkspaceDto> {
     return this.userWorkspacesService.updateLastViewed(user.uuid, workspaceId);
   }
 
@@ -77,7 +80,7 @@ export class UserWorkspacesController {
   leaveWorkspace(
     @GetUser() user: User,
     @Param('workspaceId') workspaceId: string,
-  ) {
+  ): Promise<{ message: string }> {
     return this.userWorkspacesService.removeUserFromWorkspace(
       user.uuid,
       workspaceId,
@@ -88,7 +91,7 @@ export class UserWorkspacesController {
   removeUserFromWorkspace(
     @Param('userId') userId: string,
     @Param('workspaceId') workspaceId: string,
-  ) {
+  ): Promise<{ message: string }> {
     return this.userWorkspacesService.removeUserFromWorkspace(
       userId,
       workspaceId,

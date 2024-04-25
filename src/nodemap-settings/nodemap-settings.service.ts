@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { CreateNodemapSettingDto } from './dto/create-nodemap-setting.dto';
 import { UpdateNodemapSettingDto } from './dto/update-nodemap-setting.dto';
-import { NodemapSettings } from './entities/nodemap-setting.entity';
 import { NodemapSettingsRepository } from './nodemap-settings.repository';
 import { WorkspacesRepository } from 'src/workspaces/workspaces.repository';
+import { plainToInstance } from 'class-transformer';
+import { NodemapSettingsDto } from './dto/nodemap-settings.dto';
 
 @Injectable()
 export class NodemapSettingsService {
@@ -12,12 +13,11 @@ export class NodemapSettingsService {
     private workspaceRepository: WorkspacesRepository,
   ) {}
 
-  // Create a new nodemap setting for a user
   async create(
     userId: number,
     workspaceId: string,
     createNodemapSettingDto: CreateNodemapSettingDto,
-  ): Promise<NodemapSettings> {
+  ): Promise<NodemapSettingsDto> {
     const workspace = await this.workspaceRepository.findOneOrFail({
       where: { uuid: workspaceId },
     });
@@ -28,29 +28,26 @@ export class NodemapSettingsService {
       ...createNodemapSettingDto,
     });
 
-    return this.nodemapSettingsRepository.save(newSetting);
+    const nodemapSettings = this.nodemapSettingsRepository.save(newSetting);
+
+    return plainToInstance(NodemapSettingsDto, nodemapSettings);
   }
 
-  // Get all nodemap settings (not typically used but included for completeness)
-  findAll(): Promise<NodemapSettings[]> {
-    return this.nodemapSettingsRepository.find();
-  }
-
-  // Get nodemap settings for a specific user
   async findUserSettings(
     userId: string,
     workspaceId: string,
-  ): Promise<NodemapSettings> {
-    return await this.nodemapSettingsRepository.findOne({
+  ): Promise<NodemapSettingsDto> {
+    const nodemapSettings = await this.nodemapSettingsRepository.findOne({
       where: { user: { uuid: userId }, workspace: { uuid: workspaceId } },
     });
+
+    return plainToInstance(NodemapSettingsDto, nodemapSettings);
   }
 
-  // Update nodemap settings for a specific user
   async update(
     uuid: string,
     updateNodemapSettingDto: UpdateNodemapSettingDto,
-  ): Promise<NodemapSettings> {
+  ): Promise<NodemapSettingsDto> {
     const settings = await this.nodemapSettingsRepository.findOneOrFail({
       where: { uuid },
     });
@@ -64,12 +61,13 @@ export class NodemapSettingsService {
       updateNodemapSettingDto,
     );
 
-    return await this.nodemapSettingsRepository.findOneOrFail({
+    const nodemapSettings = await this.nodemapSettingsRepository.findOneOrFail({
       where: { uuid },
     });
+
+    return plainToInstance(NodemapSettingsDto, nodemapSettings);
   }
 
-  // Remove nodemap settings (typically not necessary but included for completeness)
   async remove(userId: string): Promise<void> {
     const settings = await this.nodemapSettingsRepository.findOne({
       where: { uuid: userId },

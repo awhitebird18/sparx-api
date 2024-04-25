@@ -26,6 +26,6 @@ export class SentryFilter extends BaseExceptionFilter {
       });
     }
 
-    super.catch(exception, host); // This will maintain the default behavior for other exceptions
+    super.catch(exception, host);
   }
 }

@@ -5,6 +5,7 @@ import { UserStatusesRepository } from './user-statuses.repository';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserStatus } from './entities/user-status.entity';
 import { User } from 'src/users/entities/user.entity';
+import { UserStatusDto } from './dto/user-status.dto';
 
 @Injectable()
 export class UserStatusesService {
@@ -16,7 +17,7 @@ export class UserStatusesService {
   async createUserStatus(
     user: User,
     createUserStatusDto: CreateUserStatusDto,
-  ): Promise<UserStatus> {
+  ): Promise<UserStatusDto> {
     const userStatus = await this.userStatusesRepository.createUserStatus(
       user.id,
       createUserStatusDto,
@@ -37,12 +38,10 @@ export class UserStatusesService {
     userStatusUuid: string,
     updateUserStatusDto: UpdateUserStatusDto,
     userId: string,
-  ): Promise<UserStatus> {
-    // Find existing userStatus
+  ): Promise<UserStatusDto> {
     const userStatusFound =
       await this.userStatusesRepository.findOneUserStatusByUuid(userStatusUuid);
 
-    // Update userStatus
     Object.assign(userStatusFound, updateUserStatusDto);
 
     const updatedUserStatus = await this.userStatusesRepository.save(

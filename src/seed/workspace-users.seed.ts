@@ -11,8 +11,6 @@ export async function seedWorkspaceUsers(
 ) {
   const userWorkspaceRepository = AppDataSource.getRepository(UserWorkspace);
 
-  console.log(`User count: ${users.length}`);
-
   const workspaceUsersData = users
     .filter((user) => user.uuid !== userId)
     .map((user) => {

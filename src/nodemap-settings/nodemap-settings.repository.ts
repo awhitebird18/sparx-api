@@ -1,6 +1,5 @@
 import { DataSource, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-
 import { NodemapSettings } from './entities/nodemap-setting.entity';
 
 @Injectable()

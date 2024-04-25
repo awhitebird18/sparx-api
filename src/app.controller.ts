@@ -1,11 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
-import { Public } from './common/decorators/is-public';
+import { Controller } from '@nestjs/common';
 
 @Controller()
-export class AppController {
-  @Public()
-  @Get('health-check')
-  checkHealth(): { status: string } {
-    return { status: 'ok' };
-  }
-}
+export class AppController {}

@@ -10,40 +10,38 @@ export class TasksRepository extends Repository<Task> {
 
   async getTasksByUser(userId: string, workspaceId: string): Promise<Task[]> {
     const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0); // Normalize current date to midnight for comparison
+    currentDate.setHours(0, 0, 0, 0);
 
-    return (
-      this.createQueryBuilder('task')
-        .leftJoinAndSelect('task.user', 'user')
-        .leftJoinAndSelect('task.workspace', 'workspace')
-        .where('user.uuid = :userId AND workspace.uuid = :workspaceId', {
-          userId,
-          workspaceId,
-        })
-        // Tasks that are not due yet or are due today and marked as complete
-        .andWhere(
-          new Brackets((qb) => {
-            qb.where('task.dueDate > :currentDate', { currentDate }).orWhere(
-              new Brackets((qbInner) => {
-                qbInner
-                  .where('task.dueDate = :currentDate', { currentDate })
-                  .andWhere('task.isComplete = :isComplete', {
-                    isComplete: true,
-                  });
-              }),
-            );
-          }),
-        )
-        // Or tasks that are past due and not marked as complete
-        .orWhere(
-          new Brackets((qb) => {
-            qb.where('task.dueDate < :currentDate', { currentDate }).andWhere(
-              'task.isComplete = :isNotComplete',
-              { isNotComplete: false },
-            );
-          }),
-        )
-        .getMany()
-    );
+    return this.createQueryBuilder('task')
+      .leftJoinAndSelect('task.user', 'user')
+      .leftJoinAndSelect('task.workspace', 'workspace')
+      .where('user.uuid = :userId AND workspace.uuid = :workspaceId', {
+        userId,
+        workspaceId,
+      })
+
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where('task.dueDate > :currentDate', { currentDate }).orWhere(
+            new Brackets((qbInner) => {
+              qbInner
+                .where('task.dueDate = :currentDate', { currentDate })
+                .andWhere('task.isComplete = :isComplete', {
+                  isComplete: true,
+                });
+            }),
+          );
+        }),
+      )
+
+      .orWhere(
+        new Brackets((qb) => {
+          qb.where('task.dueDate < :currentDate', { currentDate }).andWhere(
+            'task.isComplete = :isNotComplete',
+            { isNotComplete: false },
+          );
+        }),
+      )
+      .getMany();
   }
 }

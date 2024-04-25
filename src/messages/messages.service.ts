@@ -1,19 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-
 import { MessagesRepository } from './messages.repository';
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { ReactionRepository } from './reactions.repository';
-
 import { User } from 'src/users/entities/user.entity';
 import { Reaction } from './entities/reaction.entity';
-
 import { MessageDto } from './dto/message.dto';
 import { UpdateReactionDto } from './dto/update-reaction.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { ReactionDto } from './dto/reaction.dto';
-import { Message } from './entities/message.entity';
 import { ThreadDto } from './dto/thread.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
@@ -44,15 +40,16 @@ export class MessagesService {
     return Object.values(reactionMap);
   }
 
-  async create(createMessageDto: CreateMessageDto, user: User) {
-    // Find channel
+  async create(
+    createMessageDto: CreateMessageDto,
+    user: User,
+  ): Promise<MessageDto> {
     const channel = await this.channelRepository.findOneOrFail({
       where: {
         uuid: createMessageDto.channelId,
       },
     });
 
-    // Check if message is part of a thread. If so, set parentId
     let parentId = null;
     if (createMessageDto.parentId) {
       const parentMessage = await this.messageRepository.findOneBy({
@@ -61,7 +58,6 @@ export class MessagesService {
       parentId = parentMessage.id;
     }
 
-    // Create message
     const savedMessage = await this.messageRepository.createMessage({
       ...createMessageDto,
       user,
@@ -69,24 +65,23 @@ export class MessagesService {
       parentId,
     });
 
-    // Find formatted message
     const message = await this.findPopulatedMessage(savedMessage.uuid);
 
-    // Send over socket
     this.events.emit('websocket-event', 'newMessage', message);
 
-    return message;
+    return plainToInstance(MessageDto, message);
   }
 
-  findOne(uuid: string): Promise<Message> {
-    return this.messageRepository.findOneBy({ uuid });
+  async findOne(uuid: string): Promise<MessageDto> {
+    const message = await this.messageRepository.findOneBy({ uuid });
+
+    return plainToInstance(MessageDto, message);
   }
 
   async findChannelMessages(
     channelId: string,
     page: number,
   ): Promise<MessageDto[]> {
-    // Check if the channel exists
     await this.channelRepository.findOneByOrFail({
       uuid: channelId,
     });
@@ -150,39 +145,27 @@ export class MessagesService {
   }
 
   async findPopulatedMessage(uuid: string): Promise<MessageDto> {
-    const message = await this.messageRepository.findMessageByUuid(uuid);
+    const messageFound = await this.messageRepository.findMessageByUuid(uuid);
 
-    const groupedReactions = this.transformReactions(message.reactions);
+    const groupedReactions = this.transformReactions(messageFound.reactions);
 
-    return {
-      uuid: message.uuid,
-      parentId: message.parentMessage?.uuid,
-      content: message.content,
-      userId: message.user.uuid,
-      channelId: message.channel.uuid,
-      isSystem: message.isSystem,
-      createdAt: message.createdAt,
-      updatedAt: message.updatedAt,
+    const message = {
+      uuid: messageFound.uuid,
+      parentId: messageFound.parentMessage?.uuid,
+      content: messageFound.content,
+      userId: messageFound.user.uuid,
+      channelId: messageFound.channel.uuid,
+      isSystem: messageFound.isSystem,
+      createdAt: messageFound.createdAt,
+      updatedAt: messageFound.updatedAt,
       reactions: groupedReactions,
     };
+
+    return plainToInstance(MessageDto, message);
   }
 
   async findUserThreads(user: User): Promise<ThreadDto[]> {
     const rootMessages = await this.messageRepository.findUserThreads(user.id);
-
-    // const threadsFormatted = threads.map((t: any) => {
-    //   const childMessages = t.childMessages;
-    //   const replyCount = t.replyCount;
-
-    //   delete t.childMessages;
-    //   delete t.replyCount;
-
-    //   return {
-    //     rootMessage: t,
-    //     latestReplies: childMessages,
-    //     replyCount,
-    //   };
-    // });
 
     const result = [];
 
@@ -203,10 +186,13 @@ export class MessagesService {
       });
     }
 
-    return result;
+    return plainToInstance(ThreadDto, result);
   }
 
-  async getUnreadMessageCount(channelId: string, lastRead: Date) {
+  async getUnreadMessageCount(
+    channelId: string,
+    lastRead: Date,
+  ): Promise<number> {
     return await this.messageRepository.getUnreadMessageCount(
       channelId,
       lastRead,
@@ -217,21 +203,16 @@ export class MessagesService {
     uuid: string,
     updateMessageDto: UpdateMessageDto,
   ): Promise<MessageDto> {
-    // Check if message exists and not deleted
     await this.messageRepository.findOneOrFail({
       where: { uuid },
     });
 
-    // Update message
     await this.messageRepository.updateMessage(uuid, updateMessageDto);
 
-    // Obtain updated formatted message
     const serializedMessage = await this.findPopulatedMessage(uuid);
 
-    // Send the updated message to the socket
     this.events.emit('websocket-event', 'updateMessage', serializedMessage);
 
-    // Return the updated message
     return serializedMessage;
   }
 
@@ -280,21 +261,19 @@ export class MessagesService {
 
     const messageToReturn = await this.findPopulatedMessage(newMessage.uuid);
 
-    // Emit Socket
     this.events.emit('websocket-event', 'updateMessage', messageToReturn);
 
     return messageToReturn;
   }
 
-  async remove(uuid: string) {
+  async remove(uuid: string): Promise<string> {
     const message = await this.messageRepository.findMessageByUuid(uuid);
-    // Soft remove message
+
     const deletedMessage = await this.messageRepository.softRemove(message);
 
     if (!deletedMessage)
       throw new NotFoundException('Unable to find message to remove');
 
-    // Send signal over socket to remove message
     this.events.emit(
       'websocket-event',
       'removeMessage',

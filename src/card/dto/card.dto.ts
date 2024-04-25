@@ -1,8 +1,10 @@
-export class FlashcardDTO {
-  uuid: string;
-  front: string[]; // Assuming front of flashcard is an array of strings
-  back: string[]; // Assuming back of flashcard is an array of strings
-  easeFactor: number; // Review data if necessary
+import { BaseDto } from 'src/common/dto';
+
+export class CardDto extends BaseDto {
+  frontValues: string[];
+  backValues: string[];
+  createdBy: string;
+  easeFactor: number;
   repetitions: number;
   nextReviewDate: Date;
 }

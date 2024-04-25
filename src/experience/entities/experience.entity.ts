@@ -14,8 +14,8 @@ export class Experience extends BaseEntity {
   workspace: Workspace;
 
   @Column('int')
-  points: number; // Points earned for this entry
+  points: number;
 
   @CreateDateColumn({ type: 'date' })
-  date: Date; // The date when the points were awarded
+  date: Date;
 }

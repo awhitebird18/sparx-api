@@ -20,19 +20,16 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, appOptions);
 
   // app.useLogger(app.get(Logger));
-
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
   app.use(cookieParser());
 
-  // Global error handling
   Sentry.init({
     dsn: process.env.SENTRY_DNS,
   });
   const { httpAdapter } = app.get(HttpAdapterHost);
   app.useGlobalFilters(new SentryFilter(httpAdapter));
 
-  // Create a Swagger document
   const config = new DocumentBuilder()
     .setTitle('Your API Title')
     .setDescription('API description')

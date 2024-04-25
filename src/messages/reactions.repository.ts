@@ -17,7 +17,7 @@ export class ReactionRepository extends Repository<Reaction> {
     return this.findOne({ where: { uuid } });
   }
 
-  async removeReaction(uuid: string) {
+  async removeReaction(uuid: string): Promise<Reaction> {
     const Reaction = await this.findReactionByUuid(uuid);
     if (Reaction) {
       return await this.softRemove(Reaction);

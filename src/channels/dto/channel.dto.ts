@@ -1,6 +1,5 @@
 import { BaseDto } from 'src/common/dto';
-import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
-import { ChannelType } from '../enums/channel-type.enum';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class ChannelDto extends BaseDto {
   @IsString()
@@ -22,9 +21,6 @@ export class ChannelDto extends BaseDto {
 
   @IsBoolean()
   isDefault?: boolean;
-
-  @IsEnum(ChannelType)
-  type: ChannelType;
 
   @IsString()
   status?: string;

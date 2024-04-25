@@ -1,14 +1,10 @@
 import { Entity, Column, OneToMany, ManyToOne } from 'typeorm';
-
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Message } from 'src/messages/entities/message.entity';
 import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
-
-import { ChannelType } from '../enums/channel-type.enum';
 import { Workspace } from 'src/workspaces/entities/workspace.entity';
 import { Note } from 'src/notes/entities/note.entity';
-import { Flashcard } from 'src/card/entities/card.entity';
-import { ChannelConnector } from 'src/channel-connectors/entities/channel-connector.entity';
+import { Card } from 'src/card/entities/card.entity';
 
 @Entity()
 export class Channel extends BaseEntity {
@@ -36,13 +32,6 @@ export class Channel extends BaseEntity {
   @Column({ nullable: true })
   icon?: string;
 
-  @Column({
-    type: 'enum',
-    enum: ChannelType,
-    default: ChannelType.CHANNEL,
-  })
-  type: ChannelType;
-
   @ManyToOne(() => Workspace, (workspace) => workspace.channels)
   workspace: Workspace;
 
@@ -65,18 +54,16 @@ export class Channel extends BaseEntity {
   )
   channelSubscriptions: ChannelSubscription[];
 
-  @OneToMany(() => Flashcard, (flashcard) => flashcard.channel, {
+  @OneToMany(() => Card, (flashcard) => flashcard.channel, {
     cascade: ['soft-remove'],
   })
-  flashcards: Flashcard[];
+  flashcards: Card[];
 
-  @OneToMany(() => ChannelConnector, (connector) => connector.childChannel, {
-    cascade: ['soft-remove'],
+  @ManyToOne(() => Channel, (parentChannel) => parentChannel.childChannels, {
+    nullable: true,
   })
-  childConnectors: ChannelConnector[];
+  parentChannel: Channel;
 
-  @OneToMany(() => ChannelConnector, (connector) => connector.parentChannel, {
-    cascade: ['soft-remove'],
-  })
-  parentConnectors: ChannelConnector[];
+  @OneToMany(() => Channel, (childChannel) => childChannel.parentChannel)
+  childChannels: Channel[];
 }

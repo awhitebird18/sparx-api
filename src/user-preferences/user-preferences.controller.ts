@@ -1,9 +1,7 @@
 import { Controller, Body, Patch } from '@nestjs/common';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
-
 import { UserPreferencesService } from './user-preferences.service';
 import { User } from 'src/users/entities/user.entity';
-
 import { UpdateUserPreferencesDto } from './dto/update-user-preferences';
 import { UserPreferencesDto } from './dto/user-preferences.dto';
 

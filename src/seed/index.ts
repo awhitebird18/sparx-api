@@ -9,7 +9,6 @@ import { seedChannels } from './channel.seed';
 import { seedSections } from './sections.seed';
 import { seedChannelSubscriptions } from './channel-subscriptions-2.seed';
 import { seedWorkspaceUsers } from './workspace-users.seed';
-import { seedChannelConnectors } from './channel-connectors.seed';
 import { seedMessages } from './message.seed';
 import { seedActivity } from './activity.seed';
 import { seedFlashcardTemplate } from './flashcard-template.seed';
@@ -40,10 +39,6 @@ import { seedFlashcardTemplate } from './flashcard-template.seed';
 //     },
 //     { name: 'Sections', function: () => seedSections(AppDataSource) },
 //     { name: 'Channels', function: () => seedChannels(AppDataSource) },
-//     {
-//       name: 'Channel Connectors',
-//       function: () => seedChannelConnectors(AppDataSource),
-//     },
 //     { name: 'Workspace Activity', function: () => seedActivity(AppDataSource) },
 //     {
 //       name: 'Channel Subscriptions',

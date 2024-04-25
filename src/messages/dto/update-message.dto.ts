@@ -1,1 +1,3 @@
-export class UpdateMessageDto {}
+export class UpdateMessageDto {
+  content: string;
+}

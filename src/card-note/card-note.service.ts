@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CardTemplateRepository } from 'src/card-template/card-template.repository';
-import { CreateCardNoteDto } from './dto/create-card-note.dto'; // Ensure you define this DTO
+import { CreateCardNoteDto } from './dto/create-card-note.dto';
 import { CardNoteRepository } from './card-note.repository';
 import { CardFieldValueRepository } from 'src/card-field-value/card-field-value.repository';
 import { CardFieldRepository } from 'src/card-field/card-field.repository';
@@ -8,6 +8,7 @@ import { CardRepository } from 'src/card/card.repository';
 import { User } from 'src/users/entities/user.entity';
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { WorkspacesRepository } from 'src/workspaces/workspaces.repository';
+import { Card } from 'src/card/entities/card.entity';
 
 @Injectable()
 export class CardNoteService {
@@ -21,11 +22,10 @@ export class CardNoteService {
     private cardTemplateRepository: CardTemplateRepository,
   ) {}
 
-  async create(createNoteDto: CreateCardNoteDto, user: User) {
-    // Fetch the template based on templateId
+  async create(createNoteDto: CreateCardNoteDto, user: User): Promise<Card[]> {
     const template = await this.cardTemplateRepository.findOneOrFail({
       where: { uuid: createNoteDto.templateId },
-      relations: ['cardTypes'],
+      relations: ['cardVariants'],
     });
 
     const channel = await this.channelRepository.findByUuid(
@@ -35,12 +35,11 @@ export class CardNoteService {
       createNoteDto.workspaceId,
     );
 
-    // Create a new CardNote entity
-    const cardNote = this.cardNoteRepository.create({ template }); // Assuming you have a CardNote entity
+    const cardNote = this.cardNoteRepository.create({ template });
 
     try {
       const savedCardNote = await this.cardNoteRepository.save(cardNote);
-      // Then create and save FieldValue entities
+
       for (const fieldValue of createNoteDto.fieldValues) {
         const field = await this.cardFieldRepository.findOneOrFail({
           where: { uuid: fieldValue.uuid },
@@ -49,31 +48,27 @@ export class CardNoteService {
         const newFieldValue = this.cardFieldValueRepository.create({
           field: field,
           content: fieldValue.value,
-          note: savedCardNote, // Use the saved CardNote here
+          note: savedCardNote,
         });
 
-        // Save the FieldValue
         await this.cardFieldValueRepository.save(newFieldValue);
 
         if (savedCardNote.fieldValues) {
-          // Optionally add it to the savedCardNote's fieldValues collection
           savedCardNote.fieldValues.push(newFieldValue);
         } else {
           savedCardNote.fieldValues = [newFieldValue];
         }
       }
 
-      // Create flashcards
-      for (const cardType of template.cardTypes) {
+      for (const cardVariant of template.cardVariants) {
         const flashcard = this.cardRepository.create({
-          cardType: cardType,
+          cardVariant: cardVariant,
           note: savedCardNote,
           user,
           channel,
           workspace,
         });
 
-        // Save the flashcard
         await this.cardRepository.save(flashcard);
 
         if (savedCardNote.flashcards) {
@@ -82,7 +77,8 @@ export class CardNoteService {
           savedCardNote.flashcards = [flashcard];
         }
       }
-      return savedCardNote;
+
+      return savedCardNote.flashcards;
     } catch (error) {
       console.error(error);
     }

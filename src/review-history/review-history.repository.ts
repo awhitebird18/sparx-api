@@ -11,7 +11,7 @@ export class ReviewHistoryRepository extends Repository<ReviewHistory> {
 
   async findReviewHistoryLast30Days(user: User) {
     const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setUTCHours(0, 0, 0, 0); // Set to start of the day in UTC
+    thirtyDaysAgo.setUTCHours(0, 0, 0, 0);
     thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30);
 
     const reviewHistoryRaw = await this.createQueryBuilder('reviewHistory')
@@ -27,7 +27,6 @@ export class ReviewHistoryRepository extends Repository<ReviewHistory> {
       .orderBy('date')
       .getRawMany();
 
-    // Initialize all days with zero counts for each rating
     const reviewHistoryData = {};
     for (let i = 0; i <= 30; i++) {
       const date = new Date(thirtyDaysAgo);
@@ -41,7 +40,6 @@ export class ReviewHistoryRepository extends Repository<ReviewHistory> {
       };
     }
 
-    // Fill in counts from database query
     reviewHistoryRaw.forEach((item) => {
       const dateKey = item.date;
       const rating = item.reviewHistory_performanceRating.toLowerCase();
@@ -50,7 +48,6 @@ export class ReviewHistoryRepository extends Repository<ReviewHistory> {
       }
     });
 
-    // Convert to array format
     return Object.entries(reviewHistoryData).map(([date, ratings]: any) => {
       const utcDate = new Date(date);
       const formattedDate = utcDate.toLocaleDateString('en-US', {
@@ -80,7 +77,6 @@ export class ReviewHistoryRepository extends Repository<ReviewHistory> {
       .orderBy('reviewHistory.dateReviewed')
       .getRawMany();
 
-    // Initialize data for all days with zero counts
     const reviewHistoryData = {};
     for (let i = 0; i < 366; i++) {
       const date = new Date(oneYearAgo);
@@ -89,7 +85,6 @@ export class ReviewHistoryRepository extends Repository<ReviewHistory> {
       reviewHistoryData[formattedDate] = 0;
     }
 
-    // Fill in counts from database query
     reviewHistoryRaw.forEach((item) => {
       const dateKey = new Date(item.reviewHistory_dateReviewed)
         .toISOString()
@@ -97,7 +92,6 @@ export class ReviewHistoryRepository extends Repository<ReviewHistory> {
       reviewHistoryData[dateKey] = parseInt(item.count, 10);
     });
 
-    // Convert to array format
     return Object.entries(reviewHistoryData).map(([date, count]) => ({
       date,
       count,

@@ -14,9 +14,7 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-
 import { UsersService } from './users.service';
-
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RegisterDto } from 'src/auth/dto/register.dto';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
@@ -36,11 +34,6 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Post('seed-bot')
-  createBot(): Promise<UserDto> {
-    return this.usersService.createBot();
-  }
-
   @Get(':id')
   findOne(@Param('id') id: string): Promise<UserDto> {
     return this.usersService.findOneByEmail(id);
@@ -54,7 +47,7 @@ export class UsersController {
   }
 
   @Post('default-template')
-  createDefaultTemplate(@GetUser() user: User) {
+  createDefaultTemplate(@GetUser() user: User): Promise<any> {
     return this.usersService.seedUserDefaultTemplate(user);
   }
 

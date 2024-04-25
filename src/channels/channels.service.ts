@@ -1,22 +1,17 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
-
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ChannelsRepository } from './channels.repository';
 import { Channel } from './entities/channel.entity';
-
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
 import { ChannelUserCount } from './dto/channel-user-count.dto';
-import { ChannelType } from './enums/channel-type.enum';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { User } from 'src/users/entities/user.entity';
-
 import { WorkspacesRepository } from 'src/workspaces/workspaces.repository';
 import { LogActivity } from 'src/activity/utils/logActivity';
+import { SectionsRepository } from 'src/sections/sections.repository';
+import { AssistantService } from 'src/assistant/assistant.service';
+import { ChannelDto } from './dto/channel.dto';
 
 @Injectable()
 export class ChannelsService {
@@ -24,7 +19,9 @@ export class ChannelsService {
     private channelsRepository: ChannelsRepository,
     private workspaceRepository: WorkspacesRepository,
     private cloudinaryService: CloudinaryService,
+    private sectionsRepository: SectionsRepository,
     private events: EventEmitter2,
+    private assistantService: AssistantService,
   ) {}
 
   async createChannel(
@@ -36,18 +33,6 @@ export class ChannelsService {
       where: { uuid: workspaceUuid },
     });
 
-    // Check if channel name already exists. If so, throw error.
-    const existingChannel = await this.channelsRepository.findOne({
-      where: {
-        name: createChannelDto.name,
-        workspace: { id: workspace.id },
-      },
-    });
-
-    // if (existingChannel && existingChannel.type === ChannelType.CHANNEL)
-    //   throw new ConflictException('A channel with this name already exists.');
-
-    // Create database entry
     const newChannel = await this.channelsRepository.createChannel(
       createChannelDto,
       workspace,
@@ -68,55 +53,79 @@ export class ChannelsService {
     return newChannel;
   }
 
-  async findUserChannels(user: User): Promise<any[]> {
-    const channels = await this.channelsRepository.findUserChannels(user.id);
+  async generateRoadmap({
+    topic,
+    workspaceId,
+    user,
+  }: {
+    topic: string;
+    workspaceId: string;
+    user: User;
+  }): Promise<ChannelDto[]> {
+    try {
+      const subTopicYCoords = [
+        0, 0, 120, 120, -120, -120, 240, 240, -240, -240,
+      ];
 
-    for (let i = 0; i < channels.length; i++) {
-      if (channels[i].type === ChannelType.DIRECT) {
-        channels[i].name = await this.findDirectChannelName(
-          channels[i].uuid,
-          user.uuid,
-        );
-      }
+      const nodemapTopics = await this.assistantService.generateRoadmapTopics(
+        topic,
+      );
+
+      const clearNodemap = async (workspaceId: string) => {
+        await this.removeChannelsByWorkspace(workspaceId);
+      };
+
+      const createNodemap = async (
+        data: { topic: string; subtopics: string[] }[],
+      ) => {
+        const channelsPromises = [];
+        for (let i = 0; i < data.length; i++) {
+          const entry = data[i];
+          // Main topic
+          const mainTopic = {
+            name: entry.topic,
+
+            x: 4000,
+            y: 500 * (i + 2),
+            workspaceId,
+            isDefault: i === 0,
+          };
+
+          channelsPromises.push(this.createChannel(mainTopic, workspaceId));
+
+          // Secondary topics
+          const subtopics = entry.subtopics;
+
+          for (let j = 0; j < subtopics.length; j++) {
+            const subTopic = subtopics[j];
+
+            const isEven = j % 2 === 0;
+
+            const topic = {
+              name: subTopic,
+              x: 4000 + (isEven ? -1 : 1) * 480,
+              y: 500 * (i + 2) + subTopicYCoords[j],
+            };
+            channelsPromises.push(this.createChannel(topic, workspaceId));
+          }
+        }
+        await Promise.all(channelsPromises);
+
+        return this.findWorkspaceChannels(user.id, workspaceId);
+      };
+
+      await clearNodemap(workspaceId);
+      await createNodemap(nodemapTopics);
+
+      return await this.findWorkspaceChannels(user.id, workspaceId);
+    } catch (err) {
+      console.error(err);
     }
-
-    return channels;
   }
 
   findWorkspaceChannels(userId: number, workspaceId: string): Promise<any[]> {
     return this.channelsRepository.findWorkspaceChannels(userId, workspaceId);
   }
-
-  findChannelUserIds(channelId: string): Promise<string[]> {
-    return this.channelsRepository.findChannelUserIds(channelId);
-  }
-
-  findDirectChannelByUserUuids(memberIds: string[]): Promise<Channel> {
-    return this.channelsRepository.findDirectChannelByUserUuids(memberIds);
-  }
-
-  // async findWorkspaceChannels(
-  //   page: number,
-  //   pageSize = 15,
-  // ): Promise<{
-  //   channels: ChannelDto[];
-  //   channelUserCounts: ChannelUserCount[];
-  // }> {
-  //   const result =
-  //     await this.channelsRepository.findWorkspaceChannelsWithUserCounts(
-  //       page,
-  //       pageSize,
-  //     );
-
-  //   const channelUserCounts = result.raw.map((channelUserCount: any) => ({
-  //     channelUuid: channelUserCount.channel_uuid,
-  //     userCount: channelUserCount.usercount || 0,
-  //   }));
-
-  //   const channels = result.entities;
-
-  //   return { channels, channelUserCounts };
-  // }
 
   async findChannelUserCounts(
     workspaceId: string,
@@ -133,27 +142,12 @@ export class ChannelsService {
     return channelUserCounts;
   }
 
-  async findDirectChannelName(
-    channelUuid: string,
-    currentUserId: string,
-  ): Promise<string> {
-    const channelUsers = await this.channelsRepository.findChannelUsers(
-      channelUuid,
-    );
-
-    const otherUser = channelUsers.find((u: any) => u.uuid !== currentUserId);
-
-    return otherUser.name;
-  }
-
   async findChannelUsers(channelUuid: string): Promise<any> {
     const channelUsers = await this.channelsRepository.findChannelUsers(
       channelUuid,
     );
 
     return channelUsers;
-
-    // return channelUsers.filter((u: any) => u.uuid !== currentUserId);
   }
 
   async updateChannel(
@@ -168,7 +162,6 @@ export class ChannelsService {
       throw new NotFoundException('Channel not found');
     }
 
-    // Handle image storage
     if (updateChannelDto.icon) {
       const uploadedImageUrl = await this.cloudinaryService.upload(
         updateChannelDto.icon,
@@ -178,11 +171,9 @@ export class ChannelsService {
       delete updateChannelDto.icon;
     }
 
-    // Update channel
     Object.assign(channel, updateChannelDto);
     const updatedChannel = await this.channelsRepository.save(channel);
 
-    // Send updated channel by socket
     this.events.emit(
       'websocket-event',
       'updateChannel',
@@ -193,7 +184,7 @@ export class ChannelsService {
     return updatedChannel;
   }
 
-  async removeChannel(uuid: string, workspaceId: string): Promise<void> {
+  async removeChannel(uuid: string): Promise<void> {
     const channelFound = await this.channelsRepository.findOneOrFail({
       where: { uuid },
       relations: [
@@ -202,10 +193,10 @@ export class ChannelsService {
         'flashcards',
         'childConnectors',
         'parentConnectors',
+        'workspace',
       ],
     });
 
-    // Remove channel
     const removedChannel = await this.channelsRepository.softRemove(
       channelFound,
     );
@@ -213,7 +204,7 @@ export class ChannelsService {
     if (!removedChannel)
       throw new NotFoundException(`Unable to find user with id ${uuid}`);
 
-    // Send websocket
+    const workspaceId = channelFound.workspace.uuid;
     this.events.emit('websocket-event', 'removeChannel', uuid, workspaceId);
   }
 
@@ -223,5 +214,19 @@ export class ChannelsService {
     });
 
     await this.channelsRepository.softRemove(workspaceChannels);
+  }
+
+  async sendUserChannelSocket(
+    userId: string,
+    channel: Channel,
+    sectionUuid: string,
+  ): Promise<void> {
+    this.events.emit(
+      'websocket-event',
+      'joinChannel',
+      channel,
+      sectionUuid,
+      userId,
+    );
   }
 }
