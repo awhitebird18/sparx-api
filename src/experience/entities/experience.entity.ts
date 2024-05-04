@@ -1,10 +1,14 @@
-import { Entity, Column, ManyToOne, CreateDateColumn } from 'typeorm';
+import { Entity, Column, ManyToOne } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Workspace } from 'src/workspaces/entities/workspace.entity';
 
 @Entity()
 export class Experience extends BaseEntity {
+  @Column('int')
+  points: number;
+
+  // ManyToOne Relationships
   @ManyToOne(() => User, (user) => user.experience, { onDelete: 'CASCADE' })
   user: User;
 
@@ -12,10 +16,4 @@ export class Experience extends BaseEntity {
     onDelete: 'CASCADE',
   })
   workspace: Workspace;
-
-  @Column('int')
-  points: number;
-
-  @CreateDateColumn({ type: 'date' })
-  date: Date;
 }

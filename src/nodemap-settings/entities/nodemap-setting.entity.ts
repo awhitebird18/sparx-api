@@ -5,12 +5,6 @@ import { Column, Entity, ManyToOne } from 'typeorm';
 
 @Entity()
 export class NodemapSettings extends BaseEntity {
-  @ManyToOne(() => User, (user) => user.nodemapSettings)
-  user: User;
-
-  @ManyToOne(() => Workspace, (workspace) => workspace.nodemapSettings)
-  workspace: Workspace;
-
   @Column({ default: true })
   userCountVisible: boolean;
 
@@ -20,12 +14,23 @@ export class NodemapSettings extends BaseEntity {
   @Column({ default: true })
   unreadMessageCountVisible: boolean;
 
-  @Column({ type: 'double precision', default: 4000 })
-  xPosition: number;
+  @Column({ type: 'double precision', default: 1000 })
+  initialX: number;
 
-  @Column({ type: 'double precision', default: 4000 })
-  yPosition: number;
+  @Column({ type: 'double precision', default: 1000 })
+  initialY: number;
 
   @Column({ type: 'double precision', default: 1 })
-  zoomLevel: number;
+  scale: number;
+
+  // ManyToOne Relationships
+  @ManyToOne(() => User, (user) => user.nodemapSettings, {
+    onDelete: 'CASCADE',
+  })
+  user: User;
+
+  @ManyToOne(() => Workspace, (workspace) => workspace.nodemapSettings, {
+    onDelete: 'CASCADE',
+  })
+  workspace: Workspace;
 }

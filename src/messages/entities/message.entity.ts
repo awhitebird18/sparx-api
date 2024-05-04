@@ -22,20 +22,15 @@ export class Message extends BaseEntity {
   @Column({ default: false })
   isSystem: boolean;
 
-  @OneToMany(() => Message, (message) => message.parentMessage, {
-    nullable: true,
+  // ManyToOne Relationships
+  @ManyToOne(() => User, {
+    onDelete: 'CASCADE',
   })
-  childMessages?: Message[];
-
-  @OneToMany(() => Reaction, (reaction) => reaction.message, { nullable: true })
-  reactions?: Reaction[];
-
-  @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
   user: User;
 
   @ManyToOne(() => Channel, (channel) => channel.messages, {
-    cascade: ['soft-remove'],
+    onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'channelId' })
   channel: Channel;
@@ -46,4 +41,13 @@ export class Message extends BaseEntity {
   })
   @JoinColumn({ name: 'parentId' })
   parentMessage: Message;
+
+  // OneToMany Relationships
+  @OneToMany(() => Message, (message) => message.parentMessage, {
+    nullable: true,
+  })
+  childMessages?: Message[];
+
+  @OneToMany(() => Reaction, (reaction) => reaction.message, { nullable: true })
+  reactions?: Reaction[];
 }

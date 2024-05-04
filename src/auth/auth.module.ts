@@ -19,7 +19,6 @@ import { UserWorkspacesModule } from 'src/user-workspaces/user-workspaces.module
 import { CardTemplateModule } from 'src/card-template/card-template.module';
 import { CardFieldModule } from 'src/card-field/card-field.module';
 import { CardVariantModule } from 'src/card-variant/card-variant.module';
-import { AssistantModule } from 'src/assistant/assistant.module';
 
 @Module({
   imports: [
@@ -40,7 +39,6 @@ import { AssistantModule } from 'src/assistant/assistant.module';
     CardTemplateModule,
     CardFieldModule,
     CardVariantModule,
-    AssistantModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy, RefreshJWTStrategy],

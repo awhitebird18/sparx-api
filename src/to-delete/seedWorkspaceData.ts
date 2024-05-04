@@ -10,12 +10,9 @@ import { config } from 'src/typeorm';
 import { Workspace } from 'src/workspaces/entities/workspace.entity';
 
 export async function seedWorkspaceData(workspaceId: string, userId: string) {
-  console.info('Seed starting');
-
   const AppDataSource = new DataSource(config);
 
   await AppDataSource.initialize();
-  console.info('Database Initialized');
 
   const workspaceRepository = AppDataSource.getRepository(Workspace);
 
@@ -26,7 +23,7 @@ export async function seedWorkspaceData(workspaceId: string, userId: string) {
   const users = await seedUsers(AppDataSource);
   await seedWorkspaceUsers(AppDataSource, workspace, users, userId);
   await seedUserNodemapSettings(AppDataSource, workspace);
-  await seedUserPreferences(AppDataSource, workspaceId, userId);
+  await seedUserPreferences(AppDataSource);
   await seedActivity(AppDataSource, workspace, userId);
   await seedChannelSubscriptions(AppDataSource, workspace);
   await seedMessages(AppDataSource);

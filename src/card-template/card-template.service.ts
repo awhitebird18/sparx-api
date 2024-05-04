@@ -5,48 +5,59 @@ import { User } from 'src/users/entities/user.entity';
 import { CardTemplateRepository } from './card-template.repository';
 import { CardTemplateDto } from './dto/card-template.dto';
 import { plainToInstance } from 'class-transformer';
+import { Template } from './entities/card-template.entity';
 
 @Injectable()
 export class CardTemplateService {
   constructor(private cardTemplateRepository: CardTemplateRepository) {}
 
+  convertToDto(template: Template): CardTemplateDto {
+    return plainToInstance(CardTemplateDto, template);
+  }
+
   async create(
     createCardTemplateDto: CreateCardTemplateDto,
+    workspaceId: string,
     user: User,
   ): Promise<CardTemplateDto> {
     const template = await this.cardTemplateRepository.createNote(
       createCardTemplateDto,
+      workspaceId,
       user,
     );
 
-    return plainToInstance(CardTemplateDto, template);
+    return this.convertToDto(template);
   }
 
-  async findAllByUser(user: User): Promise<CardTemplateDto[]> {
+  async findAllByUser(
+    user: User,
+    workspaceId: string,
+  ): Promise<CardTemplateDto[]> {
     const templates =
-      await this.cardTemplateRepository.findAllTemplatesIncludingDefault(user);
+      await this.cardTemplateRepository.findAllTemplatesIncludingDefault(
+        user,
+        workspaceId,
+      );
 
-    return templates.map((template) =>
-      plainToInstance(CardTemplateDto, template),
-    );
+    return templates.map((template) => this.convertToDto(template));
   }
 
   async findByUuid(uuid: string): Promise<CardTemplateDto> {
     const template = await this.cardTemplateRepository.findByUuid(uuid);
 
-    return plainToInstance(CardTemplateDto, template);
+    return this.convertToDto(template);
   }
 
   async updateCardTemplate(
     uuid: string,
     updateCardTemplateDto: UpdateCardTemplateDto,
   ): Promise<CardTemplateDto> {
-    const cardTemplate = await this.cardTemplateRepository.updateOne(
+    const template = await this.cardTemplateRepository.updateOne(
       uuid,
       updateCardTemplateDto,
     );
 
-    return plainToInstance(CardTemplateDto, cardTemplate);
+    return this.convertToDto(template);
   }
 
   removeCardTemplate(uuid: string): void {

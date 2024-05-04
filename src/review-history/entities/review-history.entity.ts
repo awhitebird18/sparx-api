@@ -5,15 +5,16 @@ import { Entity, ManyToOne, Column } from 'typeorm';
 
 @Entity()
 export class ReviewHistory extends BaseEntity {
-  @ManyToOne(() => Card, (flashcard) => flashcard.reviewHistories)
-  flashcard: Card;
-
-  @ManyToOne(() => User, (user) => user.reviewHistories)
-  user: User; // Direct reference to the User
-
   @Column({ type: 'date', default: () => 'CURRENT_DATE' })
   dateReviewed: Date;
 
   @Column()
   performanceRating: string;
+
+  // ManyToOne Relationships
+  @ManyToOne(() => Card, (flashcard) => flashcard.reviewHistories)
+  flashcard: Card;
+
+  @ManyToOne(() => User, (user) => user.reviewHistories)
+  user: User; // Direct reference to the User
 }

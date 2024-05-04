@@ -5,6 +5,8 @@ import { NodemapSettingsRepository } from './nodemap-settings.repository';
 import { WorkspacesRepository } from 'src/workspaces/workspaces.repository';
 import { plainToInstance } from 'class-transformer';
 import { NodemapSettingsDto } from './dto/nodemap-settings.dto';
+import { NodemapSettings } from './entities/nodemap-setting.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class NodemapSettingsService {
@@ -12,6 +14,10 @@ export class NodemapSettingsService {
     private nodemapSettingsRepository: NodemapSettingsRepository,
     private workspaceRepository: WorkspacesRepository,
   ) {}
+
+  convertToDto(nodemapSettings: NodemapSettings): NodemapSettingsDto {
+    return plainToInstance(NodemapSettingsDto, nodemapSettings);
+  }
 
   async create(
     userId: number,
@@ -22,15 +28,17 @@ export class NodemapSettingsService {
       where: { uuid: workspaceId },
     });
 
-    const newSetting = this.nodemapSettingsRepository.create({
+    const newSettings = this.nodemapSettingsRepository.create({
       user: { id: userId },
       workspace,
       ...createNodemapSettingDto,
     });
 
-    const nodemapSettings = this.nodemapSettingsRepository.save(newSetting);
+    const nodemapSettings = await this.nodemapSettingsRepository.save(
+      newSettings,
+    );
 
-    return plainToInstance(NodemapSettingsDto, nodemapSettings);
+    return this.convertToDto(nodemapSettings);
   }
 
   async findUserSettings(
@@ -41,19 +49,20 @@ export class NodemapSettingsService {
       where: { user: { uuid: userId }, workspace: { uuid: workspaceId } },
     });
 
-    return plainToInstance(NodemapSettingsDto, nodemapSettings);
+    return this.convertToDto(nodemapSettings);
   }
 
   async update(
-    uuid: string,
+    workspaceId: string,
+    user: User,
     updateNodemapSettingDto: UpdateNodemapSettingDto,
   ): Promise<NodemapSettingsDto> {
     const settings = await this.nodemapSettingsRepository.findOneOrFail({
-      where: { uuid },
+      where: { workspace: { uuid: workspaceId }, user: { uuid: user.uuid } },
     });
 
     if (!settings) {
-      throw new Error(`Nodemap settings not found for user #${uuid}`);
+      throw new Error(`Nodemap settings not found for user #${user.uuid}`);
     }
 
     await this.nodemapSettingsRepository.update(
@@ -62,10 +71,10 @@ export class NodemapSettingsService {
     );
 
     const nodemapSettings = await this.nodemapSettingsRepository.findOneOrFail({
-      where: { uuid },
+      where: { uuid: settings.uuid },
     });
 
-    return plainToInstance(NodemapSettingsDto, nodemapSettings);
+    return this.convertToDto(nodemapSettings);
   }
 
   async remove(userId: string): Promise<void> {

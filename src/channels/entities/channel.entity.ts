@@ -32,37 +32,32 @@ export class Channel extends BaseEntity {
   @Column({ nullable: true })
   icon?: string;
 
-  @ManyToOne(() => Workspace, (workspace) => workspace.channels)
+  // ManyToOne Relationships
+  @ManyToOne(() => Workspace, (workspace) => workspace.channels, {
+    onDelete: 'CASCADE',
+  })
   workspace: Workspace;
 
-  @OneToMany(() => Message, (message) => message.channel, {
-    cascade: ['soft-remove'],
+  @ManyToOne(() => Channel, (parentChannel) => parentChannel.childChannels, {
+    onDelete: 'CASCADE',
   })
+  parentChannel: Channel;
+
+  // OneToMany Relationships
+  @OneToMany(() => Message, (message) => message.channel)
   messages: Message[];
 
-  @OneToMany(() => Note, (note) => note.channel, {
-    cascade: ['soft-remove'],
-  })
+  @OneToMany(() => Note, (note) => note.channel)
   notes: Note[];
 
   @OneToMany(
     () => ChannelSubscription,
     (channelSubscription) => channelSubscription.channel,
-    {
-      cascade: ['soft-remove'],
-    },
   )
   channelSubscriptions: ChannelSubscription[];
 
-  @OneToMany(() => Card, (flashcard) => flashcard.channel, {
-    cascade: ['soft-remove'],
-  })
+  @OneToMany(() => Card, (flashcard) => flashcard.channel)
   flashcards: Card[];
-
-  @ManyToOne(() => Channel, (parentChannel) => parentChannel.childChannels, {
-    nullable: true,
-  })
-  parentChannel: Channel;
 
   @OneToMany(() => Channel, (childChannel) => childChannel.parentChannel)
   childChannels: Channel[];

@@ -9,6 +9,8 @@ import { User } from 'src/users/entities/user.entity';
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { WorkspacesRepository } from 'src/workspaces/workspaces.repository';
 import { Card } from 'src/card/entities/card.entity';
+import { CardDto } from 'src/card/dto/card.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class CardNoteService {
@@ -22,7 +24,14 @@ export class CardNoteService {
     private cardTemplateRepository: CardTemplateRepository,
   ) {}
 
-  async create(createNoteDto: CreateCardNoteDto, user: User): Promise<Card[]> {
+  convertToDto(card: Card): CardDto {
+    return plainToInstance(CardDto, card, { excludeExtraneousValues: true });
+  }
+
+  async create(
+    createNoteDto: CreateCardNoteDto,
+    user: User,
+  ): Promise<CardDto[]> {
     const template = await this.cardTemplateRepository.findOneOrFail({
       where: { uuid: createNoteDto.templateId },
       relations: ['cardVariants'],
@@ -78,7 +87,9 @@ export class CardNoteService {
         }
       }
 
-      return savedCardNote.flashcards;
+      const flashcards = cardNote.flashcards;
+
+      return flashcards.map((card) => this.convertToDto(card));
     } catch (error) {
       console.error(error);
     }

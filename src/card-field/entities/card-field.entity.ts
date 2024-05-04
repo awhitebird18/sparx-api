@@ -8,12 +8,14 @@ export class Field extends BaseEntity {
   @Column()
   title: string;
 
-  @ManyToMany(() => CardVariant)
+  @ManyToMany(() => CardVariant, { onDelete: 'CASCADE' })
   frontCardVariants: CardVariant[];
 
-  @ManyToMany(() => CardVariant)
+  @ManyToMany(() => CardVariant, { onDelete: 'CASCADE' })
   backCardVariants: CardVariant[];
 
-  @ManyToOne(() => Template, (template) => template.fields)
+  @ManyToOne(() => Template, (template) => template.fields, {
+    onDelete: 'CASCADE',
+  })
   template: Template;
 }

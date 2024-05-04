@@ -29,9 +29,13 @@ export class Section extends BaseEntity {
   @Column({ type: 'enum', enum: SortBy, default: SortBy.ALPHA })
   sortBy: SortBy;
 
+  // ManyToOne Relationships
+  @ManyToOne(() => User, (user) => user.sections, {
+    onDelete: 'CASCADE',
+  })
+  user: User;
+
+  // OneToMany Relationships
   @OneToMany(() => ChannelSubscription, (userchannel) => userchannel.section)
   channels: ChannelSubscription[];
-
-  @ManyToOne(() => User, (user) => user.sections)
-  user: User;
 }

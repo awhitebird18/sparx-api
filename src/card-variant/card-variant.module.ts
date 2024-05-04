@@ -9,6 +9,6 @@ import { CardFieldModule } from 'src/card-field/card-field.module';
   imports: [CardTemplateModule, CardFieldModule],
   controllers: [CardVariantController],
   providers: [CardVariantService, CardVariantRepository],
-  exports: [CardVariantRepository],
+  exports: [CardVariantService, CardVariantRepository],
 })
 export class CardVariantModule {}

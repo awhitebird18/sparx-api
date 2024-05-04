@@ -21,16 +21,10 @@ export class ActivityService {
     this.createActivity(event);
   }
 
-  convertToActivityDto(activity: Activity[]): ActivityDto[] {
-    return activity.map((activityEl) => {
-      const userId = activityEl.user.uuid;
-      delete activityEl.user;
+  convertToDto(activity: Activity): ActivityDto {
+    const userId = activity.user.uuid;
 
-      return plainToInstance(ActivityDto, {
-        ...activityEl,
-        userId,
-      });
-    });
+    return plainToInstance(ActivityDto, { ...activity, userId });
   }
 
   async createActivity({
@@ -51,10 +45,7 @@ export class ActivityService {
       text,
     });
 
-    return plainToInstance(ActivityDto, {
-      ...activity,
-      userId,
-    });
+    return this.convertToDto(activity);
   }
 
   async getRecentWorkspaceActivity(
@@ -66,7 +57,7 @@ export class ActivityService {
       page,
     );
 
-    return this.convertToActivityDto(activity);
+    return activity.map((activityEl) => this.convertToDto(activityEl));
   }
 
   async getUserActivity(
@@ -80,6 +71,6 @@ export class ActivityService {
       page,
     );
 
-    return this.convertToActivityDto(activity);
+    return activity.map((activityEl) => this.convertToDto(activityEl));
   }
 }

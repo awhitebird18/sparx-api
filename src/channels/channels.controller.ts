@@ -17,6 +17,8 @@ import { ChannelDto } from './dto/channel.dto';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
 import { ChannelUserCount } from './dto/channel-user-count.dto';
+import { Channel } from './entities/channel.entity';
+import { UpdateChannelCoordinatesDto } from './dto/update-channel-coordinates';
 
 @Controller('channels')
 export class ChannelsController {
@@ -32,7 +34,7 @@ export class ChannelsController {
       createChannel: CreateChannelDto;
       workspaceId: string;
     },
-  ): Promise<ChannelDto> {
+  ): Promise<Channel> {
     return this.channelsService.createChannel(
       createChannel,
       workspaceId,
@@ -44,13 +46,7 @@ export class ChannelsController {
   findWorkspaceChannels(
     @GetUser() currentUser: User,
     @Param('workspaceId') workspaceId: string,
-  ): Promise<
-    | any
-    | {
-        channels: ChannelDto[];
-        channelUserCounts: ChannelUserCount[];
-      }
-  > {
+  ): Promise<ChannelDto[]> {
     return this.channelsService.findWorkspaceChannels(
       currentUser.id,
       workspaceId,
@@ -68,13 +64,23 @@ export class ChannelsController {
   generateRoadmap(
     @Body() { topic, workspaceId }: { topic: string; workspaceId: string },
     @GetUser() user: User,
-  ) {
+  ): Promise<ChannelDto[]> {
     return this.channelsService.generateRoadmap({ topic, workspaceId, user });
   }
 
   @Get(':channelId/channel-users')
-  findChannelUsers(@Param('channelId') channelId: string) {
+  findChannelUsers(@Param('channelId') channelId: string): Promise<any> {
     return this.channelsService.findChannelUsers(channelId);
+  }
+
+  @Patch('positions')
+  updateManyChannels(
+    @Body()
+    data: {
+      channels: UpdateChannelCoordinatesDto[];
+    },
+  ): Promise<ChannelDto[]> {
+    return this.channelsService.updateManyChannels(data.channels);
   }
 
   @Patch(':channelId')
@@ -88,6 +94,20 @@ export class ChannelsController {
       channelId,
       data.updateChannelDto,
       data.workspaceId,
+    );
+  }
+
+  @Patch('move/:channelId')
+  moveChannel(
+    @Param('channelId', new ParseUUIDPipe({ version: '4' }))
+    channelId: string,
+    @Body()
+    data: { updateChannelDto: UpdateChannelDto; parentChannelId: string },
+  ): Promise<ChannelDto[]> {
+    return this.channelsService.moveChannel(
+      channelId,
+      data.updateChannelDto,
+      data.parentChannelId,
     );
   }
 

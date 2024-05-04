@@ -6,6 +6,7 @@ import { TaskCompletedEvent } from 'src/tasks/utils/task-completed';
 import { OnEvent } from '@nestjs/event-emitter';
 import { ExperienceDto } from './dto/experience.dto';
 import { plainToInstance } from 'class-transformer';
+import { Experience } from './entities/experience.entity';
 
 @Injectable()
 export class ExperienceService {
@@ -18,6 +19,10 @@ export class ExperienceService {
   @OnEvent('task.completed')
   handleTaskCompletedEvent(event: TaskCompletedEvent) {
     this.addExperience(event.userId, event.workspaceId, event.points);
+  }
+
+  convertToDto(experience: Experience): ExperienceDto {
+    return plainToInstance(ExperienceDto, experience);
   }
 
   async addExperience(
@@ -38,15 +43,14 @@ export class ExperienceService {
       throw new Error('Workspace not found');
     }
 
-    const experience = this.experienceRepository.create({
+    const experienceToSave = this.experienceRepository.create({
       user,
       workspace,
       points,
-      date: new Date(),
     });
 
-    const newExperienceEntry = await this.experienceRepository.save(experience);
-    return plainToInstance(ExperienceDto, newExperienceEntry);
+    const experience = await this.experienceRepository.save(experienceToSave);
+    return this.convertToDto(experience);
   }
 
   async getUsersExperienceByWorkspace(
@@ -66,10 +70,10 @@ export class ExperienceService {
       throw new Error('Workspace not found');
     }
 
-    const experience = await this.experienceRepository.find({
+    const experienceEntries = await this.experienceRepository.find({
       where: { user: { id: user.id }, workspace: { id: workspace.id } },
     });
 
-    return plainToInstance(ExperienceDto, experience);
+    return experienceEntries.map((experience) => this.convertToDto(experience));
   }
 }

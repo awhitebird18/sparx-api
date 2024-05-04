@@ -12,6 +12,7 @@ import { UpdateMessageDto } from './dto/update-message.dto';
 import { ReactionDto } from './dto/reaction.dto';
 import { ThreadDto } from './dto/thread.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Message } from './entities/message.entity';
 
 @Injectable()
 export class MessagesService {
@@ -22,7 +23,16 @@ export class MessagesService {
     private events: EventEmitter2,
   ) {}
 
-  private transformReactions(reactions: Reaction[]): ReactionDto[] {
+  private convertToDto(message: Message): MessageDto {
+    return plainToInstance(MessageDto, {
+      ...message,
+      userId: message.user.uuid,
+      channelId: message.channel.uuid,
+      reactions: this.convertToReactionDtos(message?.reactions),
+    });
+  }
+
+  private convertToReactionDtos(reactions: Reaction[]): ReactionDto[] {
     const reactionMap: {
       [emojiId: string]: ReactionDto;
     } = {};
@@ -37,7 +47,11 @@ export class MessagesService {
       reactionMap[emojiId].count++;
     }
 
-    return Object.values(reactionMap);
+    const convertedReactionsArr = Object.values(reactionMap);
+
+    return convertedReactionsArr.map((reaction) =>
+      plainToInstance(ReactionDto, reaction),
+    );
   }
 
   async create(
@@ -65,17 +79,19 @@ export class MessagesService {
       parentId,
     });
 
-    const message = await this.findPopulatedMessage(savedMessage.uuid);
+    const messageDto = await this.findPopulatedMessage(savedMessage.uuid);
 
-    this.events.emit('websocket-event', 'newMessage', message);
+    this.events.emit('websocket-event', 'newMessage', messageDto);
 
-    return plainToInstance(MessageDto, message);
+    return messageDto;
   }
 
   async findOne(uuid: string): Promise<MessageDto> {
     const message = await this.messageRepository.findOneBy({ uuid });
 
-    return plainToInstance(MessageDto, message);
+    const messageDto = this.convertToDto(message);
+
+    return messageDto;
   }
 
   async findChannelMessages(
@@ -91,28 +107,7 @@ export class MessagesService {
       page,
     );
 
-    const messagesWithGroupedReactions = messages.map((message) => {
-      let reactions = [];
-
-      if (message.reactions) {
-        reactions = this.transformReactions(message.reactions);
-      }
-
-      return {
-        uuid: message.uuid,
-        content: message.content,
-        userId: message.user.uuid,
-        channelId: message.channel.uuid,
-        isSystem: message.isSystem,
-        createdAt: message.createdAt,
-        threadCount: message.childMessages?.length,
-        reactions,
-      };
-    });
-
-    return messagesWithGroupedReactions.map((message: any) =>
-      plainToInstance(MessageDto, message),
-    );
+    return messages.map((message: any) => this.convertToDto(message));
   }
 
   async findThreadMessages(parentMessageId: string): Promise<MessageDto[]> {
@@ -120,48 +115,17 @@ export class MessagesService {
       parentMessageId,
     );
 
-    const messagesWithGroupedReactions = messages.map((message) => {
-      let reactions = [];
-
-      if (message.reactions) {
-        reactions = this.transformReactions(message.reactions);
-      }
-
-      return {
-        uuid: message.uuid,
-        parentId: message.parentMessage.uuid,
-        content: message.content,
-        userId: message.user.uuid,
-        channelId: message.channel.uuid,
-        isSystem: message.isSystem,
-        createdAt: message.createdAt,
-        reactions,
-      };
-    });
-
-    return messagesWithGroupedReactions.map((message: any) =>
-      plainToInstance(MessageDto, message),
+    const messageDtos = messages.map((message: any) =>
+      this.convertToDto(message),
     );
+
+    return messageDtos;
   }
 
   async findPopulatedMessage(uuid: string): Promise<MessageDto> {
-    const messageFound = await this.messageRepository.findMessageByUuid(uuid);
+    const message = await this.messageRepository.findMessageByUuid(uuid);
 
-    const groupedReactions = this.transformReactions(messageFound.reactions);
-
-    const message = {
-      uuid: messageFound.uuid,
-      parentId: messageFound.parentMessage?.uuid,
-      content: messageFound.content,
-      userId: messageFound.user.uuid,
-      channelId: messageFound.channel.uuid,
-      isSystem: messageFound.isSystem,
-      createdAt: messageFound.createdAt,
-      updatedAt: messageFound.updatedAt,
-      reactions: groupedReactions,
-    };
-
-    return plainToInstance(MessageDto, message);
+    return this.convertToDto(message);
   }
 
   async findUserThreads(user: User): Promise<ThreadDto[]> {
@@ -189,11 +153,11 @@ export class MessagesService {
     return plainToInstance(ThreadDto, result);
   }
 
-  async getUnreadMessageCount(
+  async getChannelUnreadMessageCount(
     channelId: string,
     lastRead: Date,
   ): Promise<number> {
-    return await this.messageRepository.getUnreadMessageCount(
+    return await this.messageRepository.getChannelUnreadMessageCount(
       channelId,
       lastRead,
     );
@@ -266,7 +230,7 @@ export class MessagesService {
     return messageToReturn;
   }
 
-  async remove(uuid: string): Promise<string> {
+  async remove(uuid: string): Promise<void> {
     const message = await this.messageRepository.findMessageByUuid(uuid);
 
     const deletedMessage = await this.messageRepository.softRemove(message);
@@ -280,7 +244,5 @@ export class MessagesService {
       deletedMessage.channel.uuid,
       deletedMessage.uuid,
     );
-
-    return 'Message Removed';
   }
 }

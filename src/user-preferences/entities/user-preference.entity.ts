@@ -14,11 +14,12 @@ export class UserPreferences extends BaseEntity {
   @Column({ default: PrimaryColor.BLUE })
   primaryColor: PrimaryColor;
 
-  @OneToOne(() => User, (user) => user.preferences)
-  @JoinColumn()
-  user: User;
-
   @Exclude()
   @Column({ nullable: true })
   userId: number;
+
+  // OneToMany Relationships
+  @OneToOne(() => User, (user) => user.preferences, { onDelete: 'CASCADE' })
+  @JoinColumn()
+  user: User;
 }

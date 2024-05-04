@@ -24,7 +24,7 @@ export class WorkspacesRepository extends Repository<Workspace> {
     return this.find({ where: { userWorkspaces: { user: { id: userId } } } });
   }
 
-  findAllWorkspaces() {
+  findAllWorkspaces(): Promise<Workspace[]> {
     return this.find();
   }
 
@@ -41,10 +41,13 @@ export class WorkspacesRepository extends Repository<Workspace> {
     return await this.findOne({ where: { uuid } });
   }
 
-  async removeWorkspace(uuid: string): Promise<Workspace> {
+  async removeWorkspace(uuid: string): Promise<void> {
+    console.log('Removing workspace 3:', uuid);
     const workspace = await this.findOne({ where: { uuid } });
+
+    console.log(workspace);
     if (workspace) {
-      return await this.softRemove(workspace);
+      await this.delete({ id: workspace.id });
     } else {
       throw new Error(`Workspace with id: ${uuid} not found`);
     }

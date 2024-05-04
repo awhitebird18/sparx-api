@@ -20,6 +20,9 @@ export class UserStatus extends BaseEntity {
   @Column({ type: 'timestamptz', nullable: false })
   dateExpire: Date;
 
-  @ManyToOne(() => User, (user) => user.customStatuses)
+  // ManyToOne Relationships
+  @ManyToOne(() => User, (user) => user.customStatuses, {
+    onDelete: 'CASCADE',
+  })
   user: User;
 }

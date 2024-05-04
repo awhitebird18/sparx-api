@@ -10,6 +10,7 @@ import { ChannelsRepository } from 'src/channels/channels.repository';
 import { UsersRepository } from 'src/users/users.repository';
 import { plainToInstance } from 'class-transformer';
 import { UnreadMessageCount } from './dto/unread-message-count.dto';
+import { UpdateUserChannelDto } from './dto/update-channel-subscription.dto';
 
 @Injectable()
 export class ChannelSubscriptionsService {
@@ -22,11 +23,11 @@ export class ChannelSubscriptionsService {
     private events: EventEmitter2,
   ) {}
 
-  private convertToChannelSubscriptionDto(
+  private convertToDto(
     channelSubscription: ChannelSubscription,
   ): ChannelSubscriptionDto {
     const channelId = channelSubscription.channel.uuid;
-    const sectionId = channelSubscription.section.uuid;
+    const sectionId = channelSubscription?.section?.uuid;
 
     return plainToInstance(ChannelSubscriptionDto, {
       ...channelSubscription,
@@ -36,16 +37,23 @@ export class ChannelSubscriptionsService {
   }
 
   async joinChannel(
-    user: User,
+    userId: string,
     channelUuid: string,
     sectionUuid?: string,
   ): Promise<ChannelSubscriptionDto> {
     try {
+      const user = await this.usersRepository.findOne({
+        where: { uuid: userId },
+      });
+
       const channel = await this.channelsRepository.findOneOrFail({
         where: {
           uuid: channelUuid,
         },
+        relations: ['workspace'],
       });
+
+      const workspace = channel.workspace;
 
       const section = await this.sectionsRepository.findOneOrFail({
         where: {
@@ -87,18 +95,25 @@ export class ChannelSubscriptionsService {
           channel.id,
         );
 
-      this.events.emit('websocket-event', 'updateChannelUserCount', {
-        channelUuid: channel.uuid,
-        userCount: channelUserCount,
-      });
-
       const channelSubscription =
         await this.channelSubscriptionsRepository.findOne({
           where: { channel: { id: channel.id }, user: { id: user.id } },
           relations: ['channel', 'section'],
         });
 
-      return this.convertToChannelSubscriptionDto(channelSubscription);
+      this.events.emit('websocket-event', 'updateChannelUserCount', {
+        channelUuid: channel.uuid,
+        userCount: channelUserCount,
+      });
+
+      this.events.emit('log.created', {
+        userId: user.uuid,
+        workspaceId: workspace.uuid,
+        type: 'user',
+        text: `has joined the ${channel.name} channel.`,
+      });
+
+      return this.convertToDto(channelSubscription);
     } catch (err) {
       console.error(err);
     }
@@ -118,7 +133,7 @@ export class ChannelSubscriptionsService {
       );
 
       const subscriptionDto = await this.joinChannel(
-        user,
+        user.uuid,
         defaultChannel.uuid,
         defaultSection.uuid,
       );
@@ -144,7 +159,7 @@ export class ChannelSubscriptionsService {
     );
 
     return channelSubscriptions.map((channelSubscription) =>
-      this.convertToChannelSubscriptionDto(channelSubscription),
+      this.convertToDto(channelSubscription),
     );
   }
 
@@ -161,40 +176,47 @@ export class ChannelSubscriptionsService {
         relations: ['channel', 'section'],
       });
 
-    return this.convertToChannelSubscriptionDto(subscription);
+    return this.convertToDto(subscription);
   }
 
   async udpateChannelSubscription(
     userUuid: string,
     channelUuid: string,
-    updatedFields: ChannelSubscriptionDto,
+    updatedFields: UpdateUserChannelDto,
   ): Promise<ChannelSubscriptionDto> {
-    const channelSubscription =
-      await this.channelSubscriptionsRepository.findOneOrFail({
-        where: {
-          user: { uuid: userUuid },
-          channel: { uuid: channelUuid },
-        },
+    try {
+      console.log('derp', userUuid, channelUuid, updatedFields);
+      const channelSubscription =
+        await this.channelSubscriptionsRepository.findOneOrFail({
+          where: {
+            user: { uuid: userUuid },
+            channel: { uuid: channelUuid },
+          },
+        });
+
+      console.log(channelSubscription);
+
+      Object.assign(channelSubscription, updatedFields);
+
+      await this.channelSubscriptionsRepository.save(channelSubscription);
+
+      const returnChannel = await this.channelSubscriptionsRepository.findOne({
+        where: { user: { uuid: userUuid }, channel: { uuid: channelUuid } },
+        relations: ['channel'],
       });
 
-    Object.assign(channelSubscription, updatedFields);
+      this.events.emit(
+        'websocket-event',
+        'updateChannelSubscription',
+        returnChannel,
+      );
 
-    await this.channelSubscriptionsRepository.save(channelSubscription);
+      const subscriptionDto = this.convertToDto(returnChannel);
 
-    const returnChannel = await this.channelSubscriptionsRepository.findOne({
-      where: { user: { uuid: userUuid }, channel: { uuid: channelUuid } },
-      relations: ['channel'],
-    });
-
-    this.events.emit(
-      'websocket-event',
-      'updateChannelSubscription',
-      returnChannel,
-    );
-
-    const subscriptionDto = this.convertToChannelSubscriptionDto(returnChannel);
-
-    return subscriptionDto;
+      return subscriptionDto;
+    } catch (error) {
+      console.error('Unable to update subscription:', error);
+    }
   }
 
   async updateLastRead(
@@ -219,9 +241,7 @@ export class ChannelSubscriptionsService {
       updatedChannelSubscription,
     );
 
-    const subsciptionDto = this.convertToChannelSubscriptionDto(
-      updatedChannelSubscription,
-    );
+    const subsciptionDto = this.convertToDto(updatedChannelSubscription);
 
     return subsciptionDto;
   }
@@ -262,9 +282,7 @@ export class ChannelSubscriptionsService {
         user.uuid,
       );
 
-      const subsciptionDto = this.convertToChannelSubscriptionDto(
-        updatedChannelSubscription,
-      );
+      const subsciptionDto = this.convertToDto(updatedChannelSubscription);
 
       return subsciptionDto;
     } catch (error) {
@@ -272,7 +290,7 @@ export class ChannelSubscriptionsService {
     }
   }
 
-  async getUserUnreadMessagesCount(
+  async getChannelUnreadMessageCount(
     userId: number,
   ): Promise<UnreadMessageCount[]> {
     const channelSubscriptions =
@@ -283,7 +301,7 @@ export class ChannelSubscriptionsService {
     const unreadCountsPromises = channelSubscriptions.map(
       (channelSubscription) =>
         this.messagesRepository
-          .getUnreadMessageCount(
+          .getChannelUnreadMessageCount(
             channelSubscription.channel?.uuid,
             channelSubscription.lastRead,
           )

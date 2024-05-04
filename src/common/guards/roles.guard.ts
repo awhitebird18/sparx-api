@@ -22,13 +22,14 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user: User = request.user;
 
-    const hasRole = requiredRoles.some((role) => user.role === role);
-    if (!hasRole) return false;
+    // const hasRole = requiredRoles.some((role) => user.role === role);
+    // if (!hasRole) return false;
 
-    const targetUserId = request.params.userId;
-    const targetUser = await this.usersRepository.findOne({
-      where: { id: targetUserId },
-    });
-    return user.workspaceId === targetUser.workspaceId;
+    // const targetUserId = request.params.userId;
+    // const targetUser = await this.usersRepository.findOne({
+    //   where: { id: targetUserId },
+    //   relations:
+    // });
+    return user.isAdmin;
   }
 }

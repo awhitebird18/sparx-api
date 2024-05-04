@@ -6,6 +6,7 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { ChannelsRepository } from 'src/channels/channels.repository';
 import { WorkspaceDto } from './dto/workspace.dto';
 import { plainToInstance } from 'class-transformer';
+import { Workspace } from './entities/workspace.entity';
 
 @Injectable()
 export class WorkspacesService {
@@ -15,20 +16,22 @@ export class WorkspacesService {
     private channelRepository: ChannelsRepository,
   ) {}
 
+  convertToDto(workspace: Workspace): WorkspaceDto {
+    return plainToInstance(WorkspaceDto, workspace);
+  }
+
   async create(createWorkspaceDto: CreateWorkspaceDto): Promise<WorkspaceDto> {
     const workspace = await this.workspaceRepository.createWorkspace(
       createWorkspaceDto,
     );
 
-    return plainToInstance(WorkspaceDto, workspace);
+    return this.convertToDto(workspace);
   }
 
   async findAll(): Promise<WorkspaceDto[]> {
     const workspaces = await this.workspaceRepository.findAllWorkspaces();
 
-    return workspaces.map((workspace) =>
-      plainToInstance(WorkspaceDto, workspace),
-    );
+    return workspaces.map((workspace) => this.convertToDto(workspace));
   }
 
   async findUserWorkspaces(userId: number): Promise<WorkspaceDto[]> {
@@ -36,15 +39,13 @@ export class WorkspacesService {
       userId,
     );
 
-    return workspaces.map((workspace) =>
-      plainToInstance(WorkspaceDto, workspace),
-    );
+    return workspaces.map((workspace) => this.convertToDto(workspace));
   }
 
   async findOne(id: string): Promise<WorkspaceDto> {
     const workspace = await this.workspaceRepository.findWorkspaceByUuid(id);
 
-    return plainToInstance(WorkspaceDto, workspace);
+    return this.convertToDto(workspace);
   }
 
   async updateWorkspace(
@@ -63,7 +64,7 @@ export class WorkspacesService {
       );
     }
 
-    return plainToInstance(WorkspaceDto, workspace);
+    return this.convertToDto(workspace);
   }
 
   async uploadImage(
@@ -83,10 +84,11 @@ export class WorkspacesService {
 
     const updatedWorkspace = await this.workspaceRepository.save(workspace);
 
-    return plainToInstance(WorkspaceDto, updatedWorkspace);
+    return this.convertToDto(updatedWorkspace);
   }
 
-  removeWorkspace(id: string): void {
-    this.workspaceRepository.removeWorkspace(id);
+  async removeWorkspace(id: string): Promise<void> {
+    console.log('Removing workspace 2:', id);
+    return await this.workspaceRepository.removeWorkspace(id);
   }
 }

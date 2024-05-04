@@ -38,6 +38,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { ExperienceModule } from './experience/experience.module';
 import { ActivityModule } from './activity/activity.module';
 import { AssistantModule } from './assistant/assistant.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -88,6 +89,7 @@ import { AssistantModule } from './assistant/assistant.module';
     ExperienceModule,
     ActivityModule,
     AssistantModule,
+    SeedModule,
   ],
   controllers: [AppController],
   providers: [

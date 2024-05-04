@@ -173,6 +173,6 @@ export class UsersService {
     if (!removedUser)
       throw new NotFoundException(`Unable to find user with id ${uuid}`);
 
-    this.events.emit('websocket-event', 'removeUser', removedUser.uuid);
+    this.events.emit('websocket-event', 'removeUser', uuid);
   }
 }

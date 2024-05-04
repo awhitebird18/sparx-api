@@ -4,7 +4,7 @@ export class NodemapSettingsDto extends BaseDto {
   userCountVisible: boolean;
   flashcardsDueVisibile: boolean;
   unreadMessageCountVisible: boolean;
-  zoomLevel: number;
-  xPosition: number;
-  yPosition: number;
+  scale: number;
+  initialX: number;
+  initialY: number;
 }

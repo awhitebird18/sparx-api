@@ -6,9 +6,13 @@ import { Entity, ManyToOne, OneToMany } from 'typeorm';
 
 @Entity()
 export class CardNote extends BaseEntity {
-  @ManyToOne(() => Template, (template) => template.notes)
+  // ManyToOne Relationships
+  @ManyToOne(() => Template, (template) => template.notes, {
+    onDelete: 'CASCADE',
+  })
   template: Template;
 
+  // OneToMany Relationships
   @OneToMany(() => FieldValue, (fieldValue) => fieldValue.note)
   fieldValues: FieldValue[];
 

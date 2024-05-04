@@ -82,7 +82,7 @@ export class MessagesRepository extends Repository<Message> {
       .getMany();
   }
 
-  async getUnreadMessageCount(
+  async getChannelUnreadMessageCount(
     channelId: string,
     lastRead: Date,
   ): Promise<number> {

@@ -1,1 +1,4 @@
-export class CreateTaskDto {}
+export class CreateTaskDto {
+  name: string;
+  isComplete: boolean;
+}

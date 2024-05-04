@@ -5,12 +5,14 @@ import { Entity, ManyToOne, Column } from 'typeorm';
 
 @Entity()
 export class FieldValue extends BaseEntity {
-  @ManyToOne(() => CardNote, (note) => note.fieldValues, { cascade: true })
-  note: CardNote;
-
-  @ManyToOne(() => Field)
-  field: Field;
-
   @Column()
   content: string;
+
+  @ManyToOne(() => CardNote, (note) => note.fieldValues, {
+    onDelete: 'CASCADE',
+  })
+  note: CardNote;
+
+  @ManyToOne(() => Field, { onDelete: 'CASCADE' })
+  field: Field;
 }

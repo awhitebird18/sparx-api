@@ -5,6 +5,7 @@ import { CardTemplateRepository } from 'src/card-template/card-template.reposito
 import { UpdateCardFieldDto } from './dto/update-card-field.dto';
 import { CardFieldDto } from './dto/card-field.dto';
 import { plainToInstance } from 'class-transformer';
+import { Field } from './entities/card-field.entity';
 
 @Injectable()
 export class CardFieldService {
@@ -12,6 +13,11 @@ export class CardFieldService {
     private cardFieldRepository: CardFieldRepository,
     private cardTemplateRepository: CardTemplateRepository,
   ) {}
+
+  convertToDto(cardField: Field): CardFieldDto {
+    return plainToInstance(CardFieldDto, cardField);
+  }
+
   async create(createCardFieldDto: CreateCardFieldDto): Promise<CardFieldDto> {
     const template = await this.cardTemplateRepository.findByUuid(
       createCardFieldDto.templateId,
@@ -22,7 +28,7 @@ export class CardFieldService {
       template,
     );
 
-    return plainToInstance(CardFieldDto, cardField);
+    return this.convertToDto(cardField);
   }
 
   async findByTemplate(templateId: string): Promise<CardFieldDto[]> {
@@ -30,15 +36,13 @@ export class CardFieldService {
       templateId,
     );
 
-    return cardFields.map((cardField) =>
-      plainToInstance(CardFieldDto, cardField),
-    );
+    return cardFields.map((cardField) => this.convertToDto(cardField));
   }
 
   async findByUuid(uuid: string): Promise<CardFieldDto> {
     const cardField = await this.cardFieldRepository.findByUuid(uuid);
 
-    return plainToInstance(CardFieldDto, cardField);
+    return this.convertToDto(cardField);
   }
 
   async updateOne(
@@ -50,7 +54,7 @@ export class CardFieldService {
       updateCardFieldDto,
     );
 
-    return plainToInstance(CardFieldDto, cardField);
+    return this.convertToDto(cardField);
   }
 
   removeOne(uuid: string): void {

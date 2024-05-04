@@ -26,17 +26,21 @@ export class SectionsService {
     },
   ];
 
-  async mapSectionToDto(section: Section): Promise<SectionDto> {
-    return plainToInstance(SectionDto, {
-      ...section,
-      channelIds: await this.findSectionChannelIds(section.uuid),
-    });
+  async convertToDto(section: Section): Promise<SectionDto> {
+    return plainToInstance(
+      SectionDto,
+      {
+        ...section,
+        channelIds: await this.findSectionChannelIds(section.uuid),
+      },
+      { excludeExtraneousValues: true },
+    );
   }
 
   async findOne(searchProperties: any): Promise<SectionDto> {
     const section = await this.sectionsRepository.findOneBy(searchProperties);
 
-    return this.mapSectionToDto(section);
+    return this.convertToDto(section);
   }
 
   findSectionChannelIds(sectionUuid: string): Promise<string[]> {
@@ -97,7 +101,7 @@ export class SectionsService {
       lastSectionIndex + 1,
     );
 
-    const section = this.mapSectionToDto(newSection);
+    const section = this.convertToDto(newSection);
 
     this.events.emit('websocket-event', 'newSection', section, user.uuid);
 
@@ -108,21 +112,21 @@ export class SectionsService {
     const sections = await this.sectionsRepository.findUserSections(userId);
 
     return await Promise.all(
-      sections.map((section) => this.mapSectionToDto(section)),
+      sections.map((section) => this.convertToDto(section)),
     );
   }
 
   async findDefaultSection(userId: number): Promise<SectionDto> {
     const section = await this.sectionsRepository.findDefaultSection(userId);
 
-    return this.mapSectionToDto(section);
+    return this.convertToDto(section);
   }
 
   async findDefaultSections(userId: number): Promise<SectionDto[]> {
     const sections = await this.sectionsRepository.findDefaultSections(userId);
 
     return await Promise.all(
-      sections.map((section) => this.mapSectionToDto(section)),
+      sections.map((section) => this.convertToDto(section)),
     );
   }
 
@@ -142,7 +146,7 @@ export class SectionsService {
       sectionUuid,
     );
 
-    const sectionDto = await this.mapSectionToDto(updatedSection);
+    const sectionDto = await this.convertToDto(updatedSection);
 
     this.events.emit('websocket-event', 'updateSection', sectionDto, user.uuid);
 

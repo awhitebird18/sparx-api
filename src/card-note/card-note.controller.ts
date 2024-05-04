@@ -14,12 +14,10 @@ export class CardNoteController {
   ) {}
 
   @Post()
-  async create(
+  create(
     @Body() createCardNoteDto: CreateCardNoteDto,
     @GetUser() user: User,
   ): Promise<CardDto[]> {
-    const cards = await this.cardNoteService.create(createCardNoteDto, user);
-
-    return cards.map((card) => this.cardService.convertToCardDto(card));
+    return this.cardNoteService.create(createCardNoteDto, user);
   }
 }

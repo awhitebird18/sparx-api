@@ -1,5 +1,5 @@
 import { BaseDto } from 'src/common/dto';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class ChannelDto extends BaseDto {
   @IsString()
@@ -24,4 +24,10 @@ export class ChannelDto extends BaseDto {
 
   @IsString()
   status?: string;
+
+  @IsString()
+  parentChannelId: string;
+
+  @IsArray()
+  childChannelIds: string[];
 }

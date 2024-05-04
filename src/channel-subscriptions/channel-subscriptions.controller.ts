@@ -12,6 +12,7 @@ import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { ChannelSubscriptionsService } from './channel-subscriptions.service';
 import { User } from 'src/users/entities/user.entity';
 import { ChannelSubscriptionDto } from './dto/channel-subscription.dto';
+import { UpdateUserChannelDto } from './dto/update-channel-subscription.dto';
 
 @Controller('channel-subscriptions')
 export class ChannelSubscriptionsController {
@@ -25,7 +26,7 @@ export class ChannelSubscriptionsController {
     @Body() data: { channelId: string; sectionId?: string },
   ): Promise<ChannelSubscriptionDto> {
     return this.channelSubscriptionsService.joinChannel(
-      user,
+      user.uuid,
       data.channelId,
       data.sectionId,
     );
@@ -57,8 +58,9 @@ export class ChannelSubscriptionsController {
   updateUserChannel(
     @GetUser() user: User,
     @Param('channelId') channelId: string,
-    @Body() updateUserChannel: ChannelSubscriptionDto,
+    @Body() updateUserChannel: UpdateUserChannelDto,
   ): Promise<ChannelSubscriptionDto> {
+    console.log(channelId, updateUserChannel);
     return this.channelSubscriptionsService.udpateChannelSubscription(
       user.uuid,
       channelId,

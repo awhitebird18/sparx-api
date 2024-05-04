@@ -6,6 +6,7 @@ import { UpdateCardVariantDto } from './dto/update-card-variant.dto';
 import { CardFieldRepository } from 'src/card-field/card-field.repository';
 import { CardVariantDto } from './dto/card-variant.dto';
 import { plainToInstance } from 'class-transformer';
+import { CardVariant } from './entities/card-variant.entity';
 
 @Injectable()
 export class CardVariantService {
@@ -14,6 +15,11 @@ export class CardVariantService {
     private cardTemplateRepository: CardTemplateRepository,
     private cardFieldRepository: CardFieldRepository,
   ) {}
+
+  convertToDto(variant: CardVariant): CardVariantDto {
+    return plainToInstance(CardVariantDto, variant);
+  }
+
   async create(
     createCardVariantDto: CreateCardVariantDto,
   ): Promise<CardVariantDto> {
@@ -21,12 +27,12 @@ export class CardVariantService {
       createCardVariantDto.templateId,
     );
 
-    const cardVariant = await this.cardTypeRepository.createCardVariant(
+    const variant = await this.cardTypeRepository.createCardVariant(
       createCardVariantDto,
       template,
     );
 
-    return plainToInstance(CardVariantDto, cardVariant);
+    return this.convertToDto(variant);
   }
 
   async addField(
@@ -48,9 +54,9 @@ export class CardVariantService {
       cardTypeFound.backFields.push(field);
     }
 
-    const cardVariant = await this.cardTypeRepository.save(cardTypeFound);
+    const variant = await this.cardTypeRepository.save(cardTypeFound);
 
-    return plainToInstance(CardVariantDto, cardVariant);
+    return this.convertToDto(variant);
   }
 
   async removeField(
@@ -72,9 +78,9 @@ export class CardVariantService {
       );
     }
 
-    const cardVariant = await this.cardTypeRepository.save(cardTypeFound);
+    const variant = await this.cardTypeRepository.save(cardTypeFound);
 
-    return plainToInstance(CardVariantDto, cardVariant);
+    return this.convertToDto(variant);
   }
 
   async findByTemplate(templateId: string): Promise<CardVariantDto[]> {
@@ -82,27 +88,25 @@ export class CardVariantService {
       templateId,
     );
 
-    return cardVariants.map((cardVariant) =>
-      plainToInstance(CardVariantDto, cardVariant),
-    );
+    return cardVariants.map((variant) => this.convertToDto(variant));
   }
 
   async findByUuid(uuid: string): Promise<CardVariantDto> {
-    const cardVariant = await this.cardTypeRepository.findByUuid(uuid);
+    const variant = await this.cardTypeRepository.findByUuid(uuid);
 
-    return plainToInstance(CardVariantDto, cardVariant);
+    return this.convertToDto(variant);
   }
 
   async updateOne(
     uuid: string,
     updateCardVariantDto: UpdateCardVariantDto,
   ): Promise<CardVariantDto> {
-    const cardVariant = await this.cardTypeRepository.updateOne(
+    const variant = await this.cardTypeRepository.updateOne(
       uuid,
       updateCardVariantDto,
     );
 
-    return plainToInstance(CardVariantDto, cardVariant);
+    return this.convertToDto(variant);
   }
 
   removeOne(uuid: string): void {

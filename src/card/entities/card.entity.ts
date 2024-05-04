@@ -9,15 +9,6 @@ import { Workspace } from 'src/workspaces/entities/workspace.entity';
 
 @Entity()
 export class Card extends BaseEntity {
-  @ManyToOne(() => User, (user) => user.flashcards)
-  user: User;
-
-  @ManyToOne(() => CardNote, (note) => note.flashcards)
-  note: CardNote;
-
-  @ManyToOne(() => CardVariant, (cardVariant) => cardVariant.flashcards)
-  cardVariant: CardVariant;
-
   @Column({ default: 0 })
   interval: number;
 
@@ -30,16 +21,29 @@ export class Card extends BaseEntity {
   @Column({ type: 'date', default: () => 'CURRENT_DATE' })
   nextReviewDate: Date;
 
-  @OneToMany(() => ReviewHistory, (reviewHistory) => reviewHistory.flashcard)
-  reviewHistories: ReviewHistory[];
+  // ManyToOne Relationships
+  @ManyToOne(() => User, (user) => user.flashcards, { onDelete: 'CASCADE' })
+  user: User;
+
+  @ManyToOne(() => CardNote, (note) => note.flashcards, { onDelete: 'CASCADE' })
+  note: CardNote;
+
+  @ManyToOne(() => CardVariant, (cardVariant) => cardVariant.flashcards, {
+    onDelete: 'CASCADE',
+  })
+  cardVariant: CardVariant;
 
   @ManyToOne(() => Channel, (channel) => channel.flashcards, {
-    cascade: ['soft-remove'],
+    onDelete: 'CASCADE',
   })
   channel: Channel;
 
   @ManyToOne(() => Workspace, (workspace) => workspace.flashcards, {
-    cascade: ['soft-remove'],
+    onDelete: 'CASCADE',
   })
   workspace: Workspace;
+
+  // OneToMany Relationships
+  @OneToMany(() => ReviewHistory, (reviewHistory) => reviewHistory.flashcard)
+  reviewHistories: ReviewHistory[];
 }

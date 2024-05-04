@@ -7,7 +7,7 @@ import { FlashcardIdea } from './dto/flashcard-idea.dto';
 import { RoadmapTopic } from './dto/roadmap-top.dto';
 import { NoteIdea } from './dto/note-idea.dto';
 import { SubtopicIdea } from './dto/suptopic-idea.dto';
-import { uuidV4 as uuid } from 'uuid';
+import { v4 as uuid } from 'uuid';
 import { convertStringToFlashcardContentFormat } from 'src/card/utils/convertStringToFlashcardContentFormat';
 
 function isJsonString(str) {
@@ -106,7 +106,7 @@ export class AssistantService {
 
     let jsonObject: FlashcardIdea[] | undefined = undefined;
 
-    if (isJsonString(data)) {
+    if (isJsonString(JSON.stringify(data))) {
       jsonObject = JSON.parse(data);
     } else {
       console.error('Received data is not a valid JSON string.');

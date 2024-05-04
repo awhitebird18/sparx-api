@@ -12,6 +12,8 @@ import { LogActivity } from 'src/activity/utils/logActivity';
 import { SectionsRepository } from 'src/sections/sections.repository';
 import { AssistantService } from 'src/assistant/assistant.service';
 import { ChannelDto } from './dto/channel.dto';
+import { plainToInstance } from 'class-transformer';
+import { UpdateChannelCoordinatesDto } from './dto/update-channel-coordinates';
 
 @Injectable()
 export class ChannelsService {
@@ -24,6 +26,19 @@ export class ChannelsService {
     private assistantService: AssistantService,
   ) {}
 
+  convertToDto(channel: Channel): ChannelDto {
+    const parentChannelId = channel?.parentChannel?.uuid;
+    const childChannelIds = channel.childChannels.length
+      ? channel.childChannels.map((childChannel) => childChannel?.uuid)
+      : [];
+
+    return plainToInstance(ChannelDto, {
+      ...channel,
+      parentChannelId,
+      childChannelIds,
+    });
+  }
+
   async createChannel(
     createChannelDto: CreateChannelDto,
     workspaceUuid: string,
@@ -33,10 +48,23 @@ export class ChannelsService {
       where: { uuid: workspaceUuid },
     });
 
+    if (createChannelDto.parentChannelId) {
+      const parentChannel = await this.channelsRepository.findByUuid(
+        createChannelDto.parentChannelId,
+      );
+
+      createChannelDto.parentChannel = parentChannel;
+    }
+
     const newChannel = await this.channelsRepository.createChannel(
       createChannelDto,
       workspace,
     );
+
+    const channelWithRelations = await this.channelsRepository.findOne({
+      where: { uuid: newChannel.uuid },
+      relations: ['parentChannel', 'childChannels'],
+    });
 
     if (user) {
       this.events.emit(
@@ -45,12 +73,12 @@ export class ChannelsService {
           user.uuid,
           workspace.uuid,
           'Node Completed',
-          `created a new module for ${newChannel.name}`,
+          `created a new module for ${channelWithRelations.name}`,
         ),
       );
     }
 
-    return newChannel;
+    return channelWithRelations;
   }
 
   async generateRoadmap({
@@ -78,23 +106,12 @@ export class ChannelsService {
       const createNodemap = async (
         data: { topic: string; subtopics: string[] }[],
       ) => {
-        const channelsPromises = [];
         for (let i = 0; i < data.length; i++) {
           const entry = data[i];
-          // Main topic
-          const mainTopic = {
-            name: entry.topic,
-
-            x: 4000,
-            y: 500 * (i + 2),
-            workspaceId,
-            isDefault: i === 0,
-          };
-
-          channelsPromises.push(this.createChannel(mainTopic, workspaceId));
 
           // Secondary topics
           const subtopics = entry.subtopics;
+          const channelsPromises = [];
 
           for (let j = 0; j < subtopics.length; j++) {
             const subTopic = subtopics[j];
@@ -108,8 +125,20 @@ export class ChannelsService {
             };
             channelsPromises.push(this.createChannel(topic, workspaceId));
           }
+
+          const childChannels = await Promise.all(channelsPromises);
+          // Main topic
+          const mainTopic = {
+            name: entry.topic,
+            x: 4000,
+            y: 500 * (i + 2),
+            workspaceId,
+            isDefault: i === 0,
+            childChannels,
+          };
+
+          await this.createChannel(mainTopic, workspaceId);
         }
-        await Promise.all(channelsPromises);
 
         return this.findWorkspaceChannels(user.id, workspaceId);
       };
@@ -117,14 +146,29 @@ export class ChannelsService {
       await clearNodemap(workspaceId);
       await createNodemap(nodemapTopics);
 
-      return await this.findWorkspaceChannels(user.id, workspaceId);
+      const channelDtos = await this.findWorkspaceChannels(
+        user.id,
+        workspaceId,
+      );
+
+      return channelDtos;
     } catch (err) {
       console.error(err);
     }
   }
 
-  findWorkspaceChannels(userId: number, workspaceId: string): Promise<any[]> {
-    return this.channelsRepository.findWorkspaceChannels(userId, workspaceId);
+  async findWorkspaceChannels(
+    userId: number,
+    workspaceId: string,
+  ): Promise<ChannelDto[]> {
+    const channels = await this.channelsRepository.findWorkspaceChannels(
+      userId,
+      workspaceId,
+    );
+
+    const channelDtos = channels.map((channel) => this.convertToDto(channel));
+
+    return channelDtos;
   }
 
   async findChannelUserCounts(
@@ -154,7 +198,7 @@ export class ChannelsService {
     id: string,
     updateChannelDto: UpdateChannelDto,
     workspaceId: string,
-  ): Promise<Channel> {
+  ): Promise<ChannelDto> {
     // Check if channel exists
     const channel = await this.channelsRepository.findByUuid(id);
 
@@ -174,14 +218,71 @@ export class ChannelsService {
     Object.assign(channel, updateChannelDto);
     const updatedChannel = await this.channelsRepository.save(channel);
 
+    const channelToReturn = await this.channelsRepository.findOne({
+      where: { uuid: updatedChannel.uuid },
+      relations: ['parentChannel', 'childChannels'],
+    });
+
+    const channelDto = this.convertToDto(channelToReturn);
+
     this.events.emit(
       'websocket-event',
       'updateChannel',
-      updatedChannel,
+      channelDto,
       workspaceId,
     );
 
-    return updatedChannel;
+    return channelDto;
+  }
+
+  async moveChannel(
+    channelId: string,
+    updateChannelDto: UpdateChannelDto,
+    parentChannelId: string,
+  ): Promise<ChannelDto[]> {
+    // Check if channel exists
+    const channelPromise = this.channelsRepository.findByUuid(channelId);
+    const parentChannelPromise =
+      this.channelsRepository.findByUuid(parentChannelId);
+
+    const [channel, parentChannel] = await Promise.all([
+      channelPromise,
+      parentChannelPromise,
+    ]);
+
+    if (!channel || !parentChannel) {
+      throw new NotFoundException('Channel not found');
+    }
+
+    // Update channel values
+    Object.assign(channel, updateChannelDto);
+    channel.parentChannel = parentChannel;
+
+    const updatedChannel = await this.channelsRepository.save(channel);
+
+    const channelToReturn = await this.channelsRepository.findOne({
+      where: { uuid: updatedChannel.uuid },
+      relations: ['parentChannel', 'childChannels'],
+    });
+    const parentChannelToReturn = await this.channelsRepository.findOne({
+      where: { uuid: parentChannel.uuid },
+      relations: ['parentChannel', 'childChannels'],
+    });
+
+    const channelDto = this.convertToDto(channelToReturn);
+    const parentChannelDto = this.convertToDto(parentChannelToReturn);
+
+    return [channelDto, parentChannelDto];
+  }
+
+  async updateManyChannels(
+    channels: UpdateChannelCoordinatesDto[],
+  ): Promise<ChannelDto[]> {
+    const updatedChannels = await this.channelsRepository.updateManyChannels(
+      channels,
+    );
+
+    return updatedChannels.map((channel) => this.convertToDto(channel));
   }
 
   async removeChannel(uuid: string): Promise<void> {
@@ -191,8 +292,6 @@ export class ChannelsService {
         'messages',
         'channelSubscriptions',
         'flashcards',
-        'childConnectors',
-        'parentConnectors',
         'workspace',
       ],
     });
@@ -211,6 +310,7 @@ export class ChannelsService {
   async removeChannelsByWorkspace(workspaceId: string) {
     const workspaceChannels = await this.channelsRepository.find({
       where: { workspace: { uuid: workspaceId } },
+      relations: ['childChannels', 'parentChannel'],
     });
 
     await this.channelsRepository.softRemove(workspaceChannels);

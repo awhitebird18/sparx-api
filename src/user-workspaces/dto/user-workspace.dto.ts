@@ -1,4 +1,5 @@
 import { BaseDto } from 'src/common/dto';
+import { User } from 'src/users/entities/user.entity';
 
 export class UserWorkspaceDto extends BaseDto {
   bio: string;
@@ -10,4 +11,5 @@ export class UserWorkspaceDto extends BaseDto {
   streakCount: number;
   website: string;
   workspaceId: string;
+  user: User;
 }

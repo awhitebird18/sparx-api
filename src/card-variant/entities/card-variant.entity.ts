@@ -16,17 +16,25 @@ export class CardVariant extends BaseEntity {
   @Column()
   title: string;
 
-  @ManyToOne(() => Template, (template) => template.cardVariants)
+  // ManyToOne Relationships
+  @ManyToOne(() => Template, (template) => template.cardVariants, {
+    onDelete: 'CASCADE',
+  })
   template: Template;
 
-  @ManyToMany(() => Field)
+  @ManyToMany(() => Field, {
+    onDelete: 'CASCADE',
+  })
   @JoinTable()
   frontFields: Field[];
 
-  @ManyToMany(() => Field)
+  @ManyToMany(() => Field, {
+    onDelete: 'CASCADE',
+  })
   @JoinTable()
   backFields: Field[];
 
+  // OneToMany Relationships
   @OneToMany(() => Card, (flashcard) => flashcard.cardVariant)
   flashcards: Card[];
 }

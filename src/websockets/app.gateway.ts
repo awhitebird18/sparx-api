@@ -10,6 +10,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Server, Socket } from 'socket.io';
 import handlers from './handlers';
 import { UserTyping } from 'src/messages/dto/user-typing.dto';
+import { WebSocketMessage } from './utils/web-socket-message';
 
 type UserStatus = 'online' | 'away' | 'busy';
 type UserData = {
@@ -154,6 +155,10 @@ export class AppGateway
       }),
     );
 
-    this.server.emit('online-users', userIdsAndStatus);
+    const webSocketMessage = new WebSocketMessage('online-users', {
+      users: userIdsAndStatus,
+    });
+
+    this.server.emit('online-users', webSocketMessage);
   }
 }

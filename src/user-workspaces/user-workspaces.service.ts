@@ -14,6 +14,7 @@ import { UsersRepository } from 'src/users/users.repository';
 import { UserWorkspace } from './entities/user-workspace.entity';
 import { UserWorkspaceDto } from './dto/user-workspace.dto';
 import { plainToInstance } from 'class-transformer';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class UserWorkspacesService {
@@ -23,6 +24,7 @@ export class UserWorkspacesService {
     private jwtService: JwtService,
     private mailerService: MailerService,
     private userRepository: UsersRepository,
+    private events: EventEmitter2,
   ) {}
 
   private convertToUserWorkspaceDto(
@@ -30,16 +32,20 @@ export class UserWorkspacesService {
   ): UserWorkspaceDto {
     const workspaceId = userWorkspace.workspace.uuid;
 
-    return plainToInstance(UserWorkspaceDto, {
-      bio: userWorkspace.bio,
-      goal: userWorkspace.goal,
-      isAdmin: userWorkspace.isAdmin,
-      isFirstLogin: userWorkspace.isFirstLogin,
-      lastViewed: userWorkspace.lastViewed,
-      location: userWorkspace.location,
-      streakCount: userWorkspace.streakCount,
-      website: userWorkspace.website,
+    const convertedUserWorkspace = {
+      ...userWorkspace,
       workspaceId: workspaceId,
+    };
+
+    return plainToInstance(UserWorkspaceDto, convertedUserWorkspace);
+  }
+
+  private createJoinLog(userId: string, workspaceId: string, text: string) {
+    this.events.emit('log.created', {
+      userId,
+      workspaceId,
+      type: 'user',
+      text,
     });
   }
 
@@ -68,6 +74,12 @@ export class UserWorkspacesService {
     const userWorkspaceDto =
       this.convertToUserWorkspaceDto(userWorkspaceRecord);
 
+    this.createJoinLog(
+      user.uuid,
+      workspaceId,
+      `has joined the ${workspace.name} workspace.`,
+    );
+
     return userWorkspaceDto;
   }
 
@@ -90,7 +102,6 @@ export class UserWorkspacesService {
   async findWorkspaceUsers(workspaceId: string): Promise<UserWorkspaceDto[]> {
     const workspace = await this.workspaceRepository.findOneOrFail({
       where: { uuid: workspaceId },
-      relations: ['workspace'],
     });
 
     const userWorkspaces =

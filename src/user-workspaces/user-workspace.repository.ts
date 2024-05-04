@@ -21,6 +21,9 @@ export class UserWorkspacesRepository extends Repository<UserWorkspace> {
   }
 
   findWorkspaceUsers(workspace: Workspace): Promise<UserWorkspace[]> {
-    return this.find({ where: { workspace: { id: workspace.id } } });
+    return this.find({
+      where: { workspace: { id: workspace.id } },
+      relations: ['workspace', 'user'],
+    });
   }
 }

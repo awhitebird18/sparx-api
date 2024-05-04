@@ -14,7 +14,7 @@ export class ActivityController {
     return this.activityService.getRecentWorkspaceActivity(workspaceId, page);
   }
 
-  @Get('user/:workspaceId/:userId')
+  @Get('workspace/:workspaceId/user/:userId')
   async getUserActivity(
     @Query('page') page: string,
     @Param('userId') userId: string,

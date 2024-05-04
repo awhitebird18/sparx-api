@@ -6,6 +6,7 @@ import {
   Patch,
   Delete,
   Param,
+  Query,
 } from '@nestjs/common';
 import { NodemapSettingsService } from './nodemap-settings.service';
 import { CreateNodemapSettingDto } from './dto/create-nodemap-setting.dto';
@@ -41,13 +42,17 @@ export class NodemapSettingsController {
     return this.nodemapSettingsService.findUserSettings(user.uuid, workspaceId);
   }
 
-  @Patch(':uuid')
+  @Patch()
   updateUserSettings(
-    @Param('uuid') uuid: string,
+    @Query('workspaceId') workspaceId: string,
     @GetUser() user: User,
     @Body() updateNodemapSettingDto: UpdateNodemapSettingDto,
   ): Promise<NodemapSettingsDto> {
-    return this.nodemapSettingsService.update(uuid, updateNodemapSettingDto);
+    return this.nodemapSettingsService.update(
+      workspaceId,
+      user,
+      updateNodemapSettingDto,
+    );
   }
 
   @Delete('user')

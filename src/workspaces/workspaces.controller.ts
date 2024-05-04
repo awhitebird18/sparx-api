@@ -50,7 +50,8 @@ export class WorkspacesController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string): void {
-    return this.workspacesService.removeWorkspace(id);
+  async remove(@Param('id') id: string): Promise<void> {
+    console.log('Removing workspace:', id);
+    return await this.workspacesService.removeWorkspace(id);
   }
 }

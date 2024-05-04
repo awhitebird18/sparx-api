@@ -19,7 +19,7 @@ export class NotesService {
   ) {}
 
   private convertToNoteDto(note: Note): NoteDto {
-    return plainToInstance(NoteDto, {
+    const noteConverted = {
       title: note.title,
       isPrivate: note.isPrivate,
       uuid: note.uuid,
@@ -27,7 +27,9 @@ export class NotesService {
       content: note.content,
       createdBy: note.createdBy.uuid,
       updatedAt: note.updatedAt,
-    });
+    };
+
+    return plainToInstance(NoteDto, noteConverted);
   }
 
   async createNote(createNoteDto: CreateNoteDto, user: User): Promise<NoteDto> {

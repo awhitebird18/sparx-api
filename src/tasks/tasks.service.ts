@@ -6,6 +6,8 @@ import { WorkspacesRepository } from 'src/workspaces/workspaces.repository';
 import { User } from 'src/users/entities/user.entity';
 import { TaskDto } from './dto/task.dto';
 import { plainToInstance } from 'class-transformer';
+import { Task } from './entities/task.entity';
+import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Injectable()
 export class TasksService {
@@ -14,6 +16,10 @@ export class TasksService {
     private eventEmitter: EventEmitter2,
     private workspaceRepository: WorkspacesRepository,
   ) {}
+
+  private convertToDto(task: Task): TaskDto {
+    return plainToInstance(TaskDto, task);
+  }
 
   async createTask(
     taskDto: { name: string; dueDate: Date },
@@ -27,7 +33,24 @@ export class TasksService {
     const newTask = this.taskRepository.create({ ...taskDto, workspace, user });
     const task = await this.taskRepository.save(newTask);
 
-    return plainToInstance(TaskDto, task);
+    return this.convertToDto(task);
+  }
+
+  async getTasksByUser(
+    userId: string,
+    workspaceId: string,
+  ): Promise<TaskDto[]> {
+    const tasks = await this.taskRepository.getTasksByUser(userId, workspaceId);
+
+    return tasks.map((task) => this.convertToDto(task));
+  }
+
+  async getTasksByWorkspace(workspaceId: string): Promise<TaskDto[]> {
+    const tasks = await this.taskRepository.find({
+      where: { workspace: { uuid: workspaceId } },
+    });
+
+    return tasks.map((task) => this.convertToDto(task));
   }
 
   async toggleComplete(
@@ -59,34 +82,18 @@ export class TasksService {
       new TaskCompletedEvent(userId, workspaceId, points),
     );
 
-    return plainToInstance(TaskDto, updatedTask);
+    return this.convertToDto(updatedTask);
   }
 
-  async updateTask(id: string, taskDto: any): Promise<TaskDto> {
-    await this.taskRepository.update(id, taskDto);
-    const task = await this.taskRepository.findOne({ where: { uuid: id } });
+  async updateTask(uuid: string, taskDto: UpdateTaskDto): Promise<TaskDto> {
+    console.log(uuid, taskDto);
+    await this.taskRepository.update({ uuid }, taskDto);
+    const task = await this.taskRepository.findOne({ where: { uuid } });
 
-    return plainToInstance(TaskDto, task);
+    return this.convertToDto(task);
   }
 
   async deleteTask(id: string): Promise<void> {
     await this.taskRepository.delete(id);
-  }
-
-  async getTasksByUser(
-    userId: string,
-    workspaceId: string,
-  ): Promise<TaskDto[]> {
-    const task = await this.taskRepository.getTasksByUser(userId, workspaceId);
-
-    return plainToInstance(TaskDto, task);
-  }
-
-  async getTasksByWorkspace(workspaceId: string): Promise<TaskDto[]> {
-    const tasks = await this.taskRepository.find({
-      where: { workspace: { uuid: workspaceId } },
-    });
-
-    return tasks.map((task) => plainToInstance(TaskDto, task));
   }
 }

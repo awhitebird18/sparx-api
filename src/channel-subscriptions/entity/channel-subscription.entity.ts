@@ -26,14 +26,19 @@ export class ChannelSubscription extends BaseEntity {
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   lastRead: Date;
 
-  @ManyToOne(() => User, (user) => user.channelSubscriptions)
+  // ManyToOne Relationships
+  @ManyToOne(() => User, (user) => user.channelSubscriptions, {
+    onDelete: 'CASCADE',
+  })
   user: User;
 
   @ManyToOne(() => Channel, (channel) => channel.channelSubscriptions, {
-    cascade: ['soft-remove'],
+    onDelete: 'CASCADE',
   })
   channel: Channel;
 
-  @ManyToOne(() => Section, (section) => section.channels)
+  @ManyToOne(() => Section, (section) => section.channels, {
+    onDelete: 'CASCADE',
+  })
   section: Section;
 }

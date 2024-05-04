@@ -13,6 +13,9 @@ import { plainToInstance } from 'class-transformer';
 import { AssistantService } from 'src/assistant/assistant.service';
 import { NotesRepository } from 'src/notes/notes.repository';
 import { FlashcardIdea } from 'src/assistant/dto/flashcard-idea.dto';
+import { CardMaturityStatDto } from './dto/card-maturity-stat-dto';
+import { CardStatDto } from './dto/card-stat.dto';
+import { ChannelCardCountDto } from './dto/channel-card-count.dto';
 
 @Injectable()
 export class CardService {
@@ -23,21 +26,26 @@ export class CardService {
     private readonly notesRepository: NotesRepository,
   ) {}
 
-  convertToCardDto(card: Card): CardDto {
-    return plainToInstance(CardDto, {
+  convertToDto(card: Card): CardDto {
+    const cardDto = plainToInstance(CardDto, {
       uuid: card.uuid,
-      front: this.extractFields(
+      createdAt: card.createdAt,
+      updatedAt: card.updatedAt,
+      frontValues: this.extractFields(
         card.cardVariant.frontFields,
         card.note.fieldValues,
       ),
-      back: this.extractFields(
+      backValues: this.extractFields(
         card.cardVariant.backFields,
         card.note.fieldValues,
       ),
+      createdBy: card.user?.uuid,
       easeFactor: card.easeFactor,
       repetitions: card.repetitions,
       nextReviewDate: card.nextReviewDate,
     });
+
+    return cardDto;
   }
 
   private extractFields(fields: Field[], fieldValues: FieldValue[]): string[] {
@@ -59,6 +67,7 @@ export class CardService {
       relations: ['workspace'],
     });
     const workspace = channel.workspace;
+
     const note = await this.notesRepository.findByUuid(noteId);
 
     return this.assistantService.generateFlashcardIdeas(
@@ -71,7 +80,7 @@ export class CardService {
   async create(createCardDto: CreateCardDto): Promise<CardDto> {
     const card = await this.cardRepository.createCard(createCardDto);
 
-    return this.convertToCardDto(card);
+    return this.convertToDto(card);
   }
 
   async findAllByUser(user: User, channelId: string): Promise<CardDto[]> {
@@ -82,7 +91,7 @@ export class CardService {
       channel.uuid,
     );
 
-    return flashcards.map((card) => this.convertToCardDto(card));
+    return flashcards.map((card) => this.convertToDto(card));
   }
 
   async getCardsDueForChannel(
@@ -96,7 +105,7 @@ export class CardService {
       channel.uuid,
     );
 
-    return flashcards.map((card: Card) => this.convertToCardDto(card));
+    return flashcards.map((card: Card) => this.convertToDto(card));
   }
 
   async getCardCountsDueForChannel(
@@ -118,28 +127,31 @@ export class CardService {
     return this.cardRepository.reviewMultipleFlashcards(reviews, user);
   }
 
-  getCountOfCardsDueByChannel(user: User, workspaceId: string) {
+  getCountOfCardsDueByChannel(
+    user: User,
+    workspaceId: string,
+  ): Promise<ChannelCardCountDto[]> {
     return this.cardRepository.getCountOfCardsDueByChannel(user, workspaceId);
   }
 
-  getDueFlashcardsNext30Days(user: User) {
+  getDueFlashcardsNext30Days(user: User): Promise<CardStatDto[]> {
     return this.cardRepository.getDueFlashcardsCategorizedNext30Days(user);
   }
 
-  getAddedFlashcardsLast30Days(user: User) {
+  getAddedFlashcardsLast30Days(user: User): Promise<CardStatDto[]> {
     return this.cardRepository.getAddedFlashcardsLast30Days(user);
   }
 
-  getCardMaturityStats(user: User) {
+  getCardMaturityStats(user: User): Promise<CardMaturityStatDto[]> {
     return this.cardRepository.getCardMaturityStats(user);
   }
 
-  async findOne(uuid: string) {
+  async findOne(uuid: string): Promise<CardDto> {
     const card = await this.cardRepository.findOne({ where: { uuid } });
     if (!card) {
       throw new NotFoundException(`Card with ID ${uuid} not found`);
     }
-    return card;
+    return this.convertToDto(card);
   }
 
   async update(uuid: string, updateCardDto: UpdateCardDto): Promise<CardDto> {
@@ -149,7 +161,7 @@ export class CardService {
     }
     const card = await this.cardRepository.findOne({ where: { uuid } });
 
-    return this.convertToCardDto(card);
+    return this.convertToDto(card);
   }
 
   async remove(uuid: string): Promise<{ uuid: string }> {

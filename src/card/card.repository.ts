@@ -138,8 +138,8 @@ export class CardRepository extends Repository<Card> {
         }
 
         const newReviewHistory = this.reviewHistoryRepository.create({
-          flashcard,
           dateReviewed: new Date(),
+          flashcard,
           performanceRating: review.performanceRating,
           user,
         });

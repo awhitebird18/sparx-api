@@ -21,14 +21,18 @@ export class CardTemplateController {
   @Post()
   create(
     @GetUser() user: User,
-    @Body() createCardTemplateDto: CreateCardTemplateDto,
+    @Body()
+    body: { card: CreateCardTemplateDto; workspaceId: string },
   ): Promise<CardTemplateDto> {
-    return this.cardTemplateService.create(createCardTemplateDto, user);
+    return this.cardTemplateService.create(body.card, body.workspaceId, user);
   }
 
-  @Get()
-  findAllByUser(@GetUser() user: User): Promise<CardTemplateDto[]> {
-    return this.cardTemplateService.findAllByUser(user);
+  @Get('user/:workspaceId')
+  findAllByUser(
+    @GetUser() user: User,
+    @Param('workspaceId') workspaceId: string,
+  ): Promise<CardTemplateDto[]> {
+    return this.cardTemplateService.findAllByUser(user, workspaceId);
   }
 
   @Get(':uuid')

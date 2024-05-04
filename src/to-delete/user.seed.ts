@@ -22,9 +22,9 @@ const avatarUrls = [
   'https://res.cloudinary.com/dwkvw91pm/image/upload/v1711935589/avatar-14_arpjs4.svg',
   'https://res.cloudinary.com/dwkvw91pm/image/upload/v1711935585/avatar-13_taxzai.svg',
   'https://res.cloudinary.com/dwkvw91pm/image/upload/v1711935584/avatar-12_lp96wo.svg',
+  'https://res.cloudinary.com/dwkvw91pm/image/upload/v1711935584/avatar-11_qfu7zp.svg',
   'https://res.cloudinary.com/dwkvw91pm/image/upload/v1711935584/avatar-10_qr88eb.svg',
   'https://res.cloudinary.com/dwkvw91pm/image/upload/v1711935584/avatar-9_buwemv.svg',
-  'https://res.cloudinary.com/dwkvw91pm/image/upload/v1711935584/avatar-11_qfu7zp.svg',
   'https://res.cloudinary.com/dwkvw91pm/image/upload/v1711935583/avatar-8_rqkbc3.svg',
   'https://res.cloudinary.com/dwkvw91pm/image/upload/v1711935577/avatar-7_hdrkuw.svg',
   'https://res.cloudinary.com/dwkvw91pm/image/upload/v1711935577/avatar-6_fctuu6.svg',
@@ -44,27 +44,9 @@ export async function seedUsers(AppDataSource: DataSource) {
 
   const hashedPassword = await bcrypt.hash('Password1', 10);
 
-  // const aaron = new User();
-  // Object.assign(aaron, {
-  //   firstName: 'Aaron',
-  //   lastName: 'Whitebird',
-  //   isAdmin: true,
-  //   email: 'aaron.whitebird@gmail.com',
-  //   password: hashedPassword,
-  //   isVerified: true,
-  // });
+  const bots = await userRepository.find();
 
-  // const shanu = new User();
-  // Object.assign(shanu, {
-  //   firstName: 'Shanu',
-  //   lastName: 'Shanu',
-  //   isAdmin: true,
-  //   email: 'awhitebirdtestingthings@gmail.com',
-  //   password: hashedPassword,
-  //   isVerified: true,
-  // });
-
-  // const defaultUsers = [aaron, shanu];
+  await userRepository.remove(bots);
 
   for (let i = 0; i < 10; i++) {
     const newUser = new User();
@@ -77,6 +59,7 @@ export async function seedUsers(AppDataSource: DataSource) {
     newUser.email = faker.internet.email({ firstName, lastName });
     newUser.password = hashedPassword;
     newUser.profileImage = avatarUrls[i];
+    newUser.isBot = true;
 
     users.push(newUser);
   }

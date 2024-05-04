@@ -79,7 +79,7 @@ export class MessagesController {
   }
 
   @Delete(':uuid')
-  remove(@Param('uuid') uuid: string): Promise<string> {
+  remove(@Param('uuid') uuid: string): Promise<void> {
     return this.messagesService.remove(uuid);
   }
 }

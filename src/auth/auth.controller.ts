@@ -9,7 +9,6 @@ import {
   Res,
   UseInterceptors,
   ClassSerializerInterceptor,
-  Param,
 } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -41,26 +40,16 @@ import { UserWorkspacesService } from 'src/user-workspaces/user-workspaces.servi
 import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from 'src/users/users.repository';
-import { CardTemplateRepository } from 'src/card-template/card-template.repository';
-import { CardFieldRepository } from 'src/card-field/card-field.repository';
-import { CardVariantRepository } from 'src/card-variant/card-variant.repository';
-import { AssistantService } from 'src/assistant/assistant.service';
-import { seedWorkspaceData } from 'src/seed/seedWorkspaceData';
 import { WorkspaceDto } from 'src/workspaces/dto/workspace.dto';
-import { PrimaryColor } from 'src/users/enums/primary-color.enum';
-import { Theme } from 'src/users/enums/theme.enum';
+import { ChannelSubscriptionDto } from 'src/channel-subscriptions/dto/channel-subscription.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
-    private assistantService: AssistantService,
     private authService: AuthService,
     private usersService: UsersService,
     private userRepository: UsersRepository,
-    private cardTemplateRepository: CardTemplateRepository,
-    private cardFieldRepository: CardFieldRepository,
-    private cardTypeRepository: CardVariantRepository,
     private sectionsService: SectionsService,
     private channelsService: ChannelsService,
     private channelSubscriptionsService: ChannelSubscriptionsService,
@@ -75,7 +64,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @ApiBody({ type: LoginDto })
   @Post('login')
-  async login(@Request() req, @Res() res: any) {
+  async login(@Request() req, @Res() res: Response) {
     this.logger.debug(req, 'logging login');
     const response = await this.authService.login(req.user, res);
     return res.send(response);
@@ -85,18 +74,24 @@ export class AuthController {
   @Post('logout')
   async logout(@Res() res: Response) {
     await this.authService.logout(res);
-    return res.send({ message: 'Logged out successfully' });
+    const responseMessage: { message: string } = {
+      message: 'Logged out successfully',
+    };
+    return res.send(responseMessage);
   }
 
   @Public()
   @ApiBody({ type: RegisterDto })
   @Post('register')
-  async register(@Body() registerDto: RegisterDto, @Res() res: Response) {
+  async register(
+    @Body() registerDto: RegisterDto,
+    @Res() res: Response,
+  ): Promise<void> {
     const user = await this.authService.register(registerDto);
 
-    const message = await this.authService.login(user, res);
+    await this.authService.login(user, res);
 
-    res.send(message);
+    res.send({ userId: user.uuid });
   }
 
   @Public()
@@ -113,52 +108,16 @@ export class AuthController {
       isAdmin: true,
       password: hashedPassword,
       isVerified: true,
+      isTemporary: true,
     });
 
     const user = await this.userRepository.save(anonymousUser);
 
     // Seed preferences
-    await this.userPreferencesService.createUserPreferences(user, {
-      primaryColor: PrimaryColor.PURPLE,
-      theme: Theme.DARK,
-    });
-
-    await this.sectionsService.seedUserDefaultSections(user);
-
-    //   Seed flashcard template
-    const cardTemplate = this.cardTemplateRepository.create({
-      isDefault: true,
-      user,
-      title: 'Basic',
-    });
-
-    const savedTemplate = await this.cardTemplateRepository.save(cardTemplate);
-
-    //   Fields
-    const frontField = this.cardFieldRepository.create({
-      title: 'Front',
-      template: savedTemplate,
-    });
-
-    const backField = this.cardFieldRepository.create({
-      title: 'Back',
-      template: savedTemplate,
-    });
-
-    const savedFields = await this.cardFieldRepository.insert([
-      frontField,
-      backField,
-    ]);
-
-    //   Variant
-    const cardVariant = this.cardTypeRepository.create({
-      title: 'Front > Back',
-      template: savedTemplate,
-      frontFields: [savedFields[0]],
-      backFields: [savedFields[1]],
-    });
-
-    await this.cardTypeRepository.save(cardVariant);
+    // await this.userPreferencesService.createUserPreferences(user, {
+    //   primaryColor: PrimaryColor.PURPLE,
+    //   theme: Theme.DARK,
+    // });
 
     const data = await this.authService.login(user, res);
 
@@ -204,27 +163,23 @@ export class AuthController {
     res.send('success');
   }
 
-  @Get('seed-workspace-data/:workspaceId')
-  async seedWorkspaceData(
-    @GetUser() user: User,
-    @Param('workspaceId') workspaceId: string,
-  ) {
-    await seedWorkspaceData(workspaceId, user.uuid);
-  }
-
   @UseInterceptors(ClassSerializerInterceptor)
   @Get('client-boot')
-  async clientBoot(@GetUser() currentUser: User): Promise<{
-    currentUser: UserDto;
-    users?: UserDto[];
-    userPreferences?: UserPreferencesDto;
-    sections?: SectionDto[];
-    channels?: ChannelDto[];
-    channelUnreads?: ChannelUnreadsDto[];
-    userStatuses?: UserStatusDto[];
-    workspaces?: WorkspaceDto[];
-    userWorkspaces?: any[];
-  }> {
+  async clientBoot(@GetUser() currentUser: User): Promise<
+    | {
+        currentUser: UserDto;
+        users: UserDto[];
+        userPreferences?: UserPreferencesDto;
+        sections: SectionDto[];
+        channels: ChannelDto[];
+        channelUnreads: ChannelUnreadsDto[];
+        userStatuses: UserStatusDto[];
+        workspaces: WorkspaceDto[];
+        userWorkspaces: any[];
+        channelSubscriptions: ChannelSubscriptionDto[];
+      }
+    | { currentUser: User }
+  > {
     const lastViewedWorkspace =
       await this.userWorkspaceService.findLastViewedWorkspace(currentUser.uuid);
 
@@ -233,7 +188,7 @@ export class AuthController {
     }
 
     const usersPromise = this.usersService.findWorkspaceUsers(
-      lastViewedWorkspace.uuid,
+      lastViewedWorkspace.workspaceId,
     );
 
     const userPreferencesPromise =
@@ -245,11 +200,17 @@ export class AuthController {
 
     const channelsPromise = this.channelsService.findWorkspaceChannels(
       currentUser.id,
-      lastViewedWorkspace.uuid,
+      lastViewedWorkspace.workspaceId,
     );
 
+    const channelSubscriptionsPromise =
+      this.channelSubscriptionsService.findUserChannelsSubscriptions(
+        currentUser,
+        lastViewedWorkspace.workspaceId,
+      );
+
     const channelUnreadsPromise =
-      this.channelSubscriptionsService.getUserUnreadMessagesCount(
+      this.channelSubscriptionsService.getChannelUnreadMessageCount(
         currentUser.id,
       );
 
@@ -274,6 +235,7 @@ export class AuthController {
       userStatuses,
       workspaces,
       userWorkspaces,
+      channelSubscriptions,
     ] = await Promise.all([
       usersPromise,
       userPreferencesPromise,
@@ -283,6 +245,7 @@ export class AuthController {
       userStatusesPromise,
       workspacesPromise,
       userWorkspacesPromise,
+      channelSubscriptionsPromise,
     ]);
 
     return {
@@ -295,6 +258,7 @@ export class AuthController {
       userStatuses,
       workspaces,
       userWorkspaces,
+      channelSubscriptions,
     };
   }
 
