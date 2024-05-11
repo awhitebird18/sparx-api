@@ -11,7 +11,7 @@ import { WorkspacesModule } from 'src/workspaces/workspaces.module';
 
 @Module({
   imports: [
-    ChannelsModule,
+    forwardRef(() => ChannelsModule),
     WorkspacesModule,
     CardFieldModule,
     CardFieldValueModule,

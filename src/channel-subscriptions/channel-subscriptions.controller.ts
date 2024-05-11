@@ -6,12 +6,13 @@ import {
   Get,
   Post,
   Query,
+  Delete,
 } from '@nestjs/common';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { ChannelSubscriptionsService } from './channel-subscriptions.service';
 import { User } from 'src/users/entities/user.entity';
 import { ChannelSubscriptionDto } from './dto/channel-subscription.dto';
-import { plainToInstance } from 'class-transformer';
+import { UpdateUserChannelDto } from './dto/update-channel-subscription.dto';
 
 @Controller('channel-subscriptions')
 export class ChannelSubscriptionsController {
@@ -23,9 +24,9 @@ export class ChannelSubscriptionsController {
   joinChannel(
     @GetUser() user: User,
     @Body() data: { channelId: string; sectionId?: string },
-  ): Promise<any> {
+  ): Promise<ChannelSubscriptionDto> {
     return this.channelSubscriptionsService.joinChannel(
-      user,
+      user.uuid,
       data.channelId,
       data.sectionId,
     );
@@ -35,7 +36,7 @@ export class ChannelSubscriptionsController {
   joinDefaultWorkspaceChannel(
     @GetUser() user: User,
     @Query() workspaceId: string,
-  ): Promise<any> {
+  ): Promise<ChannelSubscriptionDto> {
     return this.channelSubscriptionsService.joinDefaultWorkspaceChannel(
       user,
       workspaceId,
@@ -43,55 +44,69 @@ export class ChannelSubscriptionsController {
   }
 
   @Get('workspace/:workspaceId')
-  findWorkspaceUserCounts(
+  findUserChannelsSubscriptions(
     @GetUser() user: User,
     @Param('workspaceId') workspaceId: string,
-  ): Promise<any[]> {
-    return this.channelSubscriptionsService.findUserChannels(user, workspaceId);
+  ): Promise<ChannelSubscriptionDto[]> {
+    return this.channelSubscriptionsService.findUserChannelsSubscriptions(
+      user,
+      workspaceId,
+    );
   }
 
   @Patch(':channelId')
-  async updateUserChannel(
+  updateUserChannel(
     @GetUser() user: User,
     @Param('channelId') channelId: string,
-    @Body() updateUserChannel: ChannelSubscriptionDto,
+    @Body() updateUserChannel: UpdateUserChannelDto,
   ): Promise<ChannelSubscriptionDto> {
-    const channelSubscription =
-      await this.channelSubscriptionsService.udpateChannelSubscription(
-        user.uuid,
-        channelId,
-        updateUserChannel,
-      );
-
-    return plainToInstance(ChannelSubscriptionDto, channelSubscription);
+    return this.channelSubscriptionsService.udpateChannelSubscription(
+      user.uuid,
+      channelId,
+      updateUserChannel,
+    );
   }
+
   @Patch('last-read/:channelId')
-  async updateLastRead(
+  updateLastRead(
     @GetUser() user: User,
     @Param('channelId') channelId: string,
   ): Promise<ChannelSubscriptionDto> {
-    const channelSubscription =
-      await this.channelSubscriptionsService.updateLastRead(
-        user.uuid,
-        channelId,
-      );
-
-    return plainToInstance(ChannelSubscriptionDto, channelSubscription);
+    return this.channelSubscriptionsService.updateLastRead(
+      user.uuid,
+      channelId,
+    );
   }
 
   @Patch('move/:channelId')
-  async updateChannelSection(
+  updateChannelSection(
     @GetUser() user: User,
     @Param('channelId') channelId: string,
     @Body() updateUserChannel: ChannelSubscriptionDto,
   ): Promise<ChannelSubscriptionDto> {
-    const channelSubscription =
-      await this.channelSubscriptionsService.updateChannelSection(
-        user,
-        channelId,
-        updateUserChannel.sectionId,
-      );
+    return this.channelSubscriptionsService.updateChannelSection(
+      user,
+      channelId,
+      updateUserChannel.sectionId,
+    );
+  }
 
-    return plainToInstance(ChannelSubscriptionDto, channelSubscription);
+  @Delete('leave/:channelId')
+  leaveChannel(
+    @GetUser() user: User,
+    @Param('channelId') channelId: string,
+  ): Promise<void> {
+    return this.channelSubscriptionsService.leaveChannel(user.uuid, channelId);
+  }
+
+  @Delete('remove/:channelId/:userId')
+  removeUserFromChannel(
+    @Param('channelId') channelId: string,
+    @Param('userId') userId: string,
+  ): Promise<void> {
+    return this.channelSubscriptionsService.removeUserFromChannel(
+      userId,
+      channelId,
+    );
   }
 }

@@ -17,12 +17,16 @@ export class Task extends BaseEntity {
   @Column()
   dueDate: Date;
 
+  @Column({ default: 'Note' })
+  type: string;
+
   @Column({ default: false })
   isComplete: boolean;
 
   @Column({ type: 'varchar', nullable: true })
   recurrence: string | null;
 
+  // ManyToOne Relationships
   @ManyToOne(() => User, (user) => user.tasks, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;

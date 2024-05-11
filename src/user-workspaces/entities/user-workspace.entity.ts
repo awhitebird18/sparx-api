@@ -5,12 +5,6 @@ import { Entity, ManyToOne, Column } from 'typeorm';
 
 @Entity()
 export class UserWorkspace extends BaseEntity {
-  @ManyToOne(() => User, (user) => user.userWorkspaces)
-  user: User;
-
-  @ManyToOne(() => Workspace, (workspace) => workspace.userWorkspaces)
-  workspace: Workspace;
-
   @Column({ default: false })
   isAdmin: boolean;
 
@@ -34,4 +28,15 @@ export class UserWorkspace extends BaseEntity {
 
   @Column({ default: true })
   isFirstLogin: boolean;
+
+  // ManyToOne Relationships
+  @ManyToOne(() => User, (user) => user.userWorkspaces, {
+    onDelete: 'CASCADE',
+  })
+  user: User;
+
+  @ManyToOne(() => Workspace, (workspace) => workspace.userWorkspaces, {
+    onDelete: 'CASCADE',
+  })
+  workspace: Workspace;
 }

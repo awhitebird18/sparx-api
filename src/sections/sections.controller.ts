@@ -9,11 +9,8 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
-
 import { SectionsService } from './sections.service';
-
 import { User } from 'src/users/entities/user.entity';
-
 import { CreateSectionDto } from './dto/create-section.dto';
 import { UpdateSectionDto } from './dto/update-section.dto';
 import { SectionDto } from './dto/section.dto';
@@ -30,9 +27,7 @@ export class SectionsController {
     @Body() createSectionDto: CreateSectionDto,
     @GetUser() user: User,
   ): Promise<SectionDto> {
-    return this.sectionsService.mapSectionToDto(
-      await this.sectionsService.createSection(createSectionDto, user),
-    );
+    return await this.sectionsService.createSection(createSectionDto, user);
   }
 
   @Get()
@@ -41,12 +36,12 @@ export class SectionsController {
   }
 
   @Patch('reorder')
-  async reorderSections(
+  reorderSections(
     @GetUser() user: User,
     @Body()
     sectionIndexes: UpdateSectionOrderDto[],
   ): Promise<SectionDto[]> {
-    return await this.sectionsService.reorderSections(sectionIndexes, user);
+    return this.sectionsService.reorderSections(sectionIndexes, user);
   }
 
   @Patch(':sectionId')
@@ -54,7 +49,7 @@ export class SectionsController {
     @GetUser() user: User,
     @Param('sectionId') sectionId: string,
     @Body() updateSectionDto: UpdateSectionDto,
-  ) {
+  ): Promise<SectionDto> {
     return this.sectionsService.updateSection(
       sectionId,
       updateSectionDto,
@@ -63,10 +58,10 @@ export class SectionsController {
   }
 
   @Delete(':sectionId')
-  async removeSection(
+  removeSection(
     @GetUser() user: User,
     @Param('sectionId') sectionId: string,
-  ) {
-    return await this.sectionsService.removeSection(sectionId, user);
+  ): Promise<void> {
+    return this.sectionsService.removeSection(sectionId, user);
   }
 }

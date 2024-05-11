@@ -1,22 +1,25 @@
 import { Injectable } from '@nestjs/common';
-
 import { UserPreferencessRepository } from './user-preferences.repository';
-
 import { UpdateUserPreferencesDto } from './dto/update-user-preferences';
 import { CreateUserPreferences } from './dto/create-user-preferences.dto';
-import { UserPreferences } from './entities/user-preference.entity';
+import { UserPreferencesDto } from './dto/user-preferences.dto';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class UserPreferencesService {
   constructor(private userPreferencesRepository: UserPreferencessRepository) {}
 
-  createUserPreferences(createUserPreferences: CreateUserPreferences) {
+  createUserPreferences(
+    user: User,
+    createUserPreferences?: CreateUserPreferences,
+  ): Promise<UserPreferencesDto> {
     return this.userPreferencesRepository.createUserPreferences(
+      user,
       createUserPreferences,
     );
   }
 
-  findUserPreferences(userId: number): Promise<UserPreferences> {
+  findUserPreferences(userId: number): Promise<UserPreferencesDto> {
     return this.userPreferencesRepository.findOne({
       where: { userId },
     });
@@ -25,7 +28,7 @@ export class UserPreferencesService {
   async update(
     userId: number,
     updateUserpreferenceDto: UpdateUserPreferencesDto,
-  ): Promise<UserPreferences> {
+  ): Promise<UserPreferencesDto> {
     const userPreferences =
       await this.userPreferencesRepository.findUserPreferences(userId);
 

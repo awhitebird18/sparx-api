@@ -3,7 +3,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
 import { UpdateUserWorkspaceDto } from './dto/update-user-workspace.dto';
 import { UserWorkspacesRepository } from './user-workspace.repository';
 import { User } from 'src/users/entities/user.entity';
@@ -13,6 +12,9 @@ import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '@nestjs-modules/mailer';
 import { UsersRepository } from 'src/users/users.repository';
 import { UserWorkspace } from './entities/user-workspace.entity';
+import { UserWorkspaceDto } from './dto/user-workspace.dto';
+import { plainToInstance } from 'class-transformer';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class UserWorkspacesService {
@@ -22,15 +24,42 @@ export class UserWorkspacesService {
     private jwtService: JwtService,
     private mailerService: MailerService,
     private userRepository: UsersRepository,
+    private events: EventEmitter2,
   ) {}
 
-  async joinWorkspace(user: User, workspaceId: string) {
+  private convertToUserWorkspaceDto(
+    userWorkspace: UserWorkspace,
+  ): UserWorkspaceDto {
+    const workspaceId = userWorkspace.workspace.uuid;
+
+    const convertedUserWorkspace = {
+      ...userWorkspace,
+      workspaceId: workspaceId,
+    };
+
+    return plainToInstance(UserWorkspaceDto, convertedUserWorkspace);
+  }
+
+  private createJoinLog(userId: string, workspaceId: string, text: string) {
+    this.events.emit('log.created', {
+      userId,
+      workspaceId,
+      type: 'user',
+      text,
+    });
+  }
+
+  async joinWorkspace(
+    user: User,
+    workspaceId: string,
+  ): Promise<UserWorkspaceDto> {
     const workspace = await this.workspaceRepository.findOneOrFail({
       where: { uuid: workspaceId },
     });
 
     const workspaceUsers = await this.userWorkspaceRepository.find({
       where: { workspace: { id: workspace.id } },
+      relations: ['workspace'],
     });
 
     const isAdmin = workspaceUsers.length === 0;
@@ -42,24 +71,47 @@ export class UserWorkspacesService {
         isAdmin,
       );
 
-    return userWorkspaceRecord;
+    const userWorkspaceDto =
+      this.convertToUserWorkspaceDto(userWorkspaceRecord);
+
+    this.createJoinLog(
+      user.uuid,
+      workspaceId,
+      `has joined the ${workspace.name} workspace.`,
+    );
+
+    return userWorkspaceDto;
   }
 
-  findUserWorkspaces(userId: string) {
-    return this.userWorkspaceRepository
+  async findUserWorkspaces(userId: string): Promise<UserWorkspaceDto[]> {
+    const userWorkspaces = await this.userWorkspaceRepository
       .createQueryBuilder('userWorkspace')
-      .leftJoin('userWorkspace.workspace', 'workspace')
+      .leftJoinAndSelect('userWorkspace.workspace', 'workspace')
       .leftJoin('userWorkspace.user', 'user')
       .addSelect(['workspace.uuid']) // Alias the selected column
       .where('user.uuid = :userId', { userId })
       .getMany();
+
+    const userWorkspaceDtos = userWorkspaces.map((userWorkspace) =>
+      this.convertToUserWorkspaceDto(userWorkspace),
+    );
+
+    return userWorkspaceDtos;
   }
 
-  async findWorkspaceUsers(workspaceId: string) {
+  async findWorkspaceUsers(workspaceId: string): Promise<UserWorkspaceDto[]> {
     const workspace = await this.workspaceRepository.findOneOrFail({
       where: { uuid: workspaceId },
     });
-    return this.userWorkspaceRepository.findWorkspaceUsers(workspace);
+
+    const userWorkspaces =
+      await this.userWorkspaceRepository.findWorkspaceUsers(workspace);
+
+    const userWorkspaceDtos = userWorkspaces.map((userWorkspace) =>
+      this.convertToUserWorkspaceDto(userWorkspace),
+    );
+
+    return userWorkspaceDtos;
   }
 
   async sendInvite(
@@ -68,11 +120,9 @@ export class UserWorkspacesService {
   ): Promise<{ message: string }> {
     const { email, workspaceId } = inviteUser;
 
-    // Todo: once workspaces are implemented, need to find the users workspace to
-    // to be able to add workspace name and details in the email.
-
     const workspace = await this.workspaceRepository.findOneOrFail({
       where: { uuid: workspaceId },
+      relations: ['workspace'],
     });
 
     const invitedUser = await this.userRepository.findOne({ where: { email } });
@@ -97,31 +147,26 @@ export class UserWorkspacesService {
       }
     }
 
-    // Format name of user who is sending the invite
     const username = `${user.firstName[0].toUpperCase()}${user.firstName
       .substring(1)
       .toLowerCase()} ${user.lastName[0].toUpperCase()}${user.lastName
       .substring(1)
       .toLowerCase()}`;
 
-    // Format name of workspace
     const workspaceName = workspace.name;
 
-    // Generate payload for token
     const userInvitePayload = {
       userId: user.uuid,
       workspaceId: workspace.uuid,
       type: 'userInvite',
     };
 
-    // Generate a password reset token
     const passwordResetToken = this.jwtService.sign(userInvitePayload, {
       expiresIn: '1d',
     });
 
     const url = `${process.env.CLIENT_BASE_URL}/register?token=${passwordResetToken}`;
 
-    // Email user informing of the password change
     await this.mailerService.sendMail({
       to: email,
       subject: `Sparx - Invitation to join ${workspaceName}`,
@@ -136,20 +181,24 @@ export class UserWorkspacesService {
     return { message: 'User has been invited to register.' };
   }
 
-  async findLastViewedWorkspace(userId: string) {
-    // Find the most recent UserWorkspace entry for this user
-    const lastViewedEntry = await this.userWorkspaceRepository.findOne({
+  async findLastViewedWorkspace(userId: string): Promise<UserWorkspaceDto> {
+    const lastViewedUserWorkspace = await this.userWorkspaceRepository.findOne({
       where: { user: { uuid: userId } },
       order: { lastViewed: 'DESC' },
-      relations: ['workspace'], // Make sure to load the workspace relation
+      relations: ['workspace'],
     });
 
-    if (lastViewedEntry) {
-      this.updateDayStreak(lastViewedEntry);
+    if (lastViewedUserWorkspace) {
+      this.updateDayStreak(lastViewedUserWorkspace);
     }
 
-    // Return the workspace entity
-    return lastViewedEntry?.workspace;
+    if (!lastViewedUserWorkspace) return;
+
+    const userWorkspaceDto = this.convertToUserWorkspaceDto(
+      lastViewedUserWorkspace,
+    );
+
+    return userWorkspaceDto;
   }
 
   async updateDayStreak(lastViewedWorkspace: UserWorkspace): Promise<void> {
@@ -161,70 +210,89 @@ export class UserWorkspacesService {
       0,
     );
 
-    // Calculate the difference in days
     const diffDays = (today - lastLoginDate) / (1000 * 60 * 60 * 24);
 
     if (diffDays === 1) {
-      // Increment streak if user logged in the day after their last login
       lastViewedWorkspace.streakCount += 1;
     } else if (diffDays > 1) {
-      // Reset streak if there's a gap of more than one day
       lastViewedWorkspace.streakCount = 1;
     }
 
-    lastViewedWorkspace.lastViewed = new Date(); // Set last login to today
+    lastViewedWorkspace.lastViewed = new Date();
     await this.userWorkspaceRepository.save(lastViewedWorkspace);
   }
 
-  async updateRole(uuid: string, isAdmin: boolean) {
-    const userWorkspace = await this.userWorkspaceRepository.findOne({
+  async updateRole(uuid: string, isAdmin: boolean): Promise<UserWorkspaceDto> {
+    const userWorkspaceFound = await this.userWorkspaceRepository.findOne({
       where: { uuid },
     });
 
-    if (!userWorkspace) {
+    if (!userWorkspaceFound) {
       throw new NotFoundException(`UserWorkspace with ID ${uuid} not found`);
     }
-    userWorkspace.isAdmin = isAdmin;
-    await this.userWorkspaceRepository.save(userWorkspace);
-    return userWorkspace;
+    userWorkspaceFound.isAdmin = isAdmin;
+    const userWorkspace = await this.userWorkspaceRepository.save(
+      userWorkspaceFound,
+    );
+
+    const userWorkspaceDto = this.convertToUserWorkspaceDto(userWorkspace);
+
+    return userWorkspaceDto;
   }
 
   async updateWorkspaceUser(
     uuid: string,
     updateUserWorkspaceDto: UpdateUserWorkspaceDto,
-  ) {
-    const userWorkspace = await this.userWorkspaceRepository.findOne({
+  ): Promise<UserWorkspaceDto> {
+    const userWorkspaceFound = await this.userWorkspaceRepository.findOne({
       where: { uuid },
+      relations: ['workspace'],
     });
 
-    if (!userWorkspace) {
+    if (!userWorkspaceFound) {
       throw new NotFoundException(`UserWorkspace with ID ${uuid} not found`);
     }
 
-    const userWorkspaceToReturn = await this.userWorkspaceRepository.save({
-      ...userWorkspace,
+    const userWorkspace = await this.userWorkspaceRepository.save({
+      ...userWorkspaceFound,
       ...updateUserWorkspaceDto,
     });
 
-    return userWorkspaceToReturn;
+    const userWorkspaceDto = this.convertToUserWorkspaceDto(userWorkspace);
+
+    return userWorkspaceDto;
   }
 
-  async updateLastViewed(userId: string, workspaceId: string) {
-    const userWorkspace = await this.userWorkspaceRepository.findOne({
+  async updateLastViewed(
+    userId: string,
+    workspaceId: string,
+  ): Promise<UserWorkspaceDto> {
+    const userWorkspaceFound = await this.userWorkspaceRepository.findOne({
       where: { user: { uuid: userId }, workspace: { uuid: workspaceId } },
+      relations: ['workspace'],
     });
 
-    if (!userWorkspace) {
+    if (!userWorkspaceFound) {
       throw new NotFoundException(`UserWorkspace association not found`);
     }
 
-    userWorkspace.lastViewed = new Date();
-    return await this.userWorkspaceRepository.save(userWorkspace);
+    userWorkspaceFound.lastViewed = new Date();
+    const userWorkspace = await this.userWorkspaceRepository.save(
+      userWorkspaceFound,
+    );
+
+    const userWorkspaceDto = this.convertToUserWorkspaceDto(userWorkspace);
+
+    return userWorkspaceDto;
   }
 
-  async removeUserFromWorkspace(userId: string, workspaceId: string) {
+  async removeUserFromWorkspace(
+    userId: string,
+    workspaceId: string,
+  ): Promise<{ message: string }> {
     const userWorkspace = await this.userWorkspaceRepository.findOne({
       where: { user: { uuid: userId }, workspace: { uuid: workspaceId } },
+      relations: ['workspace'],
     });
 
     if (!userWorkspace) {

@@ -6,13 +6,10 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-
 import { Channel } from './entities/channel.entity';
-
-import { ChannelType } from './enums/channel-type.enum';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { Workspace } from 'src/workspaces/entities/workspace.entity';
-import { Public } from 'src/common/decorators/is-public';
+import { UpdateChannelCoordinatesDto } from './dto/update-channel-coordinates';
 
 @Injectable()
 export class ChannelsRepository extends Repository<Channel> {
@@ -23,44 +20,15 @@ export class ChannelsRepository extends Repository<Channel> {
     createChannelDto: CreateChannelDto,
     workspace: Workspace,
   ): Promise<Channel> {
-    const channel = this.create({ ...createChannelDto, workspace });
-    return this.save(channel);
-  }
-
-  async findDirectChannelByUserUuids(userUuids: string[]): Promise<Channel> {
-    // Get all DirectChannels where the first user is a member.
-    const currentUsersChannels = await this.createQueryBuilder('channel')
-      .innerJoin('channel.channelSubscriptions', 'channelSubscription')
-      .innerJoin(
-        'channelSubscription.user',
-        'user',
-        'user.uuid = :currentUserId',
-        {
-          currentUserId: userUuids[0],
-        },
-      )
-      .where('channel.type = :channelType', { channelType: ChannelType.DIRECT })
-      .getMany();
-
-    for (const channel of currentUsersChannels) {
-      // Check if the second user is a member of the channel.
-      const user2Exists = await this.createQueryBuilder('channel')
-        .innerJoin('channel.channelSubscriptions', 'channelSubscription')
-        .innerJoin(
-          'channelSubscription.user',
-          'user',
-          'user.uuid = :userUuid2',
-          {
-            userUuid2: userUuids[1],
-          },
-        )
-        .where('channel.id = :channelId', { channelId: channel.id })
-        .getOne();
-      if (user2Exists) {
-        return channel;
-      }
+    try {
+      const channel = this.create({
+        ...createChannelDto,
+        workspace,
+      });
+      return this.save(channel);
+    } catch (err) {
+      console.error(err);
     }
-    return undefined;
   }
 
   async findUserChannels(userId: number): Promise<any[]> {
@@ -88,10 +56,8 @@ export class ChannelsRepository extends Repository<Channel> {
       .getMany();
 
     return channels.map((channel) => {
-      // Assuming there is always one subscription per channel for the user
       const subscription = channel.channelSubscriptions[0];
       if (subscription) {
-        // Add status to the channel object
         return { ...channel, status: subscription.status };
       }
       return channel;
@@ -101,25 +67,56 @@ export class ChannelsRepository extends Repository<Channel> {
   async findWorkspaceChannels(
     userId: number,
     workspaceId: string,
-  ): Promise<any[]> {
+  ): Promise<Channel[]> {
     const channels = await this.createQueryBuilder('channel')
       .leftJoinAndSelect('channel.workspace', 'workspace')
+      .leftJoinAndSelect('channel.childChannels', 'childChannels')
+      .leftJoinAndSelect('channel.parentChannel', 'parentChannel')
       .leftJoinAndSelect('channel.channelSubscriptions', 'channelSubscription')
       .leftJoinAndSelect('channelSubscription.user', 'user')
       .where('workspace.uuid = :workspaceId', { workspaceId })
       .getMany();
 
-    return channels.map((channel) => {
-      // Filter subscriptions for the current user
-      const userSubscription = channel.channelSubscriptions.find(
-        (subscription) => subscription.user.id === userId,
-      );
+    return channels;
 
-      return {
-        ...channel,
-        isSubscribed: !!userSubscription?.isSubscribed,
-        subscriptionDetails: userSubscription,
-      };
+    // return channels.map((channel) => {
+    //   const userSubscription = channel.channelSubscriptions.find(
+    //     (subscription) => subscription.user.id === userId,
+    //   );
+
+    //   return {
+    //     ...channel,
+    //     isSubscribed: !!userSubscription?.isSubscribed,
+    //     subscriptionDetails: userSubscription,
+    //   };
+    // });
+  }
+
+  async updateManyChannels(
+    channels: UpdateChannelCoordinatesDto[],
+  ): Promise<Channel[]> {
+    const uuids = channels.map((channel) => channel.uuid);
+
+    // Execute all updates in parallel
+    await Promise.all(
+      channels.map((channelDto) =>
+        this.createQueryBuilder()
+          .update(Channel)
+          .set({
+            x: channelDto.x,
+            y: channelDto.y,
+          })
+          .where('uuid = :uuid', { uuid: channelDto.uuid })
+          .execute(),
+      ),
+    );
+
+    // Fetch all updated channels in a single query using the IN clause
+    return this.find({
+      where: {
+        uuid: In(uuids),
+      },
+      relations: ['parentChannel', 'childChannels'],
     });
   }
 
@@ -131,7 +128,6 @@ export class ChannelsRepository extends Repository<Channel> {
       .where('channel.uuid = :channelId', { channelId })
       .getOne();
 
-    // Filter subscriptions for the current user
     const userSubscription = channel.channelSubscriptions.find(
       (subscription) => subscription.user.id === userId,
     );
@@ -154,23 +150,20 @@ export class ChannelsRepository extends Repository<Channel> {
   }
 
   findChannelUsers(channelId: string): Promise<any[]> {
-    return (
-      this.createQueryBuilder('channel')
-        .leftJoinAndSelect('channel.channelSubscriptions', 'subscription')
-        .leftJoinAndSelect('subscription.user', 'user')
-        // .select(['channel', 'user'])
-        .where('channel.uuid = :channelId', { channelId })
-        .getRawMany()
-        .then((results) => {
-          const resultingArr = results.map((result) => ({
-            userId: result.user_uuid,
-            isAdmin: result.subscription_isAdmin,
-            status: result.subscription_status,
-          }));
+    return this.createQueryBuilder('channel')
+      .leftJoinAndSelect('channel.channelSubscriptions', 'subscription')
+      .leftJoinAndSelect('subscription.user', 'user')
+      .where('channel.uuid = :channelId', { channelId })
+      .getRawMany()
+      .then((results) => {
+        const resultingArr = results.map((result) => ({
+          userId: result.user_uuid,
+          isAdmin: result.subscription_isAdmin,
+          status: result.subscription_status,
+        }));
 
-          return resultingArr;
-        })
-    );
+        return resultingArr;
+      });
   }
 
   findWorkspaceChannelsWithUserCounts(
@@ -182,10 +175,9 @@ export class ChannelsRepository extends Repository<Channel> {
         'channel.channelSubscriptions',
         'channelSubscription',
         'channelSubscription.isSubscribed = TRUE',
-      ) // Adding condition to join
-      .select('channel') // This selects all fields of the `channel` entity
+      )
+      .select('channel')
       .addSelect('COUNT(channelSubscription.uuid)', 'usercount')
-      .where('channel.type = :type', { type: ChannelType.CHANNEL })
       .andWhere('channel.isPrivate = :isPrivate', { isPrivate: false })
       .groupBy('channel.id')
       .orderBy('channel.name', 'ASC')
@@ -200,11 +192,10 @@ export class ChannelsRepository extends Repository<Channel> {
         'channel.channelSubscriptions',
         'channelSubscription',
         'channelSubscription.isSubscribed = TRUE',
-      ) // Adding condition to join
+      )
       .leftJoin('channel.workspace', 'workspace')
-      .select('channel') // This selects all fields of the `channel` entity
+      .select('channel')
       .addSelect('COUNT(channelSubscription.uuid)', 'usercount')
-      .where('channel.type = :type', { type: ChannelType.CHANNEL })
       .andWhere('channel.isPrivate = :isPrivate', { isPrivate: false })
       .andWhere('workspace.uuid = :workspaceId', { workspaceId })
       .groupBy('channel.id')

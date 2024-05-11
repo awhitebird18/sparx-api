@@ -22,15 +22,14 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user: User = request.user;
 
-    // Check for role
-    const hasRole = requiredRoles.some((role) => user.role === role);
-    if (!hasRole) return false;
+    // const hasRole = requiredRoles.some((role) => user.role === role);
+    // if (!hasRole) return false;
 
-    // Check for same workspace (adjust based on your setup)
-    const targetUserId = request.params.userId;
-    const targetUser = await this.usersRepository.findOne({
-      where: { id: targetUserId },
-    });
-    return user.workspaceId === targetUser.workspaceId;
+    // const targetUserId = request.params.userId;
+    // const targetUser = await this.usersRepository.findOne({
+    //   where: { id: targetUserId },
+    //   relations:
+    // });
+    return user.isAdmin;
   }
 }

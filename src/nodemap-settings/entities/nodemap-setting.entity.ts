@@ -5,27 +5,32 @@ import { Column, Entity, ManyToOne } from 'typeorm';
 
 @Entity()
 export class NodemapSettings extends BaseEntity {
-  @ManyToOne(() => User, (user) => user.nodemapSettings)
-  user: User;
-
-  @ManyToOne(() => Workspace, (workspace) => workspace.nodemapSettings)
-  workspace: Workspace;
+  @Column({ default: true })
+  userCountVisible: boolean;
 
   @Column({ default: true })
-  userCountVisible: boolean; // Indicates if user count is visible
+  flashcardsDueVisible: boolean;
 
   @Column({ default: true })
-  flashcardsDueVisible: boolean; // Indicates if flashcards due count is visible
+  unreadMessageCountVisible: boolean;
 
-  @Column({ default: true })
-  unreadMessageCountVisible: boolean; // Indicates if user discussion count is visible
+  @Column({ type: 'double precision', default: 1000 })
+  initialX: number;
 
-  @Column({ type: 'double precision', default: 4000 })
-  xPosition: number; // X position of the nodemap viewport or a specific element
-
-  @Column({ type: 'double precision', default: 4000 })
-  yPosition: number; // Y position of the nodemap viewport or a specific element
+  @Column({ type: 'double precision', default: 1000 })
+  initialY: number;
 
   @Column({ type: 'double precision', default: 1 })
-  zoomLevel: number; // Zoom level of the nodemap
+  scale: number;
+
+  // ManyToOne Relationships
+  @ManyToOne(() => User, (user) => user.nodemapSettings, {
+    onDelete: 'CASCADE',
+  })
+  user: User;
+
+  @ManyToOne(() => Workspace, (workspace) => workspace.nodemapSettings, {
+    onDelete: 'CASCADE',
+  })
+  workspace: Workspace;
 }

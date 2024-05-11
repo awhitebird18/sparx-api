@@ -1,22 +1,13 @@
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  OneToMany,
-  OneToOne,
-  JoinColumn,
-} from 'typeorm';
-
+import { Entity, Column, OneToMany, OneToOne } from 'typeorm';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Section } from 'src/sections/entities/section.entity';
 import { ChannelSubscription } from 'src/channel-subscriptions/entity/channel-subscription.entity';
 import { UserPreferences } from 'src/user-preferences/entities/user-preference.entity';
-import { Workspace } from 'src/workspaces/entities/workspace.entity';
 import { UserRole } from '../enums/roles.enum';
 import { UserStatus } from 'src/user-statuses/entities/user-status.entity';
 import { Note } from 'src/notes/entities/note.entity';
 import { Template } from 'src/card-template/entities/card-template.entity';
-import { Flashcard } from 'src/card/entities/card.entity';
+import { Card } from 'src/card/entities/card.entity';
 import { ReviewHistory } from 'src/review-history/entities/review-history.entity';
 import { UserWorkspace } from 'src/user-workspaces/entities/user-workspace.entity';
 import { NodemapSettings } from 'src/nodemap-settings/entities/nodemap-setting.entity';
@@ -56,26 +47,25 @@ export class User extends BaseEntity {
   @Column({ default: false })
   isVerified: boolean;
 
+  @Column({ default: false })
+  isTemporary: boolean;
+
   @Column()
   password: string;
-
-  @Column({ nullable: true })
-  workspaceId: string;
-
-  @OneToMany(() => UserWorkspace, (userWorkspace) => userWorkspace.user)
-  userWorkspaces: UserWorkspace[];
 
   @Column({ default: UserRole.MEMBER })
   role: UserRole;
 
-  @OneToMany(() => UserStatus, (userStatus) => userStatus.user)
-  customStatuses: UserStatus[];
-
+  // OneToOne Relationships
   @OneToOne(() => UserPreferences, (userPreferences) => userPreferences.user)
   preferences: UserPreferences;
 
-  @ManyToOne(() => Workspace, (company) => company.users)
-  workspace: Workspace;
+  // OneToMany Relationships
+  @OneToMany(() => UserWorkspace, (userWorkspace) => userWorkspace.user)
+  userWorkspaces: UserWorkspace[];
+
+  @OneToMany(() => UserStatus, (userStatus) => userStatus.user)
+  customStatuses: UserStatus[];
 
   @OneToMany(() => Note, (note) => note.createdBy)
   notes: Note[];
@@ -92,8 +82,8 @@ export class User extends BaseEntity {
   @OneToMany(() => Template, (template) => template.user)
   templates: Template[];
 
-  @OneToMany(() => Flashcard, (flashcard) => flashcard.user)
-  flashcards: Flashcard[];
+  @OneToMany(() => Card, (flashcard) => flashcard.user)
+  flashcards: Card[];
 
   @OneToMany(() => ReviewHistory, (reviewHistory) => reviewHistory.user)
   reviewHistories: ReviewHistory[];

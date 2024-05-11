@@ -17,7 +17,6 @@ export class JwtExceptionFilter implements ExceptionFilter {
       ? exception.getStatus()
       : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    // Check if it's a JWT related exception and clear cookies
     if (status === HttpStatus.UNAUTHORIZED || status === HttpStatus.FORBIDDEN) {
       response.clearCookie('access_token', { httpOnly: true, path: '/' });
       response.clearCookie('refresh_token', { httpOnly: true, path: '/' });

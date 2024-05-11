@@ -1,12 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { UsersRepository } from './users.repository';
-
 import { User } from './entities/user.entity';
-
 import { SectionsModule } from 'src/sections/sections.module';
 import { UserPreferencesModule } from 'src/user-preferences/user-preferences.module';
 import { JwtModule } from '@nestjs/jwt';
@@ -16,12 +13,12 @@ import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { CardTemplateModule } from 'src/card-template/card-template.module';
 import { CardFieldModule } from 'src/card-field/card-field.module';
-import { CardTypeModule } from 'src/card-type/card-type.module';
+import { CardVariantModule } from 'src/card-variant/card-variant.module';
 
 @Module({
   imports: [
     CardFieldModule,
-    CardTypeModule,
+    CardVariantModule,
     CardTemplateModule,
     TypeOrmModule.forFeature([User]),
     UserPreferencesModule,

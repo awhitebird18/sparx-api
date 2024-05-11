@@ -1,11 +1,4 @@
-import { StatusDuration } from '../enums/status-duration.enum';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateUserStatusDto } from './create-user-status.dto';
 
-export class UpdateUserStatusDto {
-  emoji: string;
-
-  text: string;
-
-  dateExpire: string;
-
-  duration: StatusDuration;
-}
+export class UpdateUserStatusDto extends PartialType(CreateUserStatusDto) {}

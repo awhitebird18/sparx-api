@@ -1,8 +1,11 @@
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UpdateChannelDto {
   @IsString()
-  name: string;
+  uuid: string;
+
+  @IsString()
+  name?: string;
 
   @IsOptional()
   @IsString()
@@ -16,5 +19,11 @@ export class UpdateChannelDto {
   icon?: string;
 
   @IsBoolean()
-  isPrivate: boolean;
+  isPrivate?: boolean;
+
+  @IsNumber()
+  x?: number;
+
+  @IsNumber()
+  y?: number;
 }

@@ -2,7 +2,7 @@ import { Channel } from 'src/channels/entities/channel.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Workspace } from 'src/workspaces/entities/workspace.entity';
-import { Column, CreateDateColumn, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
 
 @Entity()
 export class Note extends BaseEntity {
@@ -15,17 +15,17 @@ export class Note extends BaseEntity {
   @Column({ default: true })
   isPrivate: boolean;
 
-  @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
-
+  // ManyToOne Relationships
   @ManyToOne(() => Channel, (channel) => channel.notes, {
-    cascade: ['soft-remove'],
+    onDelete: 'CASCADE',
   })
   channel: Channel;
 
   @ManyToOne(() => User, (user) => user.notes, { nullable: true })
   createdBy?: User;
 
-  @ManyToOne(() => Workspace, (workspace) => workspace.notes)
+  @ManyToOne(() => Workspace, (workspace) => workspace.notes, {
+    onDelete: 'CASCADE',
+  })
   workspace: Workspace;
 }

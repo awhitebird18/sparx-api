@@ -10,7 +10,9 @@ import { Channel } from 'src/channels/entities/channel.entity';
 export const channelHandlers = {
   joinChannel: (server: Server) => {
     return (channel: ChannelDto, sectionId: string, userId: string) => {
-      const serializedChannel = plainToInstance(ChannelDto, channel);
+      const serializedChannel = plainToInstance(ChannelDto, channel, {
+        excludeExtraneousValues: true,
+      });
 
       const websocketMessage = new WebSocketMessage(MessageType.JoinChannel, {
         channel: serializedChannel,

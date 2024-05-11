@@ -2,10 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { WorkspacesRepository } from './workspaces.repository';
-import { Workspace } from './entities/workspace.entity';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChannelsRepository } from 'src/channels/channels.repository';
+import { WorkspaceDto } from './dto/workspace.dto';
+import { plainToInstance } from 'class-transformer';
+import { Workspace } from './entities/workspace.entity';
 
 @Injectable()
 export class WorkspacesService {
@@ -13,30 +14,44 @@ export class WorkspacesService {
     private workspaceRepository: WorkspacesRepository,
     private cloudinaryService: CloudinaryService,
     private channelRepository: ChannelsRepository,
-    private events: EventEmitter2,
   ) {}
 
-  async create(createWorkspaceDto: CreateWorkspaceDto) {
+  convertToDto(workspace: Workspace): WorkspaceDto {
+    return plainToInstance(WorkspaceDto, workspace);
+  }
+
+  async create(createWorkspaceDto: CreateWorkspaceDto): Promise<WorkspaceDto> {
     const workspace = await this.workspaceRepository.createWorkspace(
       createWorkspaceDto,
     );
 
-    return workspace;
+    return this.convertToDto(workspace);
   }
 
-  findAll() {
-    return this.workspaceRepository.findAllWorkspaces();
+  async findAll(): Promise<WorkspaceDto[]> {
+    const workspaces = await this.workspaceRepository.findAllWorkspaces();
+
+    return workspaces.map((workspace) => this.convertToDto(workspace));
   }
 
-  findUserWorkspaces(userId: number) {
-    return this.workspaceRepository.findUserWorkspaces(userId);
+  async findUserWorkspaces(userId: number): Promise<WorkspaceDto[]> {
+    const workspaces = await this.workspaceRepository.findUserWorkspaces(
+      userId,
+    );
+
+    return workspaces.map((workspace) => this.convertToDto(workspace));
   }
 
-  findOne(id: string) {
-    return this.workspaceRepository.findWorkspaceByUuid(id);
+  async findOne(id: string): Promise<WorkspaceDto> {
+    const workspace = await this.workspaceRepository.findWorkspaceByUuid(id);
+
+    return this.convertToDto(workspace);
   }
 
-  async updateWorkspace(id: string, updateWorkspaceDto: UpdateWorkspaceDto) {
+  async updateWorkspace(
+    id: string,
+    updateWorkspaceDto: UpdateWorkspaceDto,
+  ): Promise<WorkspaceDto> {
     const workspace = await this.workspaceRepository.updateWorkspace(
       id,
       updateWorkspaceDto,
@@ -47,15 +62,15 @@ export class WorkspacesService {
         { uuid: id },
         { name: workspace.name },
       );
-
-      // Send updated channel by socket
     }
 
-    return workspace;
+    return this.convertToDto(workspace);
   }
 
-  async uploadImage(workspaceId: string, imgUrl: string): Promise<Workspace> {
-    // Find User
+  async uploadImage(
+    workspaceId: string,
+    imgUrl: string,
+  ): Promise<WorkspaceDto> {
     const workspace = await this.workspaceRepository.findOneOrFail({
       where: { uuid: workspaceId },
     });
@@ -65,19 +80,14 @@ export class WorkspacesService {
       workspace.uuid,
     );
 
-    // Update user with image path
     workspace.imgUrl = uploadedImageUrl;
 
-    // Update User
     const updatedWorkspace = await this.workspaceRepository.save(workspace);
 
-    // Send updated user over socket
-    // this.events.emit('websocket-event', 'updateWorkspace', updatedWorkspace);
-
-    return updatedWorkspace;
+    return this.convertToDto(updatedWorkspace);
   }
 
-  removeWorkspace(id: string) {
-    return this.workspaceRepository.removeWorkspace(id);
+  async removeWorkspace(id: string): Promise<void> {
+    return await this.workspaceRepository.removeWorkspace(id);
   }
 }

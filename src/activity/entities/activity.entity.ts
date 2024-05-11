@@ -14,9 +14,13 @@ export class Activity extends BaseEntity {
   @Column({ nullable: true })
   referenceId: string;
 
-  @ManyToOne(() => Workspace, (workspace) => workspace.activity)
+  @ManyToOne(() => Workspace, (workspace) => workspace.activity, {
+    onDelete: 'CASCADE',
+  })
   workspace: Workspace;
 
-  @ManyToOne(() => User, (user) => user.activity)
+  @ManyToOne(() => User, (user) => user.activity, {
+    onDelete: 'CASCADE',
+  })
   user: User;
 }

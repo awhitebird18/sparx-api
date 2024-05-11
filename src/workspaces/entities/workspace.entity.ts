@@ -1,6 +1,6 @@
 import { Activity } from 'src/activity/entities/activity.entity';
-import { Flashcard } from 'src/card/entities/card.entity';
-import { ChannelConnector } from 'src/channel-connectors/entities/channel-connector.entity';
+import { Template } from 'src/card-template/entities/card-template.entity';
+import { Card } from 'src/card/entities/card.entity';
 import { Channel } from 'src/channels/entities/channel.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Experience } from 'src/experience/entities/experience.entity';
@@ -8,7 +8,6 @@ import { NodemapSettings } from 'src/nodemap-settings/entities/nodemap-setting.e
 import { Note } from 'src/notes/entities/note.entity';
 import { Task } from 'src/tasks/entities/task.entity';
 import { UserWorkspace } from 'src/user-workspaces/entities/user-workspace.entity';
-import { User } from 'src/users/entities/user.entity';
 import { Column, Entity, OneToMany } from 'typeorm';
 
 @Entity()
@@ -25,9 +24,6 @@ export class Workspace extends BaseEntity {
   @Column({ nullable: true })
   imgUrl: string;
 
-  @OneToMany(() => User, (user) => user.workspace)
-  users: User[];
-
   @OneToMany(() => Channel, (channel) => channel.workspace)
   channels: Channel[];
 
@@ -36,12 +32,6 @@ export class Workspace extends BaseEntity {
 
   @OneToMany(() => UserWorkspace, (userWorkspace) => userWorkspace.workspace)
   userWorkspaces: UserWorkspace[];
-
-  @OneToMany(
-    () => ChannelConnector,
-    (channelConnector) => channelConnector.workspace,
-  )
-  channelConnectors: ChannelConnector[];
 
   @OneToMany(
     () => NodemapSettings,
@@ -58,6 +48,9 @@ export class Workspace extends BaseEntity {
   @OneToMany(() => Activity, (activity) => activity.workspace)
   activity: Activity;
 
-  @OneToMany(() => Flashcard, (flashcard) => flashcard.workspace)
-  flashcards: Flashcard;
+  @OneToMany(() => Card, (flashcard) => flashcard.workspace)
+  flashcards: Card[];
+
+  @OneToMany(() => Template, (template) => template.workspace)
+  templates: Template[];
 }

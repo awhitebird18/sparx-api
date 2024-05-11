@@ -8,6 +8,6 @@ import { CardTemplateModule } from 'src/card-template/card-template.module';
   imports: [CardTemplateModule],
   controllers: [CardFieldController],
   providers: [CardFieldService, CardFieldRepository],
-  exports: [CardFieldRepository],
+  exports: [CardFieldService, CardFieldRepository],
 })
 export class CardFieldModule {}

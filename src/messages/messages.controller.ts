@@ -10,14 +10,13 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
-
 import { MessagesService } from './messages.service';
-
 import { User } from 'src/users/entities/user.entity';
-
 import { MessageDto } from './dto/message.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
+import { UpdateReactionDto } from './dto/update-reaction.dto';
+import { ThreadDto } from './dto/thread.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Messages')
@@ -54,30 +53,33 @@ export class MessagesController {
   }
 
   @Get('user-threads')
-  findUserThreads(@GetUser() user: User): Promise<any[]> {
+  findUserThreads(@GetUser() user: User): Promise<ThreadDto[]> {
     return this.messagesService.findUserThreads(user);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.messagesService.findOne(id);
+  @Get(':uuid')
+  findOne(@Param('uuid') uuid: string): Promise<MessageDto> {
+    return this.messagesService.findOne(uuid);
   }
 
-  @Patch(':id/reaction')
+  @Patch(':uuid/reaction')
   updateMessageReactions(
-    @Param('id') id: string,
+    @Param('uuid') uuid: string,
+    @Body() updateReactionDto: UpdateReactionDto,
+  ): Promise<MessageDto> {
+    return this.messagesService.updateMessageReactions(uuid, updateReactionDto);
+  }
+
+  @Patch(':uuid')
+  update(
+    @Param('uuid') uuid: string,
     @Body() updateMessageDto: UpdateMessageDto,
-  ) {
-    return this.messagesService.updateMessageReactions(id, updateMessageDto);
+  ): Promise<MessageDto> {
+    return this.messagesService.update(uuid, updateMessageDto);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMessageDto: UpdateMessageDto) {
-    return this.messagesService.update(id, updateMessageDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.messagesService.remove(id);
+  @Delete(':uuid')
+  remove(@Param('uuid') uuid: string): Promise<void> {
+    return this.messagesService.remove(uuid);
   }
 }

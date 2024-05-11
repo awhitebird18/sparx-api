@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-
 import { Brackets, DataSource, Repository } from 'typeorm';
 import { Note } from './entities/note.entity';
 import { UpdateNoteDto } from './dto/update-note.dto';
@@ -66,7 +65,7 @@ export class NotesRepository extends Repository<Note> {
     return await this.findByUuid(uuid);
   }
 
-  async removeNote(uuid: string) {
+  async removeNote(uuid: string): Promise<Note> {
     const note = await this.findByUuid(uuid);
     if (note) {
       return await this.softRemove(note);

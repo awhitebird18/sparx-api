@@ -5,14 +5,10 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-
 import { Section } from './entities/section.entity';
-
 import { CreateSectionDto } from './dto/create-section.dto';
 import { UpdateSectionDto } from './dto/update-section.dto';
-import { ChannelType } from 'src/channels/enums/channel-type.enum';
-import { SectionDto } from './dto/section.dto';
-import { plainToInstance } from 'class-transformer';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class SectionsRepository extends Repository<Section> {
@@ -20,8 +16,17 @@ export class SectionsRepository extends Repository<Section> {
     super(Section, dataSource.createEntityManager());
   }
 
-  createSection(createSectionDto: CreateSectionDto): Promise<Section> {
-    const section = this.create(createSectionDto);
+  createSection(
+    createSectionDto: CreateSectionDto,
+    user: User,
+    orderIndex?: number,
+  ): Promise<Section> {
+    const section = this.create({
+      ...createSectionDto,
+      orderIndex,
+    });
+
+    section.user = user;
     return this.save(section);
   }
 
@@ -33,23 +38,12 @@ export class SectionsRepository extends Repository<Section> {
       .then((value) => value.maxOrderIndex);
   }
 
-  async findUserSections(userId: number): Promise<SectionDto[]> {
+  async findUserSections(userId: number): Promise<Section[]> {
     const userSections = await this.createQueryBuilder('section')
-      .leftJoinAndSelect('section.channels', 'channelSubscription')
-      .leftJoinAndSelect('channelSubscription.channel', 'channel')
       .where('section.userId = :userId', { userId })
       .getMany();
 
-    // Now, we have the sections and their associated channel subscriptions.
-    // Next, let's loop through and populate the channel IDs.
-
-    for (const section of userSections as any) {
-      //TODO: Need  to get only users channels
-      section.channelIds = section.channels.map((sub) => sub.channel?.uuid);
-      delete section.channels; // Optionally, remove the full channel subscriptions if you only want the IDs
-    }
-
-    return plainToInstance(SectionDto, userSections);
+    return userSections;
   }
 
   findSectionChannelIds(sectionUuid: string): Promise<string[]> {
@@ -86,23 +80,20 @@ export class SectionsRepository extends Repository<Section> {
   ): Promise<UpdateResult> {
     return this.createQueryBuilder('section')
       .update()
-      .set({ orderIndex: () => '"orderIndex" - 1' }) // decrement orderIndex
-      .where('"orderIndex" > :orderIndex', { orderIndex }) // for sections with higher orderIndex
-      .andWhere('user.id = :userId', { userId }) // for the same user
+      .set({ orderIndex: () => '"orderIndex" - 1' })
+      .where('"orderIndex" > :orderIndex', { orderIndex })
+      .andWhere('user.id = :userId', { userId })
       .execute();
   }
 
-  findDefaultSection(
-    sectionType: ChannelType,
-    userId: number,
-  ): Promise<Section> {
+  findDefaultSection(userId: number): Promise<Section> {
     return this.findOne({
-      where: { isSystem: true, user: { id: userId }, type: sectionType },
+      where: { isDefault: true, user: { id: userId } },
     });
   }
 
   findDefaultSections(userId: number): Promise<Section[]> {
-    return this.find({ where: { isSystem: true, user: { id: userId } } });
+    return this.find({ where: { isDefault: true, user: { id: userId } } });
   }
 
   findOneByUuid(uuid: string): Promise<Section> {

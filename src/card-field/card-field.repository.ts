@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-
 import { DataSource, Repository } from 'typeorm';
 import { Field } from './entities/card-field.entity';
 import { CreateCardFieldDto } from './dto/create-card-field.dto';
@@ -50,7 +49,7 @@ export class CardFieldRepository extends Repository<Field> {
     return await this.findByUuid(uuid);
   }
 
-  async removeOne(uuid: string) {
+  async removeOne(uuid: string): Promise<Field> {
     const cardField = await this.findByUuid(uuid);
     if (cardField) {
       return await this.softRemove(cardField);

@@ -1,11 +1,10 @@
 import { IsNotEmpty, IsNumber, IsUUID } from 'class-validator';
 
-export class ChannelUnreads {
+export class ChannelUnreadsDto {
   @IsNotEmpty()
   @IsUUID(4)
   channelId: string;
 
-  // @IsNotEmpty()
   @IsNumber()
   unreadCount: number;
 }

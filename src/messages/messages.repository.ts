@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common/exceptions';
 import { DataSource, Repository, FindOptionsWhere } from 'typeorm';
-
 import { Message } from './entities/message.entity';
-
 import { UpdateMessageDto } from './dto/update-message.dto';
 
 @Injectable()
@@ -84,7 +82,7 @@ export class MessagesRepository extends Repository<Message> {
       .getMany();
   }
 
-  async getUnreadMessageCount(
+  async getChannelUnreadMessageCount(
     channelId: string,
     lastRead: Date,
   ): Promise<number> {
@@ -136,7 +134,7 @@ export class MessagesRepository extends Repository<Message> {
     return await this.findOneByProperties({ uuid });
   }
 
-  async removeMessage(uuid: string) {
+  async removeMessage(uuid: string): Promise<Message> {
     const message = await this.findOneByProperties({ uuid });
     if (message) {
       return await this.softRemove(message);

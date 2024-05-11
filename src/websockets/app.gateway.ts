@@ -9,6 +9,8 @@ import { OnModuleInit } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Server, Socket } from 'socket.io';
 import handlers from './handlers';
+import { UserTyping } from 'src/messages/dto/user-typing.dto';
+import { WebSocketMessage } from './utils/web-socket-message';
 
 type UserStatus = 'online' | 'away' | 'busy';
 type UserData = {
@@ -43,7 +45,6 @@ export class AppGateway
     this.initCleanupRoutine();
   }
 
-  // Initial connection to gateway
   handleConnection(client: Socket) {
     const userId = client.handshake.query.userId;
 
@@ -67,11 +68,9 @@ export class AppGateway
 
   @SubscribeMessage('waitingForVerification')
   handleWaitingForVerification(client: Socket, payload: { userId: string }) {
-    // This adds the client to a room named after their email.
     client.join(payload.userId);
   }
 
-  // Join/ leave rooms
   @SubscribeMessage('joinWorkspace')
   handleJoinWorkspace(client: Socket, workspaceId: string) {
     client.join(workspaceId);
@@ -123,10 +122,7 @@ export class AppGateway
   }
 
   @SubscribeMessage('typing')
-  handleTyping(
-    client: Socket,
-    data: { userId: string; userName: string; channelId: string },
-  ): void {
+  handleTyping(client: Socket, data: UserTyping): void {
     client.to(data.channelId).emit('typing', data);
   }
 
@@ -139,7 +135,6 @@ export class AppGateway
     client.to(data.channelId).emit('stopped-typing', data);
   }
 
-  // User online status methods
   initCleanupRoutine() {
     setInterval(() => {
       const now = new Date();
@@ -152,7 +147,6 @@ export class AppGateway
     }, 10000);
   }
 
-  // TODO: need to make this work with workspaces
   broadcastUpdatedUsers() {
     const userIdsAndStatus = Array.from(this.users.entries()).map(
       ([userId, data]) => ({
@@ -161,6 +155,10 @@ export class AppGateway
       }),
     );
 
-    this.server.emit('online-users', userIdsAndStatus);
+    const webSocketMessage = new WebSocketMessage('online-users', {
+      users: userIdsAndStatus,
+    });
+
+    this.server.emit('online-users', webSocketMessage);
   }
 }

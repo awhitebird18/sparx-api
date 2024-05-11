@@ -11,4 +11,5 @@ export const config: PostgresConnectionOptions = {
   entities: [__dirname + '/**/*.entity{.ts,.js}'],
   synchronize: true,
   namingStrategy: new DefaultNamingStrategy(),
+  // dropSchema: true,
 };

@@ -12,6 +12,7 @@ import { CreateCardTemplateDto } from './dto/create-card-template.dto';
 import { UpdateCardTemplateDto } from './dto/update-card-template.dto';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { User } from 'src/users/entities/user.entity';
+import { CardTemplateDto } from './dto/card-template.dto';
 
 @Controller('card-template')
 export class CardTemplateController {
@@ -20,18 +21,22 @@ export class CardTemplateController {
   @Post()
   create(
     @GetUser() user: User,
-    @Body() createCardTemplateDto: CreateCardTemplateDto,
-  ) {
-    return this.cardTemplateService.create(createCardTemplateDto, user);
+    @Body()
+    body: { card: CreateCardTemplateDto; workspaceId: string },
+  ): Promise<CardTemplateDto> {
+    return this.cardTemplateService.create(body.card, body.workspaceId, user);
   }
 
-  @Get()
-  findAllByUser(@GetUser() user: User) {
-    return this.cardTemplateService.findAllByUser(user);
+  @Get('user/:workspaceId')
+  findAllByUser(
+    @GetUser() user: User,
+    @Param('workspaceId') workspaceId: string,
+  ): Promise<CardTemplateDto[]> {
+    return this.cardTemplateService.findAllByUser(user, workspaceId);
   }
 
   @Get(':uuid')
-  findByUuid(@Param('uuid') uuid: string) {
+  findByUuid(@Param('uuid') uuid: string): Promise<CardTemplateDto> {
     return this.cardTemplateService.findByUuid(uuid);
   }
 
@@ -39,7 +44,7 @@ export class CardTemplateController {
   update(
     @Param('uuid') uuid: string,
     @Body() updateCardTemplateDto: UpdateCardTemplateDto,
-  ) {
+  ): Promise<CardTemplateDto> {
     return this.cardTemplateService.updateCardTemplate(
       uuid,
       updateCardTemplateDto,
@@ -47,7 +52,7 @@ export class CardTemplateController {
   }
 
   @Delete(':uuid')
-  remove(@Param('uuid') uuid: string) {
+  remove(@Param('uuid') uuid: string): void {
     return this.cardTemplateService.removeCardTemplate(uuid);
   }
 }

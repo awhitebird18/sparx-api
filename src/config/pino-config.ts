@@ -4,17 +4,14 @@ import { PrettyOptions } from 'pino-pretty';
 const isProduction = process.env.NODE_ENV === 'production';
 
 const pinoPrettyOptions: PrettyOptions = {
-  colorize: !isProduction, // Only colorize in development
+  colorize: !isProduction,
   singleLine: true,
-  translateTime: 'yyyy-mm-dd HH:MM:ss.l', // Make timestamp more readable
-  ignore: 'pid,hostname', // If you don't want to display the process id and hostname (optional)
+  translateTime: 'yyyy-mm-dd HH:MM:ss.l',
+  ignore: 'pid,hostname',
 };
 
 export const pinoConfig: Params = {
   pinoHttp: {
-    // customProps: (req, res) => ({
-    //   context: 'HTTP',
-    // }),
     transport: {
       targets: [
         {
@@ -31,8 +28,8 @@ export const pinoConfig: Params = {
         },
       ],
     },
-    autoLogging: true, // Enable auto logging globally
-    redact: ['req.headers.authorization'], // Redact auth headers
+    autoLogging: true,
+    redact: ['req.headers.authorization'],
     serializers: {
       req: (req) => ({ url: req.url }),
       res: () => ({}),

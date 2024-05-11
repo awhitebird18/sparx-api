@@ -1,33 +1,34 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
-import { Flashcard } from './entities/card.entity'; // Make sure to import your actual Card entity
+import { Card } from './entities/card.entity';
 import { FlashcardReviewDTO } from './dto/card-review.dto';
 import { User } from 'src/users/entities/user.entity';
 import { PerformanceRating } from './enums/performance-rating.enum';
 import { ReviewHistoryRepository } from 'src/review-history/review-history.repository';
 import { Channel } from 'src/channels/entities/channel.entity';
+import { ChannelCardCountDto } from './dto/channel-card-count.dto';
+import { CreateCardDto } from './dto/create-card.dto';
+import { CardStatDto } from './dto/card-stat.dto';
+import { CardMaturityStatDto } from './dto/card-maturity-stat-dto';
 
 @Injectable()
-export class CardRepository extends Repository<Flashcard> {
+export class CardRepository extends Repository<Card> {
   constructor(
     private dataSource: DataSource,
     private reviewHistoryRepository: ReviewHistoryRepository,
   ) {
-    super(Flashcard, dataSource.createEntityManager());
+    super(Card, dataSource.createEntityManager());
   }
 
-  // Create a new card
-  createCard(createCardDto: any) {
+  createCard(createCardDto: CreateCardDto): Promise<Card> {
     const card = this.create(createCardDto);
     return this.save(card);
   }
 
-  // Find all cards
-  async findAll(): Promise<Flashcard[]> {
-    return await this.find();
-  }
-
-  async getCardsDueForChannel(user: User, channel: Channel): Promise<number> {
+  async getCountOfCardsDueForChannel(
+    user: User,
+    channel: Channel,
+  ): Promise<number> {
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 
@@ -43,35 +44,71 @@ export class CardRepository extends Repository<Flashcard> {
     return count;
   }
 
-  async getCardsDueForWorkspace(
+  findCardsDueForChannel(userId: string, channelId: string): Promise<Card[]> {
+    return this.createQueryBuilder('card')
+      .innerJoinAndSelect('card.cardVariant', 'cardVariant')
+      .leftJoinAndSelect('card.channel', 'channel')
+      .leftJoinAndSelect('card.user', 'user')
+      .leftJoinAndSelect('cardVariant.frontFields', 'frontFields')
+      .innerJoinAndSelect('card.note', 'note')
+      .leftJoinAndSelect('note.fieldValues', 'fieldValues')
+      .leftJoinAndSelect('fieldValues.field', 'field')
+      .where('user.uuid = :userId', { userId })
+      .andWhere('channel.uuid = :channelId', { channelId })
+      .getMany();
+  }
+
+  async getCountOfCardsDueByChannel(
     user: User,
     workspaceId: string,
-  ): Promise<{ channelId: string; count: number }[]> {
+  ): Promise<ChannelCardCountDto[]> {
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 
-    // Build the query to count flashcards per channel
     const counts = await this.createQueryBuilder('card')
-      .leftJoin('card.channel', 'channel') // Use leftJoin when you don't need to select properties from the joined entity
-      .leftJoin('card.workspace', 'workspace') // Ensure you join with workspace as well
-      .select('channel.uuid', 'channelId') // Select the channel id for grouping and output
-      .addSelect('COUNT(card.id)', 'count') // Count the cards grouped by channel
+      .leftJoin('card.channel', 'channel')
+      .leftJoin('card.workspace', 'workspace')
+      .select('channel.uuid', 'channelId')
+      .addSelect('COUNT(card.id)', 'count')
       .where('card.user = :userId', { userId: user.id })
-      .andWhere('workspace.uuid = :workspaceId', { workspaceId: workspaceId }) // Make sure to match the workspace.id, not workspace.uuid based on your entity description
+      .andWhere('workspace.uuid = :workspaceId', { workspaceId: workspaceId })
       .andWhere('card.nextReviewDate <= :today', {
         today: today.toISOString().split('T')[0],
       })
-      .groupBy('channel.uuid') // Group the results by channel id to get counts per channel
-      .getRawMany(); // Use getRawMany to execute the query and get raw results
+      .groupBy('channel.uuid')
+      .getRawMany();
 
-    // Transform the results to match the desired output format
     return counts.map((item) => ({
       channelId: item.channelId,
-      count: parseInt(item.count, 10), // Ensure count is returned as a number
+      count: parseInt(item.count, 10),
     }));
   }
 
-  async reviewMultipleFlashcards(reviews: FlashcardReviewDTO[], user: User) {
+  findFlashcardsByUser(userId: string, channelId: string): Promise<Card[]> {
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    return this.createQueryBuilder('card')
+      .innerJoinAndSelect('card.cardVariant', 'cardVariant')
+      .leftJoinAndSelect('card.channel', 'channel')
+      .leftJoinAndSelect('cardVariant.frontFields', 'frontFields')
+      .leftJoinAndSelect('cardVariant.backFields', 'backFields')
+      .innerJoinAndSelect('card.note', 'note')
+      .leftJoinAndSelect('note.fieldValues', 'fieldValues')
+      .leftJoinAndSelect('fieldValues.field', 'field')
+      .leftJoinAndSelect('fieldValues.user', 'user')
+      .where('user.uuid = :userId', { userId })
+      .andWhere('channel.uuid = :channelId', { channelId })
+      .andWhere('card.nextReviewDate <= :today', {
+        today: today.toISOString().split('T')[0],
+      })
+      .getMany();
+  }
+
+  async reviewMultipleFlashcards(
+    reviews: FlashcardReviewDTO[],
+    user: User,
+  ): Promise<FlashcardReviewDTO[]> {
     const results = [];
 
     for (const review of reviews) {
@@ -80,44 +117,37 @@ export class CardRepository extends Repository<Flashcard> {
       });
 
       if (flashcard) {
-        // Check if this is the first review of the flashcard
         if (flashcard.repetitions === 0) {
-          flashcard.interval = 1; // First review interval is 1 day
-          flashcard.easeFactor = 2.5; // Starting ease factor
+          flashcard.interval = 1;
+          flashcard.easeFactor = 2.5;
         } else {
-          // Adjust ease factor based on performance rating
           if (review.performanceRating === PerformanceRating.EASY) {
             flashcard.easeFactor += 0.1;
           } else if (review.performanceRating === PerformanceRating.HARD) {
             flashcard.easeFactor -= 0.2;
-            // Ensure ease factor doesn't fall below 1.3, which is the minimum in SM-2
             flashcard.easeFactor = Math.max(1.3, flashcard.easeFactor);
           }
 
-          // Calculate next interval
           if (review.performanceRating === PerformanceRating.AGAIN) {
-            flashcard.interval = 1; // Reset interval if the card was forgotten
+            flashcard.interval = 1;
           } else {
-            // Increase interval for next review (SM-2 formula)
             flashcard.interval = Math.round(
               flashcard.interval * flashcard.easeFactor,
             );
           }
         }
 
-        // Create and save a new ReviewHistory entry
         const newReviewHistory = this.reviewHistoryRepository.create({
-          flashcard,
           dateReviewed: new Date(),
+          flashcard,
           performanceRating: review.performanceRating,
           user,
         });
 
-        await this.reviewHistoryRepository.save(newReviewHistory); // Save the new ReviewHistory
+        await this.reviewHistoryRepository.save(newReviewHistory);
 
-        // Calculate next review date
         const nextReviewDate = new Date();
-        nextReviewDate.setUTCHours(0, 0, 0, 0); // Set to start of day in UTC
+        nextReviewDate.setUTCHours(0, 0, 0, 0);
         nextReviewDate.setUTCDate(
           nextReviewDate.getUTCDate() + flashcard.interval,
         );
@@ -135,12 +165,12 @@ export class CardRepository extends Repository<Flashcard> {
     return results;
   }
 
-  async getDueFlashcardsCategorizedNext30Days(user: User) {
-    // Set 'today' to the start of the current day in UTC
+  async getDueFlashcardsCategorizedNext30Days(
+    user: User,
+  ): Promise<CardStatDto[]> {
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 
-    // Calculate the date for 30 days later in UTC
     const thirtyDaysLater = new Date(today);
     thirtyDaysLater.setUTCDate(thirtyDaysLater.getUTCDate() + 30);
 
@@ -154,17 +184,15 @@ export class CardRepository extends Repository<Flashcard> {
       })
       .getMany();
 
-    // Initialize all days with zero counts for each category
     const categorizedData = {};
     for (let i = 0; i < 30; i++) {
       const date = new Date(today);
       date.setUTCDate(date.getUTCDate() + i);
-      const formattedDate = date.toISOString().split('T')[0]; // Format as 'YYYY-MM-DD'
+      const formattedDate = date.toISOString().split('T')[0];
 
       categorizedData[formattedDate] = { new: 0, young: 0, mature: 0 };
     }
 
-    // Categorize and count flashcards
     dueFlashcards.forEach((flashcard) => {
       const category = this.determineCardCategory(flashcard);
       const reviewDate = new Date(flashcard.nextReviewDate)
@@ -175,14 +203,11 @@ export class CardRepository extends Repository<Flashcard> {
       }
     });
 
-    // Convert to array format
     return Object.entries(categorizedData).map(([date, counts]: any) => {
-      // Convert the UTC date string back to a Date object
       const utcDate = new Date(date);
 
-      // Format the date using UTC values
       const formattedDate = utcDate.toLocaleDateString('en-US', {
-        timeZone: 'UTC', // Explicitly set the timeZone to UTC
+        timeZone: 'UTC',
         month: 'short',
         day: 'numeric',
       });
@@ -194,7 +219,7 @@ export class CardRepository extends Repository<Flashcard> {
     });
   }
 
-  async getCardMaturityStats(user: User): Promise<any[]> {
+  async getCardMaturityStats(user: User): Promise<CardMaturityStatDto[]> {
     const allUserFlashcards = await this.find({
       where: { user: { id: user.id } },
     });
@@ -212,7 +237,7 @@ export class CardRepository extends Repository<Flashcard> {
     }));
   }
 
-  private determineCardCategory(flashcard: Flashcard): string {
+  private determineCardCategory(flashcard: Card): string {
     const ageInDays =
       (new Date().getTime() - new Date(flashcard.createdAt).getTime()) /
       (1000 * 3600 * 24);
@@ -227,9 +252,9 @@ export class CardRepository extends Repository<Flashcard> {
     }
   }
 
-  async getAddedFlashcardsLast30Days(user: User) {
+  async getAddedFlashcardsLast30Days(user: User): Promise<CardStatDto[]> {
     const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setUTCHours(0, 0, 0, 0); // Set to start of the day in UTC
+    thirtyDaysAgo.setUTCHours(0, 0, 0, 0);
     thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30);
 
     const addedFlashcardsRaw = await this.createQueryBuilder('flashcard')
@@ -243,42 +268,38 @@ export class CardRepository extends Repository<Flashcard> {
       .orderBy('date')
       .getRawMany();
 
-    // Initialize all days with zero counts
     const addedFlashcards = {};
     for (let i = 0; i < 30; i++) {
       const date = new Date(thirtyDaysAgo);
       date.setUTCDate(date.getUTCDate() + i);
-      const formattedDate = date.toISOString().split('T')[0]; // Format as 'YYYY-MM-DD'
+      const formattedDate = date.toISOString().split('T')[0];
       addedFlashcards[formattedDate] = 0;
     }
 
-    // Fill in counts from database query
     addedFlashcardsRaw.forEach((item) => {
-      const dateKey = item.date; // Use the date string directly
+      const dateKey = item.date;
       addedFlashcards[dateKey] = parseInt(item.count, 10);
     });
 
-    // Convert to array format
-    return Object.entries(addedFlashcards).map(([date, count]) => {
-      // Convert the UTC date string back to a Date object
-      const utcDate = new Date(date + 'T00:00:00Z'); // Ensure correct parsing as UTC date
+    return Object.entries(addedFlashcards).map(
+      ([date, count]: [date: string, count: number]) => {
+        const utcDate = new Date(date + 'T00:00:00Z');
 
-      // Format the date using UTC values
-      const formattedDate = utcDate.toLocaleDateString('en-US', {
-        timeZone: 'UTC', // Explicitly set the timeZone to UTC
-        month: 'short',
-        day: 'numeric',
-      });
+        const formattedDate = utcDate.toLocaleDateString('en-US', {
+          timeZone: 'UTC',
+          month: 'short',
+          day: 'numeric',
+        });
 
-      return {
-        date: formattedDate,
-        count,
-      };
-    });
+        return {
+          date: formattedDate,
+          count,
+        };
+      },
+    );
   }
 
-  // Find a specific card by ID
-  async findOneById(uuid: string): Promise<Flashcard> {
+  async findOneById(uuid: string): Promise<Card> {
     const card = await this.findOne({ where: { uuid } });
     if (!card) {
       throw new NotFoundException(`Card with ID ${uuid} not found`);
@@ -286,8 +307,7 @@ export class CardRepository extends Repository<Flashcard> {
     return card;
   }
 
-  // Update a specific card by ID
-  async updateCard(uuid: string, updateCardDto: any): Promise<Flashcard> {
+  async updateCard(uuid: string, updateCardDto: any): Promise<Card> {
     const result = await this.update(uuid, updateCardDto);
     if (result.affected === 0) {
       throw new NotFoundException(`Card with ID ${uuid} not found`);
@@ -295,7 +315,6 @@ export class CardRepository extends Repository<Flashcard> {
     return await this.findOne({ where: { uuid } });
   }
 
-  // Remove a specific card by ID
   async removeCard(id: number): Promise<void> {
     const result = await this.delete(id);
     if (result.affected === 0) {

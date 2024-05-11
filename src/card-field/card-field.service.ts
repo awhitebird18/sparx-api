@@ -3,6 +3,9 @@ import { CreateCardFieldDto } from './dto/create-card-field.dto';
 import { CardFieldRepository } from './card-field.repository';
 import { CardTemplateRepository } from 'src/card-template/card-template.repository';
 import { UpdateCardFieldDto } from './dto/update-card-field.dto';
+import { CardFieldDto } from './dto/card-field.dto';
+import { plainToInstance } from 'class-transformer';
+import { Field } from './entities/card-field.entity';
 
 @Injectable()
 export class CardFieldService {
@@ -10,30 +13,51 @@ export class CardFieldService {
     private cardFieldRepository: CardFieldRepository,
     private cardTemplateRepository: CardTemplateRepository,
   ) {}
-  async create(createCardFieldDto: CreateCardFieldDto) {
+
+  convertToDto(cardField: Field): CardFieldDto {
+    return plainToInstance(CardFieldDto, cardField);
+  }
+
+  async create(createCardFieldDto: CreateCardFieldDto): Promise<CardFieldDto> {
     const template = await this.cardTemplateRepository.findByUuid(
       createCardFieldDto.templateId,
     );
 
-    return await this.cardFieldRepository.createCardField(
+    const cardField = await this.cardFieldRepository.createCardField(
       createCardFieldDto,
       template,
     );
+
+    return this.convertToDto(cardField);
   }
 
-  findByTemplate(templateId: string) {
-    return this.cardFieldRepository.findByTemplateId(templateId);
+  async findByTemplate(templateId: string): Promise<CardFieldDto[]> {
+    const cardFields = await this.cardFieldRepository.findByTemplateId(
+      templateId,
+    );
+
+    return cardFields.map((cardField) => this.convertToDto(cardField));
   }
 
-  findByUuid(uuid: string) {
-    return this.cardFieldRepository.findByUuid(uuid);
+  async findByUuid(uuid: string): Promise<CardFieldDto> {
+    const cardField = await this.cardFieldRepository.findByUuid(uuid);
+
+    return this.convertToDto(cardField);
   }
 
-  updateOne(uuid: string, updateCardFieldDto: UpdateCardFieldDto) {
-    return this.cardFieldRepository.updateOne(uuid, updateCardFieldDto);
+  async updateOne(
+    uuid: string,
+    updateCardFieldDto: UpdateCardFieldDto,
+  ): Promise<CardFieldDto> {
+    const cardField = await this.cardFieldRepository.updateOne(
+      uuid,
+      updateCardFieldDto,
+    );
+
+    return this.convertToDto(cardField);
   }
 
-  removeOne(uuid: string) {
-    return this.cardFieldRepository.removeOne(uuid);
+  removeOne(uuid: string): void {
+    this.cardFieldRepository.removeOne(uuid);
   }
 }

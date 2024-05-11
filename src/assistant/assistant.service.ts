@@ -1,15 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { CreateAssistantDto } from './dto/create-assistant.dto';
-import { UpdateAssistantDto } from './dto/update-assistant.dto';
 import { OpenAI } from 'openai';
-import { ChannelsRepository } from 'src/channels/channels.repository';
-import { ChannelConnectorsRepository } from 'src/channel-connectors/channel-connectors.repository';
-import { WorkspacesRepository } from 'src/workspaces/workspaces.repository';
-import { NotesRepository } from 'src/notes/notes.repository';
-import { User } from 'src/users/entities/user.entity';
-import { CardTemplateRepository } from 'src/card-template/card-template.repository';
-import { CardNoteService } from 'src/card-note/card-note.service';
-import { Template } from 'src/card-template/entities/card-template.entity';
+import { Channel } from 'src/channels/entities/channel.entity';
+import { Workspace } from 'src/workspaces/entities/workspace.entity';
+import { Note } from 'src/notes/entities/note.entity';
+import { FlashcardIdea } from './dto/flashcard-idea.dto';
+import { RoadmapTopic } from './dto/roadmap-top.dto';
+import { NoteIdea } from './dto/note-idea.dto';
+import { SubtopicIdea } from './dto/suptopic-idea.dto';
+import { v4 as uuid } from 'uuid';
+import { convertStringToFlashcardContentFormat } from 'src/card/utils/convertStringToFlashcardContentFormat';
 
 function isJsonString(str) {
   try {
@@ -22,63 +21,64 @@ function isJsonString(str) {
 
 @Injectable()
 export class AssistantService {
-  constructor(
-    private channelRepository: ChannelsRepository,
-    private workspaceRepository: WorkspacesRepository,
-    private channelConnectorsRepository: ChannelConnectorsRepository,
-    private notesRepository: NotesRepository,
-    private cardTemplateRepository: CardTemplateRepository,
-    private cardNoteService: CardNoteService,
-  ) {}
-
-  create(createAssistantDto: CreateAssistantDto) {
-    return 'This action adds a new assistant';
-  }
-
-  async generateSubtopics(channelId: string, workspaceId: string) {
-    const channel = await this.channelRepository.findByUuid(channelId);
-    const workspace = await this.workspaceRepository.findWorkspaceByUuid(
-      workspaceId,
-    );
-
-    const channelConnectors = await this.channelConnectorsRepository.find({
-      where: { parentChannel: { id: channel.id } },
-      relations: ['childChannel'],
-    });
-
-    console.log(channelConnectors);
-
+  async generateRoadmapTopics(topic: string): Promise<RoadmapTopic[]> {
     const openAIClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const chatCompletion = await openAIClient.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
         {
-          content: `Please generate me subtopics for ${channel.name} in relation to ${workspace.name}. For example, if I would like to know more about "Browsers and how they work" additional subtopics may look like ["Browser Architecture", "Browser Security Features",  "Browser Storage Options", "Browser Developer Tools",  "Browser Compatibility", etc..] and provide a very brief explanation on why it relates to the topic. Please generate an array of objects with the keys as title and explanation.`,
+          content: `Please generate a roadmap of major topics for learning ${topic}. For example, if I am learning Frontend Development a roadmap map look like [{topic: "Internet", subtopics: ["How does the internet work?", "What is HTTP?". "What is domain name?", "What is hosting?", "DNS and how it works?", "Browsers and how they work?"]}, {topic: "HTML", subtopics: ["Learn the basics", "Writing semantic HTML", "Forms and Validations", "Accessibility", "SEO Basics"]}, {topic: "CSS", subtopics: ["Learn the basics", "Making Layouts", "Responsive Design"]}...]. Please generate this format and keep the titles short. Please provide an array of objects and in json format.`,
           role: 'user',
         },
       ],
     });
 
-    return chatCompletion.choices[0].message.content;
+    const data = chatCompletion.choices[0].message.content;
+
+    let jsonObject: RoadmapTopic[] | undefined = undefined;
+
+    if (isJsonString(data)) {
+      jsonObject = JSON.parse(data);
+    } else {
+      console.error('Received data is not a valid JSON string.');
+    }
+
+    return jsonObject;
   }
 
-  async generateFlashcards(
-    noteId: string,
-    channelId: string,
-    workspaceId: string,
-    user: User,
-  ) {
-    const note = await this.notesRepository.findByUuid(noteId);
+  async generateSubtopics(
+    channelName: string,
+    workspaceName: string,
+  ): Promise<SubtopicIdea[]> {
+    const openAIClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const chatCompletion = await openAIClient.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          content: `Please generate me subtopics for ${channelName} in relation to ${workspaceName}. For example, if I would like to know more about "Browsers and how they work" additional subtopics may look like ["Browser Architecture", "Browser Security Features",  "Browser Storage Options", "Browser Developer Tools",  "Browser Compatibility", etc..] and provide a very brief explanation on why it relates to the topic. Please generate an array of objects with the keys as title and explanation.`,
+          role: 'user',
+        },
+      ],
+    });
 
-    const channel = await this.channelRepository.findByUuid(channelId);
-    const workspace = await this.workspaceRepository.findWorkspaceByUuid(
-      workspaceId,
-    );
+    const data = chatCompletion.choices[0].message.content;
 
-    const cardTemplates = await this.cardTemplateRepository.findAllByUser(user);
+    let jsonObject: SubtopicIdea[] | undefined = undefined;
 
-    const selectedTemplate: Template = cardTemplates[0];
+    if (isJsonString(data)) {
+      jsonObject = JSON.parse(data);
+    } else {
+      console.error('Received data is not a valid JSON string.');
+    }
 
+    return jsonObject;
+  }
+
+  async generateFlashcardIdeas(
+    note: Note,
+    channel: Channel,
+    workspace: Workspace,
+  ): Promise<FlashcardIdea[]> {
     if (!isJsonString(note.content)) return;
 
     const parsedJson = JSON.parse(note.content);
@@ -90,9 +90,6 @@ export class AssistantService {
     for (let i = 0; i < contentArr.length; i++) {
       text += contentArr[i].text;
     }
-
-    const frontFieldUuid = selectedTemplate.fields[0].uuid;
-    const backFieldUuid = selectedTemplate.fields[1].uuid;
 
     const openAIClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const chatCompletion = await openAIClient.chat.completions.create({
@@ -106,107 +103,31 @@ export class AssistantService {
     });
 
     const data = chatCompletion.choices[0].message.content;
-    console.log(data);
 
-    let jsonObject;
+    let jsonObject: FlashcardIdea[] | undefined = undefined;
 
-    if (isJsonString(data)) {
+    if (isJsonString(JSON.stringify(data))) {
       jsonObject = JSON.parse(data);
     } else {
       console.error('Received data is not a valid JSON string.');
     }
 
-    const flashcards = jsonObject.map((flashcard) => {
-      const frontSide = {
-        root: {
-          children: [
-            {
-              children: [
-                {
-                  detail: 0,
-                  format: 0,
-                  mode: 'normal',
-                  style: '',
-                  text: flashcard.front,
-                  type: 'text',
-                  version: 1,
-                },
-              ],
-              direction: 'ltr',
-              format: '',
-              indent: 0,
-              type: 'paragraph',
-              version: 1,
-            },
-          ],
-          direction: 'ltr',
-          format: '',
-          indent: 0,
-          type: 'root',
-          version: 1,
-        },
-      };
-      const backSide = {
-        root: {
-          children: [
-            {
-              children: [
-                {
-                  detail: 0,
-                  format: 0,
-                  mode: 'normal',
-                  style: '',
-                  text: flashcard.back,
-                  type: 'text',
-                  version: 1,
-                },
-              ],
-              direction: 'ltr',
-              format: '',
-              indent: 0,
-              type: 'paragraph',
-              version: 1,
-            },
-          ],
-          direction: 'ltr',
-          format: '',
-          indent: 0,
-          type: 'root',
-          version: 1,
-        },
-      };
+    const convertedFlashcardIdeas = jsonObject.map((flashcardIdea) => {
+      const front = convertStringToFlashcardContentFormat(flashcardIdea.front);
+      const back = convertStringToFlashcardContentFormat(flashcardIdea.back);
 
       return {
-        channelId,
-        templateId: selectedTemplate.uuid,
-        workspaceId,
-        fieldValues: [
-          { uuid: frontFieldUuid, value: frontSide },
-          { uuid: backFieldUuid, value: backSide },
-        ],
+        ...flashcardIdea,
+        front,
+        back,
+        uuid: uuid(),
       };
     });
 
-    const returnData = await Promise.all(
-      flashcards.map((flashcard) =>
-        this.cardNoteService.create(flashcard, user),
-      ),
-    );
-
-    return returnData;
+    return convertedFlashcardIdeas;
   }
 
-  async generateNote(
-    channelId: string,
-    workspaceId: string,
-    title: string,
-    user: User,
-  ) {
-    const channel = await this.channelRepository.findByUuid(channelId);
-    const workspace = await this.workspaceRepository.findWorkspaceByUuid(
-      workspaceId,
-    );
-
+  async generateNote(workspace: Workspace, title: string): Promise<NoteIdea> {
     const openAIClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const chatCompletion = await openAIClient.chat.completions.create({
       model: 'gpt-3.5-turbo',
@@ -217,9 +138,9 @@ export class AssistantService {
         },
       ],
     });
-    const data = chatCompletion.choices[0].message.content;
+    const data: string = chatCompletion.choices[0].message.content;
 
-    let jsonObject;
+    let jsonObject: NoteIdea | undefined = undefined;
 
     if (isJsonString(data)) {
       jsonObject = JSON.parse(data);
@@ -227,159 +148,30 @@ export class AssistantService {
       console.error('Received data is not a valid JSON string.');
     }
 
-    const jsonString = {
-      root: {
-        children: [
-          {
-            children: [
-              {
-                detail: 0,
-                format: 0,
-                mode: 'normal',
-                style: '',
-                text: jsonObject.content,
-                type: 'text',
-                version: 1,
-              },
-            ],
-            direction: 'ltr',
-            format: '',
-            indent: 0,
-            type: 'paragraph',
-            version: 1,
-          },
-        ],
-        direction: 'ltr',
-        format: '',
-        indent: 0,
-        type: 'root',
-        version: 1,
-      },
-    };
-
-    console.log('1:', jsonString);
-    console.log('2:', JSON.stringify(jsonString));
-
-    const note = await this.notesRepository.createNote(
-      { content: JSON.stringify(jsonString), title: jsonObject.title },
-      channel,
-      user,
-    );
-
-    return {
-      title: note.title,
-      isPrivate: note.isPrivate,
-      uuid: note.uuid,
-      createdAt: note.createdAt,
-      content: note.content,
-      lastAccessed: note.updatedAt,
-      // Assuming createdBy is a User entity with firstName and lastName
-      createdBy: note.createdBy.uuid,
-    };
+    return jsonObject;
   }
 
-  async summarizeArticle(
-    channelId: string,
-    workspaceId: string,
-    article: string,
-    user: User,
-  ) {
-    const channel = await this.channelRepository.findByUuid(channelId);
-    const workspace = await this.workspaceRepository.findWorkspaceByUuid(
-      workspaceId,
-    );
-
-    const channelConnectors = await this.channelConnectorsRepository.find({
-      where: { parentChannel: { id: channel.id } },
-      relations: ['childChannel'],
-    });
-
-    console.log(channelConnectors);
-
+  async summarizeArticle(channel: Channel, article: string): Promise<NoteIdea> {
     const openAIClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const chatCompletion = await openAIClient.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
         {
-          content: `Can you please summarize this article: ${article}. Please provide the output in valid json format with a title property and a content property with the summarized article.`,
+          content: `Can you please summarize this article: ${article} in relation to ${channel.name}. Please provide the output in valid json format with a title property and a content property with the summarized article.`,
           role: 'user',
         },
       ],
     });
-    const data = chatCompletion.choices[0].message.content;
+    const data: string = chatCompletion.choices[0].message.content;
 
-    let jsonObject;
+    let jsonObject: NoteIdea | undefined = undefined;
 
     if (isJsonString(data)) {
       jsonObject = JSON.parse(data);
-      console.log('Parsed JSON Object:', jsonObject);
     } else {
       console.error('Received data is not a valid JSON string.');
     }
 
-    const jsonString = `{
-      "root": {
-        "children": [
-          {
-            "children": [
-              {
-                "detail": 0,
-                "format": 0,
-                "mode": "normal",
-                "style": "",
-                "text": "${jsonObject.content}",
-                "type": "text",
-                "version": 1
-              }
-            ],
-            "direction": "ltr",
-            "format": "",
-            "indent": 0,
-            "type": "paragraph",
-            "version": 1
-          }
-        ],
-        "direction": "ltr",
-        "format": "",
-        "indent": 0,
-        "type": "root",
-        "version": 1
-      }
-    }`;
-
-    console.log({ content: jsonString, title: jsonObject.title }, jsonString);
-
-    const note = await this.notesRepository.createNote(
-      { content: jsonString, title: jsonObject.title },
-      channel,
-      user,
-    );
-
-    return {
-      title: note.title,
-      isPrivate: note.isPrivate,
-      uuid: note.uuid,
-      createdAt: note.createdAt,
-      content: note.content,
-      lastAccessed: note.updatedAt,
-      // Assuming createdBy is a User entity with firstName and lastName
-      createdBy: note.createdBy.uuid,
-    };
-  }
-
-  findAll() {
-    return `This action returns all assistant`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} assistant`;
-  }
-
-  update(id: number, updateAssistantDto: UpdateAssistantDto) {
-    return `This action updates a #${id} assistant`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} assistant`;
+    return jsonObject;
   }
 }

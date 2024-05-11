@@ -1,14 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-
 import { SectionsRepository } from 'src/sections/sections.repository';
 import { ChannelSubscriptionsService } from 'src/channel-subscriptions/channel-subscriptions.service';
-
 import { Section } from './entities/section.entity';
-
 import { CreateSectionDto } from './dto/create-section.dto';
 import { UpdateSectionDto } from './dto/update-section.dto';
-import { ChannelType } from 'src/channels/enums/channel-type.enum';
-
 import { SectionDto } from './dto/section.dto';
 import { plainToInstance } from 'class-transformer';
 import { UpdateSectionOrderDto } from './dto/update-section-order.dto';
@@ -24,27 +19,28 @@ export class SectionsService {
   ) {}
 
   private readonly defaultSections = [
-    // {
-    //   name: 'Direct Messages',
-    //   type: ChannelType.DIRECT,
-    //   orderIndex: 0,
-    // },
     {
       name: 'Favorites',
-      type: ChannelType.CHANNEL,
       orderIndex: 0,
+      isDefault: true,
     },
   ];
 
-  async mapSectionToDto(section: Section): Promise<SectionDto> {
-    return plainToInstance(SectionDto, {
-      ...section,
-      channelIds: await this.findSectionChannelIds(section.uuid),
-    });
+  async convertToDto(section: Section): Promise<SectionDto> {
+    return plainToInstance(
+      SectionDto,
+      {
+        ...section,
+        channelIds: await this.findSectionChannelIds(section.uuid),
+      },
+      { excludeExtraneousValues: true },
+    );
   }
 
-  findOne(searchProperties: any): Promise<Section> {
-    return this.sectionsRepository.findOneBy(searchProperties);
+  async findOne(searchProperties: any): Promise<SectionDto> {
+    const section = await this.sectionsRepository.findOneBy(searchProperties);
+
+    return this.convertToDto(section);
   }
 
   findSectionChannelIds(sectionUuid: string): Promise<string[]> {
@@ -56,7 +52,7 @@ export class SectionsService {
     user: User,
   ): Promise<SectionDto[]> {
     const updatePromises = [];
-    // Update section orderIndexes
+
     for (let i = 0; i < sectionIndexes.length; i++) {
       const updatePromise = this.sectionsRepository.updateSection(
         sectionIndexes[i].uuid,
@@ -76,69 +72,69 @@ export class SectionsService {
     return sections;
   }
 
-  async seedUserDefaultSections(userId: number): Promise<void> {
+  async seedUserDefaultSections(user: User): Promise<void> {
+    const sectionsPromises = [];
     for (let i = 0; i < this.defaultSections.length; i++) {
-      await this.sectionsRepository.createSection({
-        ...this.defaultSections[i],
-        orderIndex: i,
-        isSystem: true,
-        userId,
-      });
+      const sectionPromise = this.sectionsRepository.createSection(
+        {
+          ...this.defaultSections[i],
+        },
+        user,
+      );
+
+      sectionsPromises.push(sectionPromise);
     }
+
+    await Promise.all(sectionsPromises);
   }
 
   async createSection(
     createSectionDto: CreateSectionDto,
     user: User,
-  ): Promise<Section> {
+  ): Promise<SectionDto> {
     const lastSectionIndex =
       await this.sectionsRepository.findHighestOrderIndex(user.id);
 
-    // Create section
-    const newSection = await this.sectionsRepository.createSection({
-      ...createSectionDto,
-      orderIndex: lastSectionIndex + 1,
-      userId: user.id,
-      type: ChannelType.ANY,
-    });
-    // Send new section over socket
-
-    const serializedSection = plainToInstance(
-      SectionDto,
-      await this.mapSectionToDto(newSection),
+    const newSection = await this.sectionsRepository.createSection(
+      createSectionDto,
+      user,
+      lastSectionIndex + 1,
     );
 
-    this.events.emit(
-      'websocket-event',
-      'newSection',
-      serializedSection,
-      user.uuid,
-    );
+    const section = this.convertToDto(newSection);
 
-    return newSection;
+    this.events.emit('websocket-event', 'newSection', section, user.uuid);
+
+    return section;
   }
 
   async findUserSections(userId: number): Promise<SectionDto[]> {
-    return this.sectionsRepository.findUserSections(userId);
+    const sections = await this.sectionsRepository.findUserSections(userId);
+
+    return await Promise.all(
+      sections.map((section) => this.convertToDto(section)),
+    );
   }
 
-  findDefaultSection(
-    sectionType: ChannelType,
-    userId: number,
-  ): Promise<Section> {
-    return this.sectionsRepository.findDefaultSection(sectionType, userId);
+  async findDefaultSection(userId: number): Promise<SectionDto> {
+    const section = await this.sectionsRepository.findDefaultSection(userId);
+
+    return this.convertToDto(section);
   }
 
-  findDefaultSections(userId: number): Promise<Section[]> {
-    return this.sectionsRepository.findDefaultSections(userId);
+  async findDefaultSections(userId: number): Promise<SectionDto[]> {
+    const sections = await this.sectionsRepository.findDefaultSections(userId);
+
+    return await Promise.all(
+      sections.map((section) => this.convertToDto(section)),
+    );
   }
 
   async updateSection(
     sectionUuid: string,
     updateSectionDto: UpdateSectionDto,
     user: User,
-  ): Promise<Section> {
-    // Update section
+  ): Promise<SectionDto> {
     const updateResult = await this.sectionsRepository.updateSection(
       sectionUuid,
       updateSectionDto,
@@ -146,22 +142,18 @@ export class SectionsService {
     if (updateResult.affected === 0)
       throw new NotFoundException(`Section with UUID ${sectionUuid} not found`);
 
-    // Find updated section
     const updatedSection = await this.sectionsRepository.findOneByUuid(
       sectionUuid,
     );
 
-    this.events.emit(
-      'websocket-event',
-      'updateSection',
-      updatedSection,
-      user.uuid,
-    );
+    const sectionDto = await this.convertToDto(updatedSection);
 
-    return updatedSection;
+    this.events.emit('websocket-event', 'updateSection', sectionDto, user.uuid);
+
+    return sectionDto;
   }
 
-  async removeSection(uuid: string, user: User): Promise<string> {
+  async removeSection(uuid: string, user: User): Promise<void> {
     try {
       const sectionToRemove =
         await this.sectionsRepository.findSectionWithChannels(uuid);
@@ -171,7 +163,7 @@ export class SectionsService {
 
       const updatePromises = channelSubscriptions.map(async (subscription) => {
         const defaultSection = userDefaultSections.find(
-          (section) => section.type === subscription.channel.type,
+          (section) => section.isDefault,
         );
         return this.channelSubscriptionsService.updateChannelSection(
           user,
@@ -185,8 +177,6 @@ export class SectionsService {
       await this.sectionsRepository.removeSection(sectionToRemove);
 
       this.events.emit('websocket-event', 'removeSection', uuid, user.uuid);
-
-      return uuid;
     } catch (error) {
       console.error('Error in removeSection: ', error);
     }

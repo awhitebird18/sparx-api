@@ -6,60 +6,47 @@ import {
   Patch,
   Param,
   Delete,
-  Query,
   HttpCode,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { HttpStatus } from '@nestjs/common/enums';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
-
 import { ChannelsService } from './channels.service';
 import { User } from 'src/users/entities/user.entity';
-
 import { ChannelDto } from './dto/channel.dto';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
 import { ChannelUserCount } from './dto/channel-user-count.dto';
+import { Channel } from './entities/channel.entity';
+import { UpdateChannelCoordinatesDto } from './dto/update-channel-coordinates';
 
-@ApiBearerAuth('access-token')
-@ApiTags('Channels')
 @Controller('channels')
 export class ChannelsController {
   constructor(private readonly channelsService: ChannelsService) {}
-
-  @ApiBody({ type: CreateChannelDto })
   @Post()
-  async createChannel(
-    @Body() createChannelDto: CreateChannelDto,
-  ): Promise<ChannelDto> {
+  createChannel(
+    @GetUser() currentUser: User,
+    @Body()
+    {
+      createChannel,
+      workspaceId,
+    }: {
+      createChannel: CreateChannelDto;
+      workspaceId: string;
+    },
+  ): Promise<Channel> {
     return this.channelsService.createChannel(
-      createChannelDto,
-      createChannelDto.workspaceId,
+      createChannel,
+      workspaceId,
+      currentUser,
     );
   }
 
-  // @Get()
-  // findWorkspaceChannels(
-  //   @Query('page') page: number,
-  //   @Query('pageSize') pageSize: number,
-  // ): Promise<{
-  //   channels: ChannelDto[];
-  //   channelUserCounts: ChannelUserCount[];
-  // }> {
-  //   return this.channelsService.findWorkspaceChannels(page, pageSize);
-  // }
   @Get('workspaceId')
   findWorkspaceChannels(
     @GetUser() currentUser: User,
     @Param('workspaceId') workspaceId: string,
-  ): Promise<
-    | any
-    | {
-        channels: ChannelDto[];
-        channelUserCounts: ChannelUserCount[];
-      }
-  > {
+  ): Promise<ChannelDto[]> {
     return this.channelsService.findWorkspaceChannels(
       currentUser.id,
       workspaceId,
@@ -67,60 +54,69 @@ export class ChannelsController {
   }
 
   @Get('user-count/:workspaceId')
-  findWorkspaceUserCounts(
+  findChannelUserCounts(
     @Param('workspaceId') workspaceId: string,
   ): Promise<ChannelUserCount[]> {
     return this.channelsService.findChannelUserCounts(workspaceId);
   }
 
-  @Get('user-channels')
-  findUserChannels(@GetUser() currentUser: User): Promise<ChannelDto[]> {
-    return this.channelsService.findUserChannels(currentUser);
-  }
-
-  @Get('direct')
-  findDirectChannel(
-    @GetUser() currentUser: User,
-    @Query('userUuid', new ParseUUIDPipe({ version: '4' })) userUuid: string,
-  ): Promise<ChannelDto> {
-    return this.channelsService.findDirectChannelByUserUuids([
-      currentUser.uuid,
-      userUuid,
-    ]);
-  }
-
-  @Get(':channelId/users')
-  findChannelUserIds(@Param('channelId') channelId: string) {
-    return this.channelsService.findChannelUserIds(channelId);
+  @Post('generate-roadmap')
+  generateRoadmap(
+    @Body() { topic, workspaceId }: { topic: string; workspaceId: string },
+    @GetUser() user: User,
+  ): Promise<ChannelDto[]> {
+    return this.channelsService.generateRoadmap({ topic, workspaceId, user });
   }
 
   @Get(':channelId/channel-users')
-  findChannelUsers(@Param('channelId') channelId: string) {
+  findChannelUsers(@Param('channelId') channelId: string): Promise<any> {
     return this.channelsService.findChannelUsers(channelId);
   }
 
-  @Patch(':channelUuid')
+  @Patch('positions')
+  updateManyChannels(
+    @Body()
+    data: {
+      channels: UpdateChannelCoordinatesDto[];
+    },
+  ): Promise<ChannelDto[]> {
+    return this.channelsService.updateManyChannels(data.channels);
+  }
+
+  @Patch(':channelId')
   updateChannel(
-    @Param('channelUuid', new ParseUUIDPipe({ version: '4' }))
-    channelUuid: string,
+    @Param('channelId', new ParseUUIDPipe({ version: '4' }))
+    channelId: string,
     @Body()
     data: { updateChannelDto: UpdateChannelDto; workspaceId: string },
   ): Promise<ChannelDto> {
     return this.channelsService.updateChannel(
-      channelUuid,
+      channelId,
       data.updateChannelDto,
       data.workspaceId,
     );
   }
 
-  @Delete(':channelId/:workspaceId')
+  @Patch('move/:channelId')
+  moveChannel(
+    @Param('channelId', new ParseUUIDPipe({ version: '4' }))
+    channelId: string,
+    @Body()
+    data: { updateChannelDto: UpdateChannelDto; parentChannelId: string },
+  ): Promise<ChannelDto[]> {
+    return this.channelsService.moveChannel(
+      channelId,
+      data.updateChannelDto,
+      data.parentChannelId,
+    );
+  }
+
+  @Delete(':channelId')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('channelId', new ParseUUIDPipe({ version: '4' }))
     channelId: string,
-    @Param('workspaceId', new ParseUUIDPipe({ version: '4' }))
-    workspaceId: string,
   ) {
-    return this.channelsService.removeChannel(channelId, workspaceId);
+    return this.channelsService.removeChannel(channelId);
   }
 }

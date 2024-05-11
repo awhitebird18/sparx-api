@@ -1,152 +1,174 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
-import { CardRepository } from './card.repository'; // assuming you have a similar repository for Cards
+import { CardRepository } from './card.repository';
 import { User } from 'src/users/entities/user.entity';
 import { Field } from 'src/card-field/entities/card-field.entity';
 import { FieldValue } from 'src/card-field-value/entities/card-field-value.entity';
-import { Flashcard } from './entities/card.entity';
-import { FlashcardDTO } from './dto/card.dto';
+import { Card } from './entities/card.entity';
+import { CardDto } from './dto/card.dto';
 import { FlashcardReviewDTO } from './dto/card-review.dto';
 import { ChannelsRepository } from 'src/channels/channels.repository';
+import { plainToInstance } from 'class-transformer';
+import { AssistantService } from 'src/assistant/assistant.service';
+import { NotesRepository } from 'src/notes/notes.repository';
+import { FlashcardIdea } from 'src/assistant/dto/flashcard-idea.dto';
+import { CardMaturityStatDto } from './dto/card-maturity-stat-dto';
+import { CardStatDto } from './dto/card-stat.dto';
+import { ChannelCardCountDto } from './dto/channel-card-count.dto';
 
 @Injectable()
 export class CardService {
   constructor(
     private readonly cardRepository: CardRepository,
     private readonly channelsRepository: ChannelsRepository,
+    private readonly assistantService: AssistantService,
+    private readonly notesRepository: NotesRepository,
   ) {}
 
-  async create(createCardDto: CreateCardDto) {
-    const card = this.cardRepository.create(createCardDto);
-    await this.cardRepository.save(card);
-    return card;
+  convertToDto(card: Card): CardDto {
+    const cardDto = plainToInstance(CardDto, {
+      uuid: card.uuid,
+      createdAt: card.createdAt,
+      updatedAt: card.updatedAt,
+      frontValues: this.extractFields(
+        card.cardVariant.frontFields,
+        card.note.fieldValues,
+      ),
+      backValues: this.extractFields(
+        card.cardVariant.backFields,
+        card.note.fieldValues,
+      ),
+      createdBy: card.user?.uuid,
+      easeFactor: card.easeFactor,
+      repetitions: card.repetitions,
+      nextReviewDate: card.nextReviewDate,
+    });
+
+    return cardDto;
   }
 
-  async findAllByUser(user: User, channelId: string) {
-    // Get today's date without time for comparison
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+  private extractFields(fields: Field[], fieldValues: FieldValue[]): string[] {
+    return fields.map((field) => {
+      const fieldValue = fieldValues.find((fv) => fv.field.id === field.id);
+      return fieldValue ? fieldValue.content : 'Field Missing';
+    });
+  }
 
+  async generateFlashcardIdeas({
+    noteId,
+    channelId,
+  }: {
+    noteId: string;
+    channelId: string;
+  }): Promise<FlashcardIdea[]> {
+    const channel = await this.channelsRepository.findOne({
+      where: { uuid: channelId },
+      relations: ['workspace'],
+    });
+    const workspace = channel.workspace;
+
+    const note = await this.notesRepository.findByUuid(noteId);
+
+    return this.assistantService.generateFlashcardIdeas(
+      note,
+      channel,
+      workspace,
+    );
+  }
+
+  async create(createCardDto: CreateCardDto): Promise<CardDto> {
+    const card = await this.cardRepository.createCard(createCardDto);
+
+    return this.convertToDto(card);
+  }
+
+  async findAllByUser(user: User, channelId: string): Promise<CardDto[]> {
     const channel = await this.channelsRepository.findByUuid(channelId);
 
-    const flashcards = await this.cardRepository
-      .createQueryBuilder('card')
-      .innerJoinAndSelect('card.cardType', 'cardType')
-      .leftJoinAndSelect('card.channel', 'channel')
-      .leftJoinAndSelect('cardType.frontFields', 'frontFields')
-      .leftJoinAndSelect('cardType.backFields', 'backFields')
-      .innerJoinAndSelect('card.note', 'note')
-      .leftJoinAndSelect('note.fieldValues', 'fieldValues')
-      .leftJoinAndSelect('fieldValues.field', 'field')
-      .where('card.user = :userId', { userId: user.id })
-      .andWhere('channel.uuid = :channelId', { channelId: channel.uuid })
-      .andWhere('card.nextReviewDate <= :today', {
-        today: today.toISOString().split('T')[0],
-      })
-      .getMany();
+    const flashcards = await this.cardRepository.findFlashcardsByUser(
+      user.uuid,
+      channel.uuid,
+    );
 
-    return flashcards.map((card) => this.toDTO(card));
+    return flashcards.map((card) => this.convertToDto(card));
   }
 
-  async getCardsByChannel(user: User, channelId: string) {
+  async getCardsDueForChannel(
+    user: User,
+    channelId: string,
+  ): Promise<CardDto[]> {
     const channel = await this.channelsRepository.findByUuid(channelId);
 
-    const flashcards = await this.cardRepository
-      .createQueryBuilder('card')
-      .innerJoinAndSelect('card.cardType', 'cardType')
-      .leftJoinAndSelect('card.channel', 'channel')
-      .leftJoinAndSelect('card.user', 'user')
-      .leftJoinAndSelect('cardType.frontFields', 'frontFields')
-      .innerJoinAndSelect('card.note', 'note')
-      .leftJoinAndSelect('note.fieldValues', 'fieldValues')
-      .leftJoinAndSelect('fieldValues.field', 'field')
-      .where('card.user = :userId', { userId: user.id })
-      .andWhere('channel.uuid = :channelId', { channelId: channel.uuid })
-      .getMany();
+    const flashcards = await this.cardRepository.findCardsDueForChannel(
+      user.uuid,
+      channel.uuid,
+    );
 
-    return flashcards.map((flashcard: Flashcard) => ({
-      uuid: flashcard.uuid,
-      userId: flashcard.user.uuid,
-      content: flashcard.note.fieldValues[0].content,
-      nextReviewDate: flashcard.nextReviewDate,
-      repetitions: flashcard.repetitions,
-      createdOn: flashcard.createdAt,
-    }));
+    return flashcards.map((card: Card) => this.convertToDto(card));
   }
 
-  async getCardsDueForChannel(user: User, channelId: string) {
+  async getCardCountsDueForChannel(
+    user: User,
+    channelId: string,
+  ): Promise<number> {
     const channel = await this.channelsRepository.findByUuid(channelId);
 
-    return await this.cardRepository.getCardsDueForChannel(user, channel);
+    return await this.cardRepository.getCountOfCardsDueForChannel(
+      user,
+      channel,
+    );
   }
 
-  async reviewMultipleFlashcards(reviews: FlashcardReviewDTO[], user: User) {
+  async reviewMultipleFlashcards(
+    reviews: FlashcardReviewDTO[],
+    user: User,
+  ): Promise<FlashcardReviewDTO[]> {
     return this.cardRepository.reviewMultipleFlashcards(reviews, user);
   }
 
-  getCardsDueForWorkspace(user: User, workspaceId: string) {
-    return this.cardRepository.getCardsDueForWorkspace(user, workspaceId);
+  getCountOfCardsDueByChannel(
+    user: User,
+    workspaceId: string,
+  ): Promise<ChannelCardCountDto[]> {
+    return this.cardRepository.getCountOfCardsDueByChannel(user, workspaceId);
   }
 
-  getDueFlashcardsNext30Days(user: User) {
+  getDueFlashcardsNext30Days(user: User): Promise<CardStatDto[]> {
     return this.cardRepository.getDueFlashcardsCategorizedNext30Days(user);
   }
 
-  getAddedFlashcardsLast30Days(user: User) {
+  getAddedFlashcardsLast30Days(user: User): Promise<CardStatDto[]> {
     return this.cardRepository.getAddedFlashcardsLast30Days(user);
   }
 
-  getCardMaturityStats(user: User) {
+  getCardMaturityStats(user: User): Promise<CardMaturityStatDto[]> {
     return this.cardRepository.getCardMaturityStats(user);
   }
 
-  async findOne(uuid: string) {
+  async findOne(uuid: string): Promise<CardDto> {
     const card = await this.cardRepository.findOne({ where: { uuid } });
     if (!card) {
       throw new NotFoundException(`Card with ID ${uuid} not found`);
     }
-    return card;
+    return this.convertToDto(card);
   }
 
-  async update(uuid: string, updateCardDto: UpdateCardDto) {
+  async update(uuid: string, updateCardDto: UpdateCardDto): Promise<CardDto> {
     const result = await this.cardRepository.update(uuid, updateCardDto);
     if (result.affected === 0) {
       throw new NotFoundException(`Card with ID ${uuid} not found`);
     }
-    return await this.cardRepository.findOne({ where: { uuid } });
+    const card = await this.cardRepository.findOne({ where: { uuid } });
+
+    return this.convertToDto(card);
   }
 
-  async remove(uuid: string) {
+  async remove(uuid: string): Promise<{ uuid: string }> {
     const result = await this.cardRepository.delete(uuid);
     if (result.affected === 0) {
       throw new NotFoundException(`Card with ID $uuidd} not found`);
     }
     return { uuid };
-  }
-
-  private toDTO(card: Flashcard): FlashcardDTO {
-    return {
-      uuid: card.uuid,
-      front: this.extractFields(
-        card.cardType.frontFields,
-        card.note.fieldValues,
-      ),
-      back: this.extractFields(card.cardType.backFields, card.note.fieldValues),
-      easeFactor: card.easeFactor,
-      repetitions: card.repetitions,
-      nextReviewDate: card.nextReviewDate,
-    };
-  }
-
-  private extractFields(fields: Field[], fieldValues: FieldValue[]): string[] {
-    // Implement logic to extract and order the fields from fieldValues based on fields
-    // This might involve finding the matching fieldValues for each field and formatting the content
-
-    return fields.map((field) => {
-      // Find the corresponding fieldValue
-      const fieldValue = fieldValues.find((fv) => fv.field.id === field.id);
-      return fieldValue ? fieldValue.content : 'Field Missing'; // Replace with appropriate default or error handling
-    });
   }
 }
