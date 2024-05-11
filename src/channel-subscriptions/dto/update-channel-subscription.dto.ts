@@ -16,6 +16,7 @@ export class UpdateUserChannelDto {
 
   @IsBoolean()
   @IsOptional()
+  git;
   isAdmin?: boolean;
 
   @IsBoolean()

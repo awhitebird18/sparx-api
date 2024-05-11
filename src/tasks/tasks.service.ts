@@ -86,7 +86,6 @@ export class TasksService {
   }
 
   async updateTask(uuid: string, taskDto: UpdateTaskDto): Promise<TaskDto> {
-    console.log(uuid, taskDto);
     await this.taskRepository.update({ uuid }, taskDto);
     const task = await this.taskRepository.findOne({ where: { uuid } });
 

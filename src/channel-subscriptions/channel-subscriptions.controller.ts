@@ -60,7 +60,6 @@ export class ChannelSubscriptionsController {
     @Param('channelId') channelId: string,
     @Body() updateUserChannel: UpdateUserChannelDto,
   ): Promise<ChannelSubscriptionDto> {
-    console.log(channelId, updateUserChannel);
     return this.channelSubscriptionsService.udpateChannelSubscription(
       user.uuid,
       channelId,

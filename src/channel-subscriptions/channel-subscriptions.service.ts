@@ -185,7 +185,6 @@ export class ChannelSubscriptionsService {
     updatedFields: UpdateUserChannelDto,
   ): Promise<ChannelSubscriptionDto> {
     try {
-      console.log('derp', userUuid, channelUuid, updatedFields);
       const channelSubscription =
         await this.channelSubscriptionsRepository.findOneOrFail({
           where: {
@@ -193,8 +192,6 @@ export class ChannelSubscriptionsService {
             channel: { uuid: channelUuid },
           },
         });
-
-      console.log(channelSubscription);
 
       Object.assign(channelSubscription, updatedFields);
 

@@ -42,10 +42,8 @@ export class WorkspacesRepository extends Repository<Workspace> {
   }
 
   async removeWorkspace(uuid: string): Promise<void> {
-    console.log('Removing workspace 3:', uuid);
     const workspace = await this.findOne({ where: { uuid } });
 
-    console.log(workspace);
     if (workspace) {
       await this.delete({ id: workspace.id });
     } else {

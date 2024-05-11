@@ -91,8 +91,6 @@ export class SeedService {
         Math.max(currentUserCount, 0),
       );
 
-      // console.log(usersToSubscribe);
-
       // Subscribe users to workspaceChannel
       for (const userWorkspace of usersToSubscribe) {
         const subscriptionPromise =

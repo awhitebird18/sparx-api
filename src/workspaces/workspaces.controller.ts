@@ -51,7 +51,6 @@ export class WorkspacesController {
 
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<void> {
-    console.log('Removing workspace:', id);
     return await this.workspacesService.removeWorkspace(id);
   }
 }

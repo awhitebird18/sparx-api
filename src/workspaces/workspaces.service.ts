@@ -88,7 +88,6 @@ export class WorkspacesService {
   }
 
   async removeWorkspace(id: string): Promise<void> {
-    console.log('Removing workspace 2:', id);
     return await this.workspaceRepository.removeWorkspace(id);
   }
 }
