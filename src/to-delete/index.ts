@@ -7,7 +7,7 @@ import { seedUserPreferences } from './user-preferences.seed';
 (async function () {
   console.info('Bot Seed starting');
 
-  const AppDataSource = new DataSource(getOptions());
+  const AppDataSource = new DataSource(getOptions(true));
 
   await AppDataSource.initialize();
   console.info('Database Initialized');
