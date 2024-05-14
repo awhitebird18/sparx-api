@@ -1,5 +1,9 @@
 version: '3.9'
 
+networks:
+  sparx-network:
+    driver: bridge
+
 services:
   app:
     env_file:
@@ -13,7 +17,7 @@ services:
     ports:
       - '3000:3000'
     networks:
-      - sparx
+      - sparx-network
     volumes:
       - /var/log:/var/log
       - /etc/letsencrypt:/etc/letsencrypt

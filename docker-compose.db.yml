@@ -1,5 +1,9 @@
 version: '3.9'
 
+networks:
+  sparx-network:
+    driver: bridge
+
 services:
   db:
     container_name: postgres
@@ -12,7 +16,7 @@ services:
     ports:
       - '5432:5432'
     networks:
-      - sparx
+      - sparx-network
     volumes:
       - pgdata:/var/lib/postgresql/data
 
