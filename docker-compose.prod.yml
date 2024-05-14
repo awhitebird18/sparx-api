@@ -12,6 +12,8 @@ services:
         - NODE_ENV=production
     ports:
       - '3000:3000'
+    networks:
+      - sparx
     volumes:
       - /var/log:/var/log
       - /etc/letsencrypt:/etc/letsencrypt
