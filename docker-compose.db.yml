@@ -17,6 +17,14 @@ services:
       - '5432:5432'
     networks:
       - sparx-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25' # Limit to 50% of a single CPU core
+          memory: '512M' # Limit to 512MB of memory
+        reservations:
+          cpus: '0.25' # Reserve 25% of a single CPU core
+          memory: '256M' # Reserve 256MB of memory
     volumes:
       - pgdata:/var/lib/postgresql/data
 
